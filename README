@@ -1,0 +1,48 @@
+LaTeX-Table version 0.0.1
+
+LaTeX::Table provides functionality for an intuitive and easy generation of
+LaTeX tables for reports or theses. It ships with some predefined good looking
+table styles. Supports multipage tables via the xtab package.
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+
+Alternatively, to install with Module::Build, you can use the following
+commands:
+
+    perl Build.PL
+    ./Build
+    ./Build test
+    ./Build install
+
+
+Now start the script generate_examples.pl in the examples directory of this
+distibution. 
+
+    perl generate_examples.pl
+    
+This script generates some LaTeX files with some example tables.
+Now please compile these examples with LaTeX and check if all tables look ok:
+
+    latex examples.tex
+    xdvi examples.dvi
+     
+
+DEPENDENCIES
+
+Class::Std
+Regexp::Common
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2006, Markus Riester
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.

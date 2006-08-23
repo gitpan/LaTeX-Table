@@ -1,0 +1,18 @@
+Build.PL
+Changes
+MANIFEST
+#META.yml # Will be created by "make dist"
+Makefile.PL
+README
+examples/generate_examples.pl
+lib/LaTeX/Table.pm
+t/00.load.t
+t/10.table-styles.t
+t/20.mcdef.t
+t/30.exceptions.t
+t/40.miscprivates.t
+t/50.synopsis.t
+t/perlcritic.t
+t/pod-coverage.t
+t/pod.t
+META.yml                                 Module meta-data (added by MakeMaker)
