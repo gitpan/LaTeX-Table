@@ -1,9 +1,10 @@
 package LaTeX::Table;
 
-use version; $VERSION = qv('0.0.1');
-
 use warnings;
 use strict;
+
+use version; our $VERSION = qv('0.0.2');
+
 use Carp;
 use Fatal qw( open close );
 
@@ -591,7 +592,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.0.1
+This document describes LaTeX::Table version 0.0.2
 
 
 =head1 SYNOPSIS
@@ -654,7 +655,7 @@ the C<\input> command:
 
 =item C<$table-E<gt>generate_string($header, $data)>
 
-Same as generate() but does not create a LaTeX file but returns the LaTex code
+Same as generate() but does not create a LaTeX file but returns the LaTeX code
 as string.
 
   my $latexcode = $table->generate_string($header, $data);
@@ -761,7 +762,7 @@ All custom themes. Getter and setter only.
 =head1 MULTICOLUMNS 
 
 Multicolumns can be defined in LaTeX with
-\multicolumn{#cols}{definition}{text}. Because multicolumn are often needed
+\multicolumn{#cols}{definition}{text}. Because multicolumns are often needed
 and this is way too much code to type, a shortcut was implemented. Now,
 text:#colsdefinition is equivalent to original LaTeX code. For example,
 Beers:2|c| is equivalent to \multicolumn{2}{|c|}{Beers}. Note that |c|
@@ -845,7 +846,8 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2006, Markus Riester C<< <mriester@gmx.de> >>. All rights reserved.
+Copyright (c) 2006-2007, Markus Riester C<< <mriester@gmx.de> >>. 
+All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

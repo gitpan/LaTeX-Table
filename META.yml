@@ -1,14 +1,22 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         LaTeX-Table
-version:      v0.0.1
-version_from: lib/LaTeX/Table.pm
-installdirs:  site
+---
+name: LaTeX-Table
+version: v0.0.2
+author:
+  - 'Markus Riester <mriester@gmx.de>'
+abstract: Perl extension for the automatic generation of LaTeX tables.
+license: perl
 requires:
-    Class::Std:                    0
-    Regexp::Common:                0
-    Test::More:                    0
-    version:                       0
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.30_01
+  Class::Std: 0
+  Regexp::Common: 0
+  Test::More: 0
+  version: 0
+generated_by: Module::Build version 0.2806
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2
+provides:
+  LaTeX::Table:
+    file: lib/LaTeX/Table.pm
+    version: v0.0.2
+resources:
+  license: http://dev.perl.org/licenses/
