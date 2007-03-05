@@ -1,9 +1,18 @@
 #!perl
 
-if (!require Test::Perl::Critic) {
-    Test::More::plan(
-        skip_all => "Test::Perl::Critic required for testing PBP compliance"
-    );
+use strict;
+use warnings;
+use English qw(-no_match_vars);
+use Test::More;
+
+eval {
+    require Test::Perl::Critic;
+    my @config = (); #Arguments for Perl::Critic->new() go here!
+    Test::Perl::Critic->import( @config );
+};
+
+if( $EVAL_ERROR ) {
+    plan( skip_all => 'Test::Perl::Critic required for PBP tests' );
 }
 
 Test::Perl::Critic::all_critic_ok();

@@ -1,6 +1,9 @@
 Revision history for LaTeX-Table
 
-0.0.2  Thu Aug  3 12:10:07 2006
+0.0.3  Thu Mar  5 18:10:11 2007
+       - t/perlcritic.t: required Test::Perl::Critic
+       
+0.0.2  Wed Feb 28 16:52:00 2007
        - Added missing dependencies in Build.PL 
        - Test::Perl::Critic passed
 
