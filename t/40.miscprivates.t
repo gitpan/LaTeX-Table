@@ -17,4 +17,3 @@ $test_data = [ [ 'a', 2, 4], [ 'b', 3 ] ];
 @summary = $table->_get_data_summary($test_data);
 is_deeply(\@summary, [0,1,1], 'not all integers');
 
-diag( "Testing LaTeX::Table $LaTeX::Table::VERSION misc private methods" );

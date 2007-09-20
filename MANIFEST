@@ -1,13 +1,14 @@
 Build.PL
 Changes
 MANIFEST
-#META.yml # Will be created by "make dist"
+META.yml 
 Makefile.PL
 README
 examples/generate_examples.pl
+examples/examples.pdf
 lib/LaTeX/Table.pm
 t/00.load.t
-t/10.table-styles.t
+t/10.table-std.t
 t/20.mcdef.t
 t/30.exceptions.t
 t/40.miscprivates.t

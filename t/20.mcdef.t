@@ -17,4 +17,3 @@ is_deeply($table->_get_mc_def('test:2c'), { value => 'test', align => 'c', cols 
 
 is_deeply($table->_add_font_family('test:2r', 'bf'), '\\textbf{test}:2r', 'add bold fonts');							 
 
-diag( "Testing LaTeX::Table $LaTeX::Table::VERSION multicolumn definition routines" );

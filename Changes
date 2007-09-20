@@ -1,5 +1,18 @@
 Revision history for LaTeX-Table
 
+0.1.0  Thu Sep 20 12:30:00 2007
+       - API CHANGE: header and data now options
+       - label optional 
+       - caption optional
+       - maincaption optional
+       - custom themes can be set in new()
+       - POD improvements
+       - more tests
+       - table environment optional
+       - added examples.pdf
+       - Bugfixes:
+           * META.yml missing
+           
 0.0.3  Thu Mar  5 18:10:11 2007
        - t/perlcritic.t: required Test::Perl::Critic
        

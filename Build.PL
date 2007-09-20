@@ -8,10 +8,11 @@ my $builder = Module::Build->new(
     dist_author         => 'Markus Riester <mriester@gmx.de>',
     dist_version_from   => 'lib/LaTeX/Table.pm',
     requires => {
-        'Test::More' => 0,
+        'Test::More'     => 0,
         'Class::Std'     => 0,
+        'Scalar::Util'   => 0,
         'Regexp::Common' => 0,
-        'version'    => 0,
+        'version'        => 0,
     },
     add_to_cleanup      => [ 'LaTeX-Table-*' ],
 );

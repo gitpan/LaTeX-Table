@@ -1,9 +1,12 @@
-use Test::More tests => 2;
+use Test::More tests => 1;
 use English qw( -no_match_vars ) ;
 
 my $SYNOPSIS = <<'EOT'
-
   use LaTeX::Table;
+  
+  
+  my $header
+  	= [ [ 'Name', 'Beers:2|c|' ], [ '', 'before 4pm', 'after 4pm' ] ];
   
   my $data = [
   	[ 'Lisa',   '0', '0' ],
@@ -15,9 +18,6 @@ my $SYNOPSIS = <<'EOT'
   	[ 'Barney', '8', '16' ],
   ];
   
-  my $header
-  	= [ [ 'Name', 'Beers:2|c|' ], [ '', 'before 4pm', 'after 4pm' ] ];
-  
   my $table = LaTeX::Table->new(
   	{   
   	   filename    => 'counter.tex',
@@ -26,18 +26,17 @@ my $SYNOPSIS = <<'EOT'
   	   label       => 'table_beercounter',
   	   theme       => 'Houston',
 	   tablepos    => 'htb',
+       header      => $header,
+       data        => $data,
   	}
   );
   
   # write LaTeX code in counter.tex
-  $table->generate_string( $header, $data );
+  $table->generate();
+
 EOT
 ;
 
 eval $SYNOPSIS;
-ok(!$EVAL_ERROR,"Test Synopsis");
+ok(!$EVAL_ERROR,"Test Synopsis") || diag $EVAL_ERROR;
 
-eval 'my $table = LaTeX::Table->new()';
-ok($EVAL_ERROR,"Wrong synopsis");
-
-diag( "Testing LaTeX::Table $LaTeX::Table::VERSION SYNOPSIS" );

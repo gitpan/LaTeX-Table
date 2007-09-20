@@ -3,10 +3,11 @@ package LaTeX::Table;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.0.3');
+use version; our $VERSION = qv('0.1.0');
 
 use Carp;
 use Fatal qw( open close );
+use Scalar::Util qw(reftype);
 
 use English qw( -no_match_vars );
 use Regexp::Common;
@@ -15,42 +16,60 @@ use Class::Std;
 {
 
     my %filename : ATTR( :name<filename> :default('latextable.tex') );
-    my %label : ATTR( :name<label> :default('latextableperl') );
+    my %label : ATTR( :name<label> :default('') );
     my %type : ATTR( :name<type> :default('std') );
-    my %maincaption : ATTR( :name<maincaption> :default (0) );
+    my %maincaption : ATTR( :name<maincaption> :default('') );
+    my %header : ATTR( :name<header> :default(0));
+    my %data : ATTR( :name<data> :default(0) );
+    my %table_environment : ATTR( :name<table_environment> :default(1) );
     my %caption : ATTR( :name<caption> :default('') );
     my %tabledef : ATTR( :name<tabledef> :default(0) );
     my %theme : ATTR( :name<theme> :default('Dresden') );
     my %predef_themes : ATTR( :get<predef_themes> );
-    my %custom_themes : ATTR( :get<custom_themes> :set<custom_themes> );
+    my %custom_themes : ATTR( :name<custom_themes> :default(0) );
     my %tablepos : ATTR( :name<tablepos> :default(0) );
     my %center : ATTR( :name<center> :default(1) );
     my %size : ATTR( :name<size> :default(0) );
-    my %tabletailmsg : ATTR( :name<tabletailmsg> :default('Continued on next page') );
+    my %tabletailmsg :
+        ATTR( :name<tabletailmsg> :default('Continued on next page') );
     my %tabletail : ATTR( :name<tabletail> :default(0) );
     my %xentrystretch : ATTR( :name<xentrystretch> :default(0) );
+
+    sub _compatibility_layer {
+        my ( $self, @args ) = @_;
+        return if !defined $args[0];
+        if ( reftype $args[0] eq 'ARRAY' ) {
+            carp("DEPRECATED. Use options header and data instead");
+            $self->set_header( $args[0] );
+            if ( reftype $args[1] eq 'ARRAY' ) {
+                $self->set_data( $args[1] );
+            }
+        }
+        return;
+    }
 
     ###########################################################################
     # Usage      : $table->generate_string(\@header, \@data);
     # Purpose    : generates LaTex data
     # Returns    : code
     # Parameters : data columns
-    # Throws     : 
+    # Throws     :
     # Comments   : n/a
     # See also   :
 
     sub generate_string {
-        my ( $self, $header, $data ) = @_;
+        my ( $self, @args ) = @_;
+        $self->_compatibility_layer(@args);
         my $code = '';
-        $code = $self->_header($header, $data);
-        
+        $code = $self->_header( $self->get_header, $self->get_data );
+
         my $theme  = $self->_get_theme_settings;
         my $hlines = $theme->{'HORIZONTAL_LINES'};
         my $h0     = "\\hline\n" x $hlines->[0];
         my $h2     = "\\hline\n" x $hlines->[2];
         my $i      = 0;
     ROW:
-        foreach my $row (@$data) {
+        foreach my $row ( @{ $self->get_data } ) {
             $i++;
             my @cols = @$row;
             if ( !@cols ) {
@@ -59,7 +78,7 @@ use Class::Std;
             }
             else {
                 $code .= join( '&', @cols ) . "\\\\ \n";
-                if ( $i == scalar(@$data) ) {
+                if ( $i == scalar( @{ $self->get_data } ) ) {
                     $code .= $h0;
                 }
                 else {
@@ -70,10 +89,10 @@ use Class::Std;
         $code .= $self->_footer();
         return $code;
     }
-    
+
     sub generate {
         my ( $self, $header, $data ) = @_;
-        my $code = $self->generate_string($header, $data);
+        my $code = $self->generate_string( $header, $data );
         open my $LATEX, '>', $self->get_filename;
         print $LATEX $code;
         close $LATEX;
@@ -82,44 +101,40 @@ use Class::Std;
 
     ###########################################################################
     # Usage      : $self->_header(\@header,\@data);
-    # Purpose    : create the LaTeX header  
+    # Purpose    : create the LaTeX header
     # Returns    : LaTeX code
     # Parameters : header and data columns
-    # Throws     : 
+    # Throws     :
     # Comments   : n/a
     # See also   : _footer
-    
+
     sub _header {
         my ( $self, $header, $data ) = @_;
         my $table_def = $self->_get_tabledef_code($data);
         $table_def = $self->get_tabledef if $self->get_tabledef;
-        my $pos    = $self->_get_tablepos_code();
-        my $code   = $self->_get_header_columns_code($header);
+        my $pos  = $self->_get_tablepos_code() . "\n";
+        my $code = $self->_get_header_columns_code($header);
 
         my $center = '';
-        $center = '\center' if $self->get_center;
-        my $size = $self->_get_size_code();
+        $center = "\\center\n" if $self->get_center;
+        my $size    = $self->_get_size_code();
         my $caption = $self->_get_caption_code();
-        my $label   = $self->get_label;
+        my $label   = $self->_get_label_code;
 
-        my $tabletail = $self->_get_tabletail_code($data, 0);
-        my $tabletaillast = $self->_get_tabletail_code($data, 1);
-        
+        my $tabletail     = $self->_get_tabletail_code( $data, 0 );
+        my $tabletaillast = $self->_get_tabletail_code( $data, 1 );
+
         my $xentrystretch = '';
-        if ($self->get_xentrystretch) {
+        if ( $self->get_xentrystretch ) {
             my $xs = $self->get_xentrystretch();
             croak("xentrystretch not a number") if $xs !~ $RE{num}{real};
-            $xentrystretch = "\\xentrystretch{$xs}";
-        }    
+            $xentrystretch = "\\xentrystretch{$xs}\n";
+        }
 
-        if ($self->get_type eq 'xtab') {
+        if ( $self->get_type eq 'xtab' ) {
             return <<EOXT
         {
-        $size
-        $center
-        $caption
-        $xentrystretch
-        \\label{$label}
+        $size$center$caption$xentrystretch$label
           \\tablehead{$code}
           $tabletail
           $tabletaillast
@@ -127,15 +142,17 @@ use Class::Std;
 EOXT
         }
         else {
+            my $table_environment = '';
+            if ($self->get_table_environment) {
+                $table_environment = join('',"\\begin{table}$pos",$size,
+                    $center);
+            }    
             return <<EOST
-    \\begin{table}$pos
-    $size
-	$center
-    \\begin{tabular}{$table_def}
+$table_environment\\begin{tabular}{$table_def}
     $code
 EOST
-            ;
-        }        
+                ;
+        }
     }
 
     ###########################################################################
@@ -144,36 +161,40 @@ EOST
     # Returns    : LaTeX code
     # Parameters : none
     # See also   : _header
-    
+
     sub _footer {
         my ($self)  = @_;
-        my $label   = $self->get_label;
+        my $label   = $self->_get_label_code();
         my $caption = $self->_get_caption_code();
-        if ($self->get_type eq 'xtab') {
+        if ( $self->get_type eq 'xtab' ) {
             return <<EOXT
     \\end{xtabular}
     } 
 EOXT
         }
         else {
+            my $table_environment = '';
+            if ($self->get_table_environment) {
+            $table_environment = join('',$caption,$label,
+                "\\end{table}" );
+
+            }    
             return <<EOST
 \\end{tabular}
- $caption
-  \\label{$label}
-\\end{table} 
+$table_environment
 EOST
-            ;
-        }        
+                ;
+        }
     }
-    
+
     ###########################################################################
     # Usage      : $self->_get_data_summary(\@data);
     # Purpose    : find out how many columns we need and if column consists of
-    #              numbers only 
+    #              numbers only
     # Returns    : an array with one entry for every column. Entry is either 1
-    #              (column is numerical) or 0. 
+    #              (column is numerical) or 0.
     # Parameters : data columns
-    # Throws     : 
+    # Throws     :
     # Comments   : n/a
     # See also   :
 
@@ -183,14 +204,14 @@ EOST
         my %is_a_number;
         my %not_a_number;
         foreach my $row (@$data) {
-            if (scalar(@$row) > scalar(@max_row)) {
+            if ( scalar(@$row) > scalar(@max_row) ) {
                 @max_row = @$row;
             }
             my $i = 0;
             foreach my $col (@$row) {
-                if ($col =~ $RE{num}{real}) {
+                if ( $col =~ $RE{num}{real} ) {
                     $is_a_number{$i}++;
-                } 
+                }
                 else {
                     $not_a_number{$i}++;
                 }
@@ -200,20 +221,20 @@ EOST
         my @summary;
         for my $i ( 0 .. $#max_row ) {
             my $number = 0;
-            if (defined $is_a_number{$i} && !defined $not_a_number{$i}) {
+            if ( defined $is_a_number{$i} && !defined $not_a_number{$i} ) {
                 $number = 1;
             }
             push @summary, $number;
         }
         return @summary;
     }
-    
+
     ###########################################################################
     # Usage      : $self->_get_header_columns_code(\@header);
     # Purpose    : generate the header LaTeX code
     # Returns    : LaTeX code
     # Parameters : header columns
-    # Throws     : 
+    # Throws     :
     # Comments   : n/a
     # See also   : _get_row_code
 
@@ -266,13 +287,13 @@ EOST
         $code .= "\\hline\n" x $hlines->[1];
         return $code;
     }
-    
+
     ###########################################################################
     # Usage      : $self->_get_row_code(@cols);
     # Purpose    : generate the LaTeX code of a row
     # Returns    : LaTeX code
     # Parameters : the columns
-    # Throws     : 
+    # Throws     :
     # Comments   : n/a
     # See also   :
 
@@ -347,20 +368,20 @@ EOST
             = '\\text' . $family . '{' . $col_def->{value} . '}';
         return $self->_get_mc_value($col_def);
     }
-    
+
     ###########################################################################
     # Usage      : $self->_get_tabledef_code(\@data);
     # Purpose    : generate the LaTeX code of the table definition (e.g.
     #              |l|r|r|r|)
     # Returns    : LaTeX code
     # Parameters : the data columns
-    # Throws     : 
+    # Throws     :
     # Comments   : Tries to be intelligent. Hope it is ;)
     # See also   :
 
     sub _get_tabledef_code {
         my ( $self, $data ) = @_;
-        my @cols = $self->_get_data_summary($data);
+        my @cols   = $self->_get_data_summary($data);
         my $vlines = $self->_get_theme_settings->{'VERTICAL_LINES'};
 
         my $v0        = '|' x $vlines->[0];
@@ -388,17 +409,16 @@ EOST
         return $table_def;
     }
 
-    
     ###########################################################################
     # Usage      : $self->_get_tabletail_code(\@data, $last);
     # Purpose    : generates the LaTeX code of the xtab tabletail
     # Returns    : LaTeX code
-    # Parameters : the data columns and a flag indicating whether it is the  
-    #              code for the last tail (1). 
-    # Throws     : 
+    # Parameters : the data columns and a flag indicating whether it is the
+    #              code for the last tail (1).
+    # Throws     :
     # Comments   : n/a
     # See also   :
-    
+
     sub _get_tabletail_code {
         my ( $self, $data, $last ) = @_;
 
@@ -406,22 +426,23 @@ EOST
         if ( $self->get_tabletail ) {
             return $self->get_tabletail;
         }
-        
+
         # else generate default table tail
-        
-        my @cols = $self->_get_data_summary($data);
+
+        my @cols    = $self->_get_data_summary($data);
         my $nu_cols = scalar @cols;
-        my $hlines = $self->_get_theme_settings->{'HORIZONTAL_LINES'};
-        my $vlines = $self->_get_theme_settings->{'VERTICAL_LINES'};
+        my $hlines  = $self->_get_theme_settings->{'HORIZONTAL_LINES'};
+        my $vlines  = $self->_get_theme_settings->{'VERTICAL_LINES'};
         my $linecode .= "\\hline\n" x $hlines->[0];
 
         my $v0 = '|' x $vlines->[0];
-        
-        if ( $last ) {
+
+        if ($last) {
             return "\\tablelasttail{$linecode}";
         }
-        return "\\tabletail{$linecode \\multicolumn{$nu_cols}{${v0}r$v0}{{" .
-        $self->get_tabletailmsg . "}} \\\\ \n $linecode }"; 
+        return "\\tabletail{$linecode \\multicolumn{$nu_cols}{${v0}r$v0}{{"
+            . $self->get_tabletailmsg
+            . "}} \\\\ \n $linecode }";
     }
 
     ###########################################################################
@@ -429,7 +450,7 @@ EOST
     # Purpose    : generates the LaTeX code of the caption
     # Returns    : LaTeX code
     # Parameters : none
-    # Throws     : 
+    # Throws     :
     # Comments   : n/a
     # See also   :
 
@@ -439,14 +460,19 @@ EOST
         my $s_caption = '';
         my $theme     = $self->_get_theme_settings;
 
-        if ( $self->get_maincaption ) {
+        my $tmp = '';
+        if ( $self->get_maincaption ne '' ) {
             $f_caption = '[' . $self->get_maincaption . ']';
+            $tmp       = $self->get_maincaption . '. ';
+            if ( defined $theme->{CAPTION_FONT_STYLE} ) {
+                $tmp = $self->_add_font_family( $tmp,
+                    $theme->{CAPTION_FONT_STYLE} );
+            }
         }
-        my $tmp = $self->get_maincaption . '. ';
-        if ( defined $theme->{CAPTION_FONT_STYLE} ) {
-            $tmp = $self->_add_font_family( $tmp,
-                $theme->{CAPTION_FONT_STYLE} );
+        else {
+            return '' if $self->get_caption eq '';
         }
+
         $s_caption = '{' . $tmp . $self->get_caption . '}';
         my $c_caption = 'caption';
 
@@ -454,49 +480,62 @@ EOST
             $c_caption = 'bottomcaption';
         }
 
-        return '\\' . $c_caption . $f_caption . $s_caption;
+        return '\\' . $c_caption . $f_caption . $s_caption . "\n";
     }
-    
+
     ###########################################################################
     # Usage      : $self->_get_size_code();
     # Purpose    : generates the LaTeX code of the size (e.g. \small, \large)
     # Returns    : LaTeX code
-    # Parameters : none 
+    # Parameters : none
     # Throws     : exception if size is not valid
     # Comments   : n/a
     # See also   :
-    
+
     sub _get_size_code {
-        my ( $self ) = @_;
-        my %valid = ( 'tiny' => 1, 
-                      'scriptsize' => 1, 
-                      'footnotesize' => 1, 
-                      'small' => 1,
-                      'normal' => 1,
-                      'large' => 1,
-                      'Large' => 1,
-                      'LARGE' => 1,
-                      'huge' => 1,
-                      'Huge' => 1,
-                     );
-        my $size = $self->get_size;             
+        my ($self) = @_;
+        my %valid = (
+            'tiny'         => 1,
+            'scriptsize'   => 1,
+            'footnotesize' => 1,
+            'small'        => 1,
+            'normal'       => 1,
+            'large'        => 1,
+            'Large'        => 1,
+            'LARGE'        => 1,
+            'huge'         => 1,
+            'Huge'         => 1,
+        );
+        my $size = $self->get_size;
         return '' if !$size;
-        
-        if (!defined $valid{$size}) {
+
+        if ( !defined $valid{$size} ) {
             croak( "Size not known: $size. Valid sizes are: "
                     . join( ', ', sort keys %valid ) );
-        }  
-        return "\\$size";
+        }
+        return "\\$size\n";
+    }
+
+    ###########################################################################
+    # Usage      : $self->_get_label_code();
+    # Purpose    : create the LaTeX label
+    # Returns    : LaTeX code
+    # Parameters : none
+
+    sub _get_label_code {
+        my ($self) = @_;
+        my $label = $self->get_label;
+        if ( $label ne '' ) {
+            $label = "\\label{$label}\n";
+        }
+        return $label;
     }
 
     ###########################################################################
     # Usage      : $self->_get_tablepos_code();
     # Purpose    : generates the LaTeX code of the table position (e.g. [htb])
     # Returns    : LaTeX code
-    # Parameters : none 
-    # Throws     : 
-    # Comments   : n/a
-    # See also   :
+    # Parameters : none
 
     sub _get_tablepos_code {
         my ($self) = @_;
@@ -508,13 +547,13 @@ EOST
         }
 
     }
-    
+
     ###########################################################################
     # Usage      : $self->_get_theme_settings();
     # Purpose    : return an hash reference with all settings of the current
-    #              theme 
+    #              theme
     # Returns    : see purpose
-    # Parameters : none 
+    # Parameters : none
     # Throws     : exception if theme is unknown
     # Comments   : n/a
     # See also   : get_available_themes();
@@ -524,53 +563,66 @@ EOST
         my $themes = $self->get_available_themes;
         if ( defined $themes->{ $self->get_theme } ) {
             return $themes->{ $self->get_theme };
-        } 
+        }
         else {
-            croak('Unknown theme: ' . $self->get_theme);
+            croak( 'Unknown theme: ' . $self->get_theme );
         }
     }
-    
+
     ###########################################################################
     # Usage      : called by Class::Std
     # Purpose    : initializing themes
-    # Parameters : none 
+    # Parameters : none
     # See also   : perldoc Class::Std
 
     sub BUILD {
         my ( $self, $ident, $arg_ref ) = @_;
-        $custom_themes{$ident} = {};
         $predef_themes{$ident} = {
             'Dresden' => {
                 'HEADER_FONT_STYLE'  => 'bf',
-                'HEADER_CENTERED'     => 1,
+                'HEADER_CENTERED'    => 1,
                 'CAPTION_FONT_STYLE' => 'bf',
-                'VERTICAL_LINES'      => [ 1, 2, 1 ],
-                'HORIZONTAL_LINES'    => [ 1, 2, 0 ],
+                'VERTICAL_LINES'     => [ 1, 2, 1 ],
+                'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
             },
             'Houston' => {
                 'HEADER_FONT_STYLE'  => 'bf',
-                'HEADER_CENTERED'     => 1,
+                'HEADER_CENTERED'    => 1,
                 'CAPTION_FONT_STYLE' => 'bf',
-                'VERTICAL_LINES'      => [ 1, 2, 1 ],
-                'HORIZONTAL_LINES'    => [ 1, 2, 1 ],
+                'VERTICAL_LINES'     => [ 1, 2, 1 ],
+                'HORIZONTAL_LINES'   => [ 1, 2, 1 ],
             },
             'Miami' => {
                 'HEADER_FONT_STYLE'  => 'bf',
-                'HEADER_CENTERED'     => 1,
+                'HEADER_CENTERED'    => 1,
                 'CAPTION_FONT_STYLE' => 'bf',
-                'VERTICAL_LINES'      => [ 0, 0, 0 ],
-                'HORIZONTAL_LINES'    => [ 0, 1, 0 ],
+                'VERTICAL_LINES'     => [ 0, 0, 0 ],
+                'HORIZONTAL_LINES'   => [ 0, 1, 0 ],
             },
         };
         return;
     }
-    
+
+    ###########################################################################
+    # Usage      : called by Class::Std
+    # Purpose    : initializing values 'cause Class::Std can also define
+    #              simple default values
+    # Parameters : none
+    # See also   : perldoc Class::Std
+
+    sub START {
+        my ( $self, $ident, $args_ref ) = @_;
+        $header{$ident}        = [] if $header{$ident} == 0;
+        $data{$ident}          = [] if $data{$ident} == 0;
+        $custom_themes{$ident} = {} if $custom_themes{$ident} == 0;
+    }
+
     ###########################################################################
     # Usage      : $self->get_available_themes();
     # Purpose    : return an hash reference with all available themes
     #              (predefined and custom)
     # Returns    : see purpose
-    # Parameters : none 
+    # Parameters : none
     # Throws     : no exceptions
     # Comments   : n/a
     # See also   : _get_theme_settings()
@@ -589,15 +641,16 @@ __END__
 
 LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
-
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.0.3
-
+This document describes LaTeX::Table version 0.1.0
 
 =head1 SYNOPSIS
 
   use LaTeX::Table;
+  
+  my $header
+  	= [ [ 'Name', 'Beers:2|c|' ], [ '', 'before 4pm', 'after 4pm' ] ];
   
   my $data = [
   	[ 'Lisa',   '0', '0' ],
@@ -609,22 +662,21 @@ This document describes LaTeX::Table version 0.0.3
   	[ 'Barney', '8', '16' ],
   ];
   
-  my $header
-  	= [ [ 'Name', 'Beers:2|c|' ], [ '', 'before 4pm', 'after 4pm' ] ];
-  
   my $table = LaTeX::Table->new(
   	{   
-  	   filename    => 'counter.tex',
-  	   caption     => 'Number of beers before and after 4pm.',
-  	   maincaption => 'Beer Counter',
-  	   label       => 'table_beercounter',
-  	   theme       => 'Houston',
-	   tablepos    => 'htb',
+        filename    => 'counter.tex',
+        caption     => 'Number of beers before and after 4pm.',
+        maincaption => 'Beer Counter',
+        label       => 'table_beercounter',
+        theme       => 'Houston',
+        tablepos    => 'htb',
+        header      => $header,
+        data        => $data,
   	}
   );
   
   # write LaTeX code in counter.tex
-  $table->generate( $header, $data );
+  $table->generate();
   
   
 =head1 DESCRIPTION
@@ -642,26 +694,22 @@ table styles. Supports multipage tables via the xtab package.
 Constructs a LaTeX::Table object. The parameter is an hash reference with
 options (see below).
 
-=item C<$table-E<gt>generate($header, $data)>
+=item C<$table-E<gt>generate()>
 
-Generates the LaTeX table code. The two parameters are references to an array
-(the rows) of array references (the columns), once for the header and once for
-the data. An empty columns array produces an horizontal line (the '\hline' LaTeX
-command). The generated LaTeX table can be included in a LaTeX document with
-the C<\input> command:
+Generates the LaTeX table code. The generated LaTeX table can be included in
+a LaTeX document with the C<\input> command:
   
   % include counter.tex, generated by LaTeX::Table 
   \input{counter}
 
-=item C<$table-E<gt>generate_string($header, $data)>
+=item C<$table-E<gt>generate_string()>
 
 Same as generate() but does not create a LaTeX file but returns the LaTeX code
 as string.
 
-  my $latexcode = $table->generate_string($header, $data);
+  my $latexcode = $table->generate_string();
 
 =item C<$table-E<gt>get_available_themes()>
-
 
 Returns an hash reference to all available (predefined and customs) themes. 
 See L<THEMES> for details.
@@ -673,11 +721,13 @@ See L<THEMES> for details.
 
 =back
 
-=head2 Options
+=head1 OPTIONS
 
 Options can be defined in the constructor hash reference or with the setter
 set_<optionname>. Additionally, getters of the form get_<optionname> are
 created.
+
+=head2 BASIC OPTIONS
 
 =over
 
@@ -686,67 +736,158 @@ created.
 The name of the LaTeX output file. Default is
 'latextable.tex'.
 
-=item C<label>
-
-The label of the table. Default is 'latextableperl'. In Latex,
-you can then create a reference to the table with \ref{label}.
-
 =item C<type>
 
-Can be either 'std' for the standard LaTeX table or 'xtab' for
-a xtabular table for multipage tables. The later requires the xtab
-latex-package (\usepackage{xtab} in your LaTeX document). Default is 'std'.
+Can be either I<std> for the standard LaTeX table or I<xtab> for
+a xtabular table for multipage tables. The later requires the C<xtab>
+latex-package (C<\usepackage{xtab}> in your LaTeX document). Default is 
+I<std>.
+
+=item C<header>
+
+The header. It is a reference to an array (the rows) of array references (the
+columns).
+
+  $table->set_header([ [ 'Name', 'Beers' ] ]);
+
+will produce following header:
+
+  +------+-------+
+  | Name | Beers |
+  +------+-------+
+  
+  $table->set_header([ [ 'Name', 'Beers' ], ['', '(roughly)' ] ]);
+
+will produce this header:
+
+  +------+-----------+
+  | Name |   Beers   |
+  |      | (roughly) |
+  +------+-----------+
+
+=item C<data>
+
+The data. Once again an reference to an array (rows) of array references
+(columns). 
+
+  $table->set_data([ [ 'March', '1' ], [ 'Homer', '4' ] ]);
+
+And you will get a table like this:
+
+ +-------+---------+
+ | March |       1 |
+ | Homer |       4 |
+ +-------+---------+
+
+An empty column array will produce a horizontal line:
+
+  $table->set_data([ [ 'March', '1' ], [], [ 'Homer', '4' ] ]);
+
+And you will get a table like this:
+
+ +-------+---------+
+ | March |       1 |
+ +-------+---------+
+ | Homer |       4 |
+ +-------+---------+
+
+=back
+
+=head2 TABLE ENVIRONMENT
+
+=over
+
+=item C<table_environment>
+
+If 1, then a table environment will be generated. Default 1. This option only
+affects tables of C<type> I<std>.
+
+    \begin{table}[htb]
+        \center
+        \begin{tabular}{|l||r|r|}
+        ...
+        \end{tabular}
+        \caption{Number of beers}
+        \label{table_beercounter}
+    \end{table} 
 
 =item C<caption>
 
-The caption of the table. Default is ''.
+The caption of the table. If empty, then no caption is generated. Default
+is I<''> (empty). Requires C<table_environment>.
+
+=item C<center>
+
+Defines whether the table is centered. Default 1 (centered). Requires 
+C<table_environment>.
+
+=item C<label>
+
+The label of the table. If empty, then no label is generated. In 
+Latex, you can create a reference to the table with C<\ref{label}>.
+Default is I<''> (empty). Requires C<table_environment>.
 
 =item C<maincaption>
 
 If set, then this caption will be displayed in the Table
-Listing (\listoftables) and before the C<caption>. Default unset.
-
-=item C<theme>
-
-The name of the theme. Default is 'Dresden'.
-
-=item C<tablepos>
-
-The position of the table, e.g. 'htb'. Default unset.
-
-=item C<center>
-
-Defines whether the table is centered. Default 1 (centered).
+Listing (C<\listoftables>) and before the C<caption>. Default is I<''>.
+Requires C<table_environment>.
 
 =item C<size>
 
 Font size. Valid values are 'tiny', 'scriptsize', 'footnotesize', 'small',
-'normal', 'large', 'Large', 'LARGE', 'huge', 'Huge' and 0. Default is 0 (does
-not define a font size).
+'normal', 'large', 'Large', 'LARGE', 'huge', 'Huge' and 0. Default is 0 
+(does not define a font size). Requires C<table_environment>.
+
+=item C<tablepos>
+
+The position of the table, e.g. C<htb>. Default unset. Requires 
+C<table_environment>.
+
+=back
+
+=head2 TABULAR ENVIRONMENT
+
+=over 
 
 =item C<tabledef>
 
-The table definition, e.g. '|l|r|c|r|'. If unset, LaTeX table tries to guess a
-good definition. Columns containing only numbers are right-justified, others
-left-justified. Default unset (guess good definition).
+The table definition, e.g. C<|l|r|c|r|>. If unset, C<LaTeX::Table> tries to 
+guess a good definition. Columns containing only numbers are right-justified,
+others left-justified. Default unset (guess good definition).
+
+=back
+
+=head2 MULTIPAGE TABLES
+
+=over
 
 =item C<tabletailmsg>
 
 Message at the end of a multipage table. 
-Default is 'Continued on next page'. 'xtab' only.
+Default is I<Continued on next page>. 
 
 =item C<tabletail>
 
 Custom table tail. 
-Default is multicolumn with the tabletailmsg (see above) right-justified. 'xtab' only.
+Default is multicolumn with the tabletailmsg (see above) right-justified. 
 
 =item C<xentrystretch>
 
 Option for xtab. Play with this option if the number of rows per page is not 
 optimal. Requires a number as parameter. Default is 0 (does not use this option).
-'xtab' only.
 
     $table->set_xentrystretch(-0.1);
+
+=back
+
+=head2 THEMES
+
+=over
+
+=item C<theme>
+
+The name of the theme. Default is I<Dresden>.
 
 =item C<predef_themes>
 
@@ -754,28 +895,63 @@ All predefined themes. Getter only.
 
 =item C<custom_themes>
 
-All custom themes. Getter and setter only.
-
+All custom themes. See L<"CUSTOM THEMES">.
 
 =back
 
 =head1 MULTICOLUMNS 
 
 Multicolumns can be defined in LaTeX with
-\multicolumn{#cols}{definition}{text}. Because multicolumns are often needed
-and this is way too much code to type, a shortcut was implemented. Now,
-text:#colsdefinition is equivalent to original LaTeX code. For example,
-Beers:2|c| is equivalent to \multicolumn{2}{|c|}{Beers}. Note that |c|
-overrides the LINES settings in the theme (See Custom Themes).
+C<\multicolumn{#cols}{definition}{text}>. Because multicolumns are often 
+needed and this is way too much code to type, a shortcut was implemented. Now,
+C<text:#colsdefinition> is equivalent to original LaTeX code. For example,
+C<Beers:2|c|> is equivalent to C<\multicolumn{2}{|c|}{Beers}>. Note that 
+C<|c|> overrides the LINES settings in the theme (See L<"CUSTOM THEMES">).
 
 =head1 THEMES
 
 The theme can be selected with $table->set_theme($themename). Currently,
-following predefined themes are available: Dresden, Miami, Houston. The
-script generate_examples.pl in the examples directory of this distributions
-generates some examples for all available themes.
+following predefined themes are available: I<Dresden>, I<Miami> and 
+I<Houston>. The script F<generate_examples.pl> in the I<examples> directory 
+of this distributions generates some examples for all available themes.
 
-=head2 Custom Themes
+=head2 DRESDEN
+
+The default theme. Nice and clean, with a header written in bold text. Header
+and first column are seperated by a double line. 
+
+  +-------++-------+
+  | Name  || Beers |
+  +-------++-------+
+  +-------++-------+
+  | March ||     1 |
+  | Homer ||     4 |
+  +-------++-------+
+ 
+=head2 HOUSTON
+
+Very similar to I<Dresden>, but columns are seperated (one inner line).
+
+  +-------++-------+
+  | Name  || Beers |
+  +-------++-------+
+  +-------++-------+
+  | March ||     1 |
+  +-------++-------+
+  | Homer ||     4 |
+  +-------++-------+
+
+=head2 MIAMI
+
+A very simple theme. Header once again written in bold text.
+
+    Name  | Beers 
+  --------+--------
+    March |     1 
+    Homer |     4 
+
+
+=head2 CUSTOM THEMES
 
 Custom themes can be defined with an array reference containing all options
 (explained later):
@@ -796,16 +972,29 @@ Custom themes can be defined with an array reference containing all options
 
 =item Fonts
 
-C<HEADER_FONT_STYLE>, C<CAPTION_FONT_STYLE>. Valid values are 'bf' (bold),
-it (italics), sc (caps) and tt (typewriter).
+C<HEADER_FONT_STYLE>, C<CAPTION_FONT_STYLE>. Valid values are I<bf> (bold),
+I<it> (italics), I<sc> (caps) and I<tt> (typewriter).
 
 =item Lines
 
 C<VERTICAL_LINES>, C<HORIZONTAL_LINES>. A reference to an array with three
-integers, e.g. [ 1, 2, 0 ]. The first integer defines the number of outer
+integers, e.g. C<[ 1, 2, 0 ]>. The first integer defines the number of outer
 lines. The second the number of lines after the header and after the first
-column. The third is the number of inner lines.
+column. The third is the number of inner lines. For example L<"DRESDEN"> is
+defined as:
 
+            'Dresden' => {
+                ...  
+                'VERTICAL_LINES'     => [ 1, 2, 1 ],
+                'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+            }
+
+The first integers define one outer line - vertical and horizontal. So a box 
+is drawn around the table. The second integers define two lines between header
+and table and two vertical lines between first and second column. And finally
+the third integers define that columns are seperated by a single vertical line
+whereas rows are not seperated by horizontal lines.
+            
 =item Misc
 
 C<HEADER_CENTERED>. Valid values are 0 (not centered) or 1 (centered).
@@ -816,11 +1005,9 @@ C<HEADER_CENTERED>. Valid values are 0 (not centered) or 1 (centered).
 
 LaTeX::Table requires no configuration files or environment variables.
 
-
 =head1 INCOMPATIBILITIES
 
 None reported.
-
 
 =head1 BUGS AND LIMITATIONS
 
@@ -843,7 +1030,6 @@ please let me know your theme settings.
 
 Markus Riester  C<< <mriester@gmx.de> >>
 
-
 =head1 LICENCE AND COPYRIGHT
 
 Copyright (c) 2006-2007, Markus Riester C<< <mriester@gmx.de> >>. 
@@ -851,7 +1037,6 @@ All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.
-
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -875,3 +1060,7 @@ RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
 SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
+
+=cut
+
+# vim: ft=perl sw=4 ts=4 expandtab

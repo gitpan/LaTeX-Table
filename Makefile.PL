@@ -11,6 +11,7 @@ WriteMakefile(
     PREREQ_PM => {
         'Test::More'     => 0,
         'Class::Std'     => 0,
+        'Scalar::Util'   => 0,
         'Regexp::Common' => 0,
         'version'        => 0,
     },
