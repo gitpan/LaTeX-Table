@@ -14,6 +14,7 @@ t/30.exceptions.t
 t/40.miscprivates.t
 t/50.synopsis.t
 t/perlcritic.t
+t/perlcriticrc
 t/pod-coverage.t
 t/pod.t
 META.yml                                 Module meta-data (added by MakeMaker)

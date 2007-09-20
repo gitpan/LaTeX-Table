@@ -1,9 +1,15 @@
+#############################################################################
+#   $Author: markus $
+#     $Date: 2007-09-20 18:06:08 +0200 (Thu, 20 Sep 2007) $
+# $Revision: 474 $
+#############################################################################
+
 package LaTeX::Table;
 
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.1.0');
+use version; our $VERSION = qv('0.1.1');
 
 use Carp;
 use Fatal qw( open close );
@@ -16,13 +22,13 @@ use Class::Std;
 {
 
     my %filename : ATTR( :name<filename> :default('latextable.tex') );
-    my %label : ATTR( :name<label> :default('') );
+    my %label : ATTR( :name<label> :default(0) );
     my %type : ATTR( :name<type> :default('std') );
-    my %maincaption : ATTR( :name<maincaption> :default('') );
+    my %maincaption : ATTR( :name<maincaption> :default(0) );
     my %header : ATTR( :name<header> :default(0));
     my %data : ATTR( :name<data> :default(0) );
     my %table_environment : ATTR( :name<table_environment> :default(1) );
-    my %caption : ATTR( :name<caption> :default('') );
+    my %caption : ATTR( :name<caption> :default(0) );
     my %tabledef : ATTR( :name<tabledef> :default(0) );
     my %theme : ATTR( :name<theme> :default('Dresden') );
     my %predef_themes : ATTR( :get<predef_themes> );
@@ -39,7 +45,7 @@ use Class::Std;
         my ( $self, @args ) = @_;
         return if !defined $args[0];
         if ( reftype $args[0] eq 'ARRAY' ) {
-            carp("DEPRECATED. Use options header and data instead");
+            carp('DEPRECATED. Use options header and data instead.');
             $self->set_header( $args[0] );
             if ( reftype $args[1] eq 'ARRAY' ) {
                 $self->set_data( $args[1] );
@@ -60,7 +66,7 @@ use Class::Std;
     sub generate_string {
         my ( $self, @args ) = @_;
         $self->_compatibility_layer(@args);
-        my $code = '';
+        my $code = q{};
         $code = $self->_header( $self->get_header, $self->get_data );
 
         my $theme  = $self->_get_theme_settings;
@@ -71,14 +77,13 @@ use Class::Std;
     ROW:
         foreach my $row ( @{ $self->get_data } ) {
             $i++;
-            my @cols = @$row;
-            if ( !@cols ) {
+            if ( !@{$row} ) {
                 $code .= "\\hline\n";
                 next ROW;
             }
             else {
-                $code .= join( '&', @cols ) . "\\\\ \n";
-                if ( $i == scalar( @{ $self->get_data } ) ) {
+                $code .= join( q{&}, @{$row} ) . "\\\\ \n";
+                if ( $i == scalar @{ $self->get_data } ) {
                     $code .= $h0;
                 }
                 else {
@@ -94,7 +99,7 @@ use Class::Std;
         my ( $self, $header, $data ) = @_;
         my $code = $self->generate_string( $header, $data );
         open my $LATEX, '>', $self->get_filename;
-        print $LATEX $code;
+        print {$LATEX} $code;
         close $LATEX;
         return 1;
     }
@@ -110,13 +115,23 @@ use Class::Std;
 
     sub _header {
         my ( $self, $header, $data ) = @_;
-        my $table_def = $self->_get_tabledef_code($data);
-        $table_def = $self->get_tabledef if $self->get_tabledef;
+
+        # if specified, use tabledef, otherwise guess a good definition
+        my $table_def;
+        if ($self->get_tabledef) {
+            $table_def = $self->get_tabledef;
+        }
+        else {
+            $table_def = $self->_get_tabledef_code($data);
+        }
+
         my $pos  = $self->_get_tablepos_code() . "\n";
         my $code = $self->_get_header_columns_code($header);
 
-        my $center = '';
-        $center = "\\center\n" if $self->get_center;
+        my $center = q{};
+        if ($self->get_center) {
+            $center = "\\center\n";
+        }
         my $size    = $self->_get_size_code();
         my $caption = $self->_get_caption_code();
         my $label   = $self->_get_label_code;
@@ -124,15 +139,15 @@ use Class::Std;
         my $tabletail     = $self->_get_tabletail_code( $data, 0 );
         my $tabletaillast = $self->_get_tabletail_code( $data, 1 );
 
-        my $xentrystretch = '';
+        my $xentrystretch = q{};
         if ( $self->get_xentrystretch ) {
             my $xs = $self->get_xentrystretch();
-            croak("xentrystretch not a number") if $xs !~ $RE{num}{real};
+            croak('xentrystretch not a number') if $xs !~ $RE{num}{real};
             $xentrystretch = "\\xentrystretch{$xs}\n";
         }
 
         if ( $self->get_type eq 'xtab' ) {
-            return <<EOXT
+            return <<"EOXT"
         {
         $size$center$caption$xentrystretch$label
           \\tablehead{$code}
@@ -142,12 +157,12 @@ use Class::Std;
 EOXT
         }
         else {
-            my $table_environment = '';
+            my $table_environment = q{};
             if ($self->get_table_environment) {
-                $table_environment = join('',"\\begin{table}$pos",$size,
-                    $center);
-            }    
-            return <<EOST
+                $table_environment = join q{},"\\begin{table}$pos",$size,
+                    $center;
+            }
+            return <<"EOST"
 $table_environment\\begin{tabular}{$table_def}
     $code
 EOST
@@ -167,19 +182,18 @@ EOST
         my $label   = $self->_get_label_code();
         my $caption = $self->_get_caption_code();
         if ( $self->get_type eq 'xtab' ) {
-            return <<EOXT
+            return <<"EOXT"
     \\end{xtabular}
     } 
 EOXT
         }
         else {
-            my $table_environment = '';
+            my $table_environment = q{};
             if ($self->get_table_environment) {
-            $table_environment = join('',$caption,$label,
-                "\\end{table}" );
+            $table_environment = join q{},$caption,$label,"\\end{table}";
 
-            }    
-            return <<EOST
+            }
+            return <<"EOST"
 \\end{tabular}
 $table_environment
 EOST
@@ -203,12 +217,12 @@ EOST
         my @max_row;
         my %is_a_number;
         my %not_a_number;
-        foreach my $row (@$data) {
-            if ( scalar(@$row) > scalar(@max_row) ) {
-                @max_row = @$row;
+        foreach my $row (@{$data}) {
+            if ( scalar @{$row} > scalar @max_row ) {
+                @max_row = @{$row};
             }
             my $i = 0;
-            foreach my $col (@$row) {
+            foreach my $col (@{$row}) {
                 if ( $col =~ $RE{num}{real} ) {
                     $is_a_number{$i}++;
                 }
@@ -240,22 +254,22 @@ EOST
 
     sub _get_header_columns_code {
         my ( $self, $header ) = @_;
-        my $code   = '';
+        my $code   = q{};
         my $theme  = $self->_get_theme_settings;
         my $hlines = $theme->{'HORIZONTAL_LINES'};
         $code .= "\\hline\n" x $hlines->[0];
 
-        foreach my $row (@$header) {
-            my @cols = @$row;
+        foreach my $row (@{$header}) {
+            my @cols = @{$row};
 
             if ( defined $theme->{'HEADER_CENTERED'}
                 && $theme->{'HEADER_CENTERED'} )
             {
                 my $vlines = $theme->{'VERTICAL_LINES'};
 
-                my $v0 = '|' x $vlines->[0];
-                my $v1 = '|' x $vlines->[1];
-                my $v2 = '|' x $vlines->[2];
+                my $v0 = q{|} x $vlines->[0];
+                my $v1 = q{|} x $vlines->[1];
+                my $v2 = q{|} x $vlines->[2];
 
                 my $i = 0;
                 foreach my $col (@cols) {
@@ -330,7 +344,7 @@ EOST
     sub _get_mc_value {
         my ( $self, $def ) = @_;
         if ( defined $def->{cols} ) {
-            return $def->{value} . ':' . $def->{cols} . $def->{align};
+            return $def->{value} . q{:} . $def->{cols} . $def->{align};
         }
         else {
             return $def->{value};
@@ -361,11 +375,10 @@ EOST
         my %know_families = ( tt => 1, bf => 1, it => 1, sc => 1 );
         if ( !defined $know_families{$family} ) {
             croak( "Family not known: $family. Valid families are: "
-                    . join( ', ', sort keys %know_families ) );
+                    . join ', ', sort keys %know_families );
         }
         my $col_def = $self->_get_mc_def($col);
-        $col_def->{value}
-            = '\\text' . $family . '{' . $col_def->{value} . '}';
+        $col_def->{value} = "\\text$family" . '{' . $col_def->{value} . '}';
         return $self->_get_mc_value($col_def);
     }
 
@@ -384,16 +397,19 @@ EOST
         my @cols   = $self->_get_data_summary($data);
         my $vlines = $self->_get_theme_settings->{'VERTICAL_LINES'};
 
-        my $v0        = '|' x $vlines->[0];
-        my $v1        = '|' x $vlines->[1];
-        my $v2        = '|' x $vlines->[2];
-        my $table_def = '';
+        my $v0        = q{|} x $vlines->[0];
+        my $v1        = q{|} x $vlines->[1];
+        my $v2        = q{|} x $vlines->[2];
+
+        my $table_def = q{};
         my $i         = 0;
         foreach my $col (@cols) {
 
             # align text right, numbers left, first col always left
             my $align = 'l';
-            $align = 'r' if $col;
+            if ($col) {
+                $align = 'r';
+            }
 
             if ( $i == 0 ) {
                 $table_def .= $v0 . 'l' . $v1;
@@ -410,17 +426,17 @@ EOST
     }
 
     ###########################################################################
-    # Usage      : $self->_get_tabletail_code(\@data, $last);
+    # Usage      : $self->_get_tabletail_code(\@data, $final_tabletail);
     # Purpose    : generates the LaTeX code of the xtab tabletail
     # Returns    : LaTeX code
     # Parameters : the data columns and a flag indicating whether it is the
-    #              code for the last tail (1).
+    #              code for the final tail (1).
     # Throws     :
     # Comments   : n/a
     # See also   :
 
     sub _get_tabletail_code {
-        my ( $self, $data, $last ) = @_;
+        my ( $self, $data, $final_tabletail ) = @_;
 
         # if custom table tail is defined, then return it
         if ( $self->get_tabletail ) {
@@ -435,9 +451,9 @@ EOST
         my $vlines  = $self->_get_theme_settings->{'VERTICAL_LINES'};
         my $linecode .= "\\hline\n" x $hlines->[0];
 
-        my $v0 = '|' x $vlines->[0];
+        my $v0 = q{|} x $vlines->[0];
 
-        if ($last) {
+        if ($final_tabletail) {
             return "\\tablelasttail{$linecode}";
         }
         return "\\tabletail{$linecode \\multicolumn{$nu_cols}{${v0}r$v0}{{"
@@ -456,12 +472,12 @@ EOST
 
     sub _get_caption_code {
         my ($self)    = @_;
-        my $f_caption = '';
-        my $s_caption = '';
+        my $f_caption = q{};
+        my $s_caption = q{};
         my $theme     = $self->_get_theme_settings;
 
-        my $tmp = '';
-        if ( $self->get_maincaption ne '' ) {
+        my $tmp = q{};
+        if ( $self->get_maincaption ) {
             $f_caption = '[' . $self->get_maincaption . ']';
             $tmp       = $self->get_maincaption . '. ';
             if ( defined $theme->{CAPTION_FONT_STYLE} ) {
@@ -470,7 +486,7 @@ EOST
             }
         }
         else {
-            return '' if $self->get_caption eq '';
+            return q{} if !$self->get_caption;
         }
 
         $s_caption = '{' . $tmp . $self->get_caption . '}';
@@ -480,7 +496,7 @@ EOST
             $c_caption = 'bottomcaption';
         }
 
-        return '\\' . $c_caption . $f_caption . $s_caption . "\n";
+        return q{\\} . $c_caption . $f_caption . $s_caption . "\n";
     }
 
     ###########################################################################
@@ -507,11 +523,11 @@ EOST
             'Huge'         => 1,
         );
         my $size = $self->get_size;
-        return '' if !$size;
+        return q{} if !$size;
 
         if ( !defined $valid{$size} ) {
             croak( "Size not known: $size. Valid sizes are: "
-                    . join( ', ', sort keys %valid ) );
+                    . join ', ', sort keys %valid );
         }
         return "\\$size\n";
     }
@@ -525,10 +541,10 @@ EOST
     sub _get_label_code {
         my ($self) = @_;
         my $label = $self->get_label;
-        if ( $label ne '' ) {
-            $label = "\\label{$label}\n";
+        if ( $label ) {
+            return "\\label{$label}\n";
         }
-        return $label;
+        return q{};
     }
 
     ###########################################################################
@@ -543,7 +559,7 @@ EOST
             return '[' . $self->get_tablepos . ']';
         }
         else {
-            return '';
+            return q{};
         }
 
     }
@@ -612,9 +628,18 @@ EOST
 
     sub START {
         my ( $self, $ident, $args_ref ) = @_;
-        $header{$ident}        = [] if $header{$ident} == 0;
-        $data{$ident}          = [] if $data{$ident} == 0;
-        $custom_themes{$ident} = {} if $custom_themes{$ident} == 0;
+        if ($header{$ident} == 0) {
+            $header{$ident} = [];
+        }
+
+        if( $data{$ident} == 0) {
+            $data{$ident} = [];
+        }
+
+        if ($custom_themes{$ident} == 0) {
+            $custom_themes{$ident} = {};
+        }
+        return;
     }
 
     ###########################################################################
@@ -629,8 +654,8 @@ EOST
 
     sub get_available_themes {
         my ($self) = @_;
-        return { %{ $self->get_predef_themes },
-            %{ $self->get_custom_themes } };
+        return { ( %{ $self->get_predef_themes },
+            %{ $self->get_custom_themes } ) };
     }
 }
 
@@ -712,7 +737,7 @@ as string.
 =item C<$table-E<gt>get_available_themes()>
 
 Returns an hash reference to all available (predefined and customs) themes. 
-See L<THEMES> for details.
+See L<"THEMES"> for details.
 
 	foreach my $theme ( keys %{ $table->get_available_themes } ) {
 		...
@@ -755,10 +780,12 @@ will produce following header:
   +------+-------+
   | Name | Beers |
   +------+-------+
-  
+
+Here an example for a multirow header:
+
   $table->set_header([ [ 'Name', 'Beers' ], ['', '(roughly)' ] ]);
 
-will produce this header:
+This code will produce this header:
 
   +------+-----------+
   | Name |   Beers   |
@@ -813,8 +840,8 @@ affects tables of C<type> I<std>.
 
 =item C<caption>
 
-The caption of the table. If empty, then no caption is generated. Default
-is I<''> (empty). Requires C<table_environment>.
+The caption of the table. Only generated if get_caption() returns a true value. 
+Default is 0. Requires C<table_environment>.
 
 =item C<center>
 
@@ -823,15 +850,15 @@ C<table_environment>.
 
 =item C<label>
 
-The label of the table. If empty, then no label is generated. In 
-Latex, you can create a reference to the table with C<\ref{label}>.
-Default is I<''> (empty). Requires C<table_environment>.
+The label of the table. Only generated if get_label() returns a true value.
+In Latex you can create a reference to the table with C<\ref{label}>.
+Default is 0. Requires C<table_environment>.
 
 =item C<maincaption>
 
-If set, then this caption will be displayed in the Table
-Listing (C<\listoftables>) and before the C<caption>. Default is I<''>.
-Requires C<table_environment>.
+If get_maincaption() returns a true value, then this value will be displayed 
+in the Table Listing (C<\listoftables>) and before the C<caption>. Default
+0. Requires C<table_environment>.
 
 =item C<size>
 
@@ -841,8 +868,8 @@ Font size. Valid values are 'tiny', 'scriptsize', 'footnotesize', 'small',
 
 =item C<tablepos>
 
-The position of the table, e.g. C<htb>. Default unset. Requires 
-C<table_environment>.
+The position of the table, e.g. C<htb>. Only generated if get_tablepos()
+returns a true value. Requires C<table_environment>.
 
 =back
 
@@ -1001,9 +1028,42 @@ C<HEADER_CENTERED>. Valid values are 0 (not centered) or 1 (centered).
 
 =back
 
+=head1 DIAGNOSTICS
+
+=over
+
+=item C<DEPRECATED. Use options header and data instead.>
+
+You have called either generate() or generate_string() with header and data as
+parameters. This is deprecated since C<LaTeX::Table> 0.1.0. 
+
+=item C<Family not known: ... . Valid families are: ...>
+
+You have set a font family to an invalid value.
+
+=item C<Size not known: ... . Valid sizes are: ...>
+
+You have set a font size to an invalid value.
+
+=item C<Unknown theme: ...>
+
+You have set the option C<theme> to an invalid value.
+
+=item C<xentrystretch not a number>
+
+You have set the option C<xentrystretch> to an invalid value. This option
+requires a number.
+
+=back
+
 =head1 CONFIGURATION AND ENVIRONMENT
 
-LaTeX::Table requires no configuration files or environment variables.
+C<LaTeX::Table> requires no configuration files or environment variables.
+
+=head1 DEPENDENCIES
+
+L<Carp>, L<Fatal>, L<Scalar::Util>, L<English>,
+L<Regexp::Common>, L<Class::Std>
 
 =head1 INCOMPATIBILITIES
 
@@ -1021,7 +1081,7 @@ L<http://rt.cpan.org>.
 
 There are many limitations. This module does not want to provide 
 thousands of useless options. However, if a particular - good looking - 
-LaTeX table is not possible to generate with LaTeX::Table, it is 
+LaTeX table is not possible to generate with C<LaTeX::Table>, it is 
 considered as a bug. Please sent appropriate example LaTeX code to me.
 If you think your table theme looks better than the default ones, then 
 please let me know your theme settings.
@@ -1030,7 +1090,7 @@ please let me know your theme settings.
 
 Markus Riester  C<< <mriester@gmx.de> >>
 
-=head1 LICENCE AND COPYRIGHT
+=head1 LICENSE AND COPYRIGHT
 
 Copyright (c) 2006-2007, Markus Riester C<< <mriester@gmx.de> >>. 
 All rights reserved.
