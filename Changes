@@ -1,5 +1,8 @@
 Revision history for LaTeX-Table
 
+0.2.1  Fri Oct 19 18:02:00 2007
+       - Bugfix: callback $is_header == 1 in data 
+
 0.2.0  Fri Oct 19 18:00:00 2007
        - use Text::Wrap for wrapping lines
        - callback

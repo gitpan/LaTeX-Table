@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-10-19 16:02:12 +0200 (Fri, 19 Oct 2007) $
-# $Revision: 572 $
+#     $Date: 2007-10-19 18:12:35 +0200 (Fri, 19 Oct 2007) $
+# $Revision: 581 $
 #############################################################################
 
 package LaTeX::Table;
@@ -9,7 +9,7 @@ package LaTeX::Table;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.2.0');
+use version; our $VERSION = qv('0.2.1');
 
 use Carp;
 use Fatal qw( open close );
@@ -125,7 +125,7 @@ use Class::Std;
             $self->_check_callback;
             for my $i ( 0 .. $#data ) {
                 for my $j ( 0 .. (scalar @{$data[$i]}-1) ) {
-                    $data[$i][$j] = &{$self->get_callback}($i, $j, $data[$i][$j],1);
+                    $data[$i][$j] = &{$self->get_callback}($i, $j, $data[$i][$j],0);
                 }
             }
         }
@@ -761,7 +761,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.2.0
+This document describes LaTeX::Table version 0.2.1
 
 =head1 SYNOPSIS
 
@@ -795,7 +795,18 @@ This document describes LaTeX::Table version 0.2.0
   
   # write LaTeX code in counter.tex
   $table->generate();
-  
+
+  # wrap the second column after 70 characters
+  $table->set_text_wrap([ undef, 70 ]);
+
+  # callback functions
+  $table->set_callback(sub { 
+       my ($row, $col, $value, $is_header ) = @_;
+       if ($col == 1) {
+           $value = uc $value;
+       }
+       return $value;
+  });     
   
 =head1 DESCRIPTION
 
@@ -1001,7 +1012,7 @@ others left-justified. Default unset (guess good definition).
 
 =item C<text_wrap>
 
-If get_text_wrap returns a true value and if the return value is a reference
+If get_text_wrap() returns a true value and if the return value is a reference
 to an array of integer values, then L<Text::Wrap> is used to wrap the line
 after the specified number of characters. More precisely, L<Text::Wrap>
 ensures that no column will have a length longer than C<$characters - 1>.
@@ -1162,15 +1173,15 @@ C<HEADER_CENTERED>. Valid values are 0 (not centered) or 1 (centered).
 
 =over
 
-=item C<DEPRECATED. Use options header and data instead.>
-
-You have called either generate() or generate_string() with header and data as
-parameters. This is deprecated since C<LaTeX::Table> 0.1.0. 
-
 =item C<callback is not a code reference>
 
 The return value of get_callback() is not a code reference. See 
 L<"TABULAR ENVIRONMENT">.
+
+=item C<DEPRECATED. Use options header and data instead.>
+
+You have called either generate() or generate_string() with header and data as
+parameters. This is deprecated since C<LaTeX::Table> 0.1.0. 
 
 =item C<Family not known: ... . Valid families are: ...>
 
@@ -1192,7 +1203,7 @@ You have set the option C<theme> to an invalid value.
 =item C<Value in text_wrap not an integer: ...>
 
 All values in the text_wrap array reference must either be undef or must match
-the regular expression m{\A \d+ \z}xms.
+the regular expression C<m{\A \d+ \z}xms>.
 
 =item C<xentrystretch not a number>
 

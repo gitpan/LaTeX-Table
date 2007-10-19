@@ -37,8 +37,8 @@ my $expected_output = <<'EOT'
 \hline
 \hline
 
+MARGE&foo&BART\\ 
 marge&homer&bart\\ 
-foo&HOMER&foo\\ 
 MARGE&foo&BART\\ 
 \hline
 \end{tabular}
