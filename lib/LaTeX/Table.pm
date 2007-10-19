@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-09-20 18:06:08 +0200 (Thu, 20 Sep 2007) $
-# $Revision: 474 $
+#     $Date: 2007-10-19 16:02:12 +0200 (Fri, 19 Oct 2007) $
+# $Revision: 572 $
 #############################################################################
 
 package LaTeX::Table;
@@ -9,14 +9,15 @@ package LaTeX::Table;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.1.1');
+use version; our $VERSION = qv('0.2.0');
 
 use Carp;
 use Fatal qw( open close );
 use Scalar::Util qw(reftype);
-
 use English qw( -no_match_vars );
+
 use Regexp::Common;
+use Text::Wrap qw(wrap);
 
 use Class::Std;
 {
@@ -33,9 +34,11 @@ use Class::Std;
     my %theme : ATTR( :name<theme> :default('Dresden') );
     my %predef_themes : ATTR( :get<predef_themes> );
     my %custom_themes : ATTR( :name<custom_themes> :default(0) );
+    my %text_wrap : ATTR( :name<text_wrap> :default(0) );
     my %tablepos : ATTR( :name<tablepos> :default(0) );
     my %center : ATTR( :name<center> :default(1) );
     my %size : ATTR( :name<size> :default(0) );
+    my %callback : ATTR( :name<callback> :default(0) );
     my %tabletailmsg :
         ATTR( :name<tabletailmsg> :default('Continued on next page') );
     my %tabletail : ATTR( :name<tabletail> :default(0) );
@@ -69,13 +72,11 @@ use Class::Std;
         my $code = q{};
         $code = $self->_header( $self->get_header, $self->get_data );
 
-        my $theme  = $self->_get_theme_settings;
-        my $hlines = $theme->{'HORIZONTAL_LINES'};
-        my $h0     = "\\hline\n" x $hlines->[0];
-        my $h2     = "\\hline\n" x $hlines->[2];
-        my $i      = 0;
+        my $theme = $self->_get_theme_settings;
+        my $i     = 0;
+        my @data  = $self->_examine_data;
     ROW:
-        foreach my $row ( @{ $self->get_data } ) {
+        for my $row (@data) {
             $i++;
             if ( !@{$row} ) {
                 $code .= "\\hline\n";
@@ -83,16 +84,94 @@ use Class::Std;
             }
             else {
                 $code .= join( q{&}, @{$row} ) . "\\\\ \n";
-                if ( $i == scalar @{ $self->get_data } ) {
-                    $code .= $h0;
+                if ( $i == scalar @data ) {
+                    $code .= "\\hline\n" x $theme->{'HORIZONTAL_LINES'}->[0];
                 }
                 else {
-                    $code .= $h2;
+                    $code .= "\\hline\n" x $theme->{'HORIZONTAL_LINES'}->[2];
                 }
             }
         }
         $code .= $self->_footer();
         return $code;
+    }
+    
+    sub _check_callback {
+        my ( $self ) = @_;
+        if (reftype $self->get_callback ne 'CODE') {
+            croak 'callback is not a code reference.';
+        }
+        return;
+    }
+
+    sub _check_text_wrap {
+        my ( $self ) = @_;
+        if (reftype $self->get_text_wrap ne 'ARRAY') {
+            croak 'text_wrap is not an array reference.';
+        }
+        for my $value (@{$self->get_text_wrap}) {
+            if (defined $value && $value !~ m{\A \d+ \z}xms) {
+                croak 'Value in text_wrap not an integer: ' . $value;
+            }
+        }
+        return;
+    }
+
+    sub _examine_data {
+        my ($self) = @_;
+        my $text_wrap = $self->get_text_wrap;
+        my @data = @{ $self->get_data };
+        if ($self->get_callback ) {
+            $self->_check_callback;
+            for my $i ( 0 .. $#data ) {
+                for my $j ( 0 .. (scalar @{$data[$i]}-1) ) {
+                    $data[$i][$j] = &{$self->get_callback}($i, $j, $data[$i][$j],1);
+                }
+            }
+        }
+        return @data if !$text_wrap;
+        $self->_check_text_wrap;
+
+        my @data_wrapped;
+        my $i = 0;
+        for my $row ( @data ) {
+            my $j = 0;
+            my @rows;
+            for my $col ( @{$row} ) {
+                if ( defined $text_wrap->[$j]
+                    && length $col > $text_wrap->[$j] )
+                {
+                    my $l = 0;
+
+                    ## no critic
+                    local($Text::Wrap::columns) = $text_wrap->[$j];
+                    ## use critic
+                    my $lines = wrap( q{}, q{}, $col );
+                    for my $wrapped_line ( split /\n/xms, $lines ) {
+                        $rows[$l][$j] = $wrapped_line;
+                        $l++;
+                    }
+                }
+                else {
+                    $rows[0][$j] = $col;
+                }
+                $j++;
+            }
+
+            for my $row_row (@rows) {
+                push @data_wrapped, [];
+                for my $row_i ( 0 .. ( scalar( @{$row} ) - 1 ) ) {
+                    if ( defined $row_row->[$row_i] ) {
+                        $data_wrapped[-1]->[$row_i] = $row_row->[$row_i];
+                    }
+                    else {
+                        $data_wrapped[-1]->[$row_i] = q{};
+                    }
+                }
+            }
+            $i += scalar @rows;
+        }
+        return @data_wrapped;
     }
 
     sub generate {
@@ -118,7 +197,7 @@ use Class::Std;
 
         # if specified, use tabledef, otherwise guess a good definition
         my $table_def;
-        if ($self->get_tabledef) {
+        if ( $self->get_tabledef ) {
             $table_def = $self->get_tabledef;
         }
         else {
@@ -129,7 +208,7 @@ use Class::Std;
         my $code = $self->_get_header_columns_code($header);
 
         my $center = q{};
-        if ($self->get_center) {
+        if ( $self->get_center ) {
             $center = "\\center\n";
         }
         my $size    = $self->_get_size_code();
@@ -148,18 +227,18 @@ use Class::Std;
 
         if ( $self->get_type eq 'xtab' ) {
             return <<"EOXT"
-        {
-        $size$center$caption$xentrystretch$label
-          \\tablehead{$code}
-          $tabletail
-          $tabletaillast
-         \\begin{xtabular}{$table_def}
+{
+$size$center$caption$xentrystretch$label
+\\tablehead{$code}
+$tabletail
+$tabletaillast
+\\begin{xtabular}{$table_def}
 EOXT
         }
         else {
             my $table_environment = q{};
-            if ($self->get_table_environment) {
-                $table_environment = join q{},"\\begin{table}$pos",$size,
+            if ( $self->get_table_environment ) {
+                $table_environment = join q{}, "\\begin{table}$pos", $size,
                     $center;
             }
             return <<"EOST"
@@ -183,14 +262,15 @@ EOST
         my $caption = $self->_get_caption_code();
         if ( $self->get_type eq 'xtab' ) {
             return <<"EOXT"
-    \\end{xtabular}
-    } 
+\\end{xtabular}
+} 
 EOXT
         }
         else {
             my $table_environment = q{};
-            if ($self->get_table_environment) {
-            $table_environment = join q{},$caption,$label,"\\end{table}";
+            if ( $self->get_table_environment ) {
+                $table_environment = join q{}, $caption, $label,
+                    "\\end{table}";
 
             }
             return <<"EOST"
@@ -217,12 +297,12 @@ EOST
         my @max_row;
         my %is_a_number;
         my %not_a_number;
-        foreach my $row (@{$data}) {
+        for my $row ( @{$data} ) {
             if ( scalar @{$row} > scalar @max_row ) {
                 @max_row = @{$row};
             }
             my $i = 0;
-            foreach my $col (@{$row}) {
+            for my $col ( @{$row} ) {
                 if ( $col =~ $RE{num}{real} ) {
                     $is_a_number{$i}++;
                 }
@@ -258,8 +338,14 @@ EOST
         my $theme  = $self->_get_theme_settings;
         my $hlines = $theme->{'HORIZONTAL_LINES'};
         $code .= "\\hline\n" x $hlines->[0];
+        
+        my $i = 0;
 
-        foreach my $row (@{$header}) {
+        if ($self->get_callback) {
+            $self->_check_callback;
+        }
+
+        foreach my $row ( @{$header} ) {
             my @cols = @{$row};
 
             if ( defined $theme->{'HEADER_CENTERED'}
@@ -271,13 +357,16 @@ EOST
                 my $v1 = q{|} x $vlines->[1];
                 my $v2 = q{|} x $vlines->[2];
 
-                my $i = 0;
+                my $j = 0;
                 foreach my $col (@cols) {
                     my $align;
-                    if ( $i == 0 ) {
+                    if ($self->get_callback) {
+                        $col = &{$self->get_callback}($i,$j,$col,1);
+                    }
+                    if ( $j == 0 ) {
                         $align = $v0 . 'c' . $v1;
                     }
-                    elsif ( $i == ( scalar(@cols) - 1 ) ) {
+                    elsif ( $j == ( scalar(@cols) - 1 ) ) {
                         $align = 'c' . $v0;
                     }
                     else {
@@ -285,7 +374,7 @@ EOST
                     }
                     $col = $self->_add_mc_def(
                         { value => $col, align => $align, cols => '1' } );
-                    $i++;
+                    $j++;
                 }
             }
 
@@ -297,6 +386,7 @@ EOST
             }
 
             $code .= $self->_get_row_code(@cols);
+            $i++;
         }
         $code .= "\\hline\n" x $hlines->[1];
         return $code;
@@ -374,8 +464,10 @@ EOST
         my ( $self, $col, $family ) = @_;
         my %know_families = ( tt => 1, bf => 1, it => 1, sc => 1 );
         if ( !defined $know_families{$family} ) {
-            croak( "Family not known: $family. Valid families are: "
-                    . join ', ', sort keys %know_families );
+            croak(
+                "Family not known: $family. Valid families are: " . join ', ',
+                sort keys %know_families
+            );
         }
         my $col_def = $self->_get_mc_def($col);
         $col_def->{value} = "\\text$family" . '{' . $col_def->{value} . '}';
@@ -397,9 +489,9 @@ EOST
         my @cols   = $self->_get_data_summary($data);
         my $vlines = $self->_get_theme_settings->{'VERTICAL_LINES'};
 
-        my $v0        = q{|} x $vlines->[0];
-        my $v1        = q{|} x $vlines->[1];
-        my $v2        = q{|} x $vlines->[2];
+        my $v0 = q{|} x $vlines->[0];
+        my $v1 = q{|} x $vlines->[1];
+        my $v2 = q{|} x $vlines->[2];
 
         my $table_def = q{};
         my $i         = 0;
@@ -456,9 +548,9 @@ EOST
         if ($final_tabletail) {
             return "\\tablelasttail{$linecode}";
         }
-        return "\\tabletail{$linecode \\multicolumn{$nu_cols}{${v0}r$v0}{{"
+        return "\\tabletail{$linecode\\multicolumn{$nu_cols}{${v0}r$v0}{{"
             . $self->get_tabletailmsg
-            . "}} \\\\ \n $linecode }";
+            . "}} \\\\ \n$linecode}";
     }
 
     ###########################################################################
@@ -526,8 +618,8 @@ EOST
         return q{} if !$size;
 
         if ( !defined $valid{$size} ) {
-            croak( "Size not known: $size. Valid sizes are: "
-                    . join ', ', sort keys %valid );
+            croak( "Size not known: $size. Valid sizes are: " . join ', ',
+                sort keys %valid );
         }
         return "\\$size\n";
     }
@@ -541,7 +633,7 @@ EOST
     sub _get_label_code {
         my ($self) = @_;
         my $label = $self->get_label;
-        if ( $label ) {
+        if ($label) {
             return "\\label{$label}\n";
         }
         return q{};
@@ -628,15 +720,15 @@ EOST
 
     sub START {
         my ( $self, $ident, $args_ref ) = @_;
-        if ($header{$ident} == 0) {
+        if ( $header{$ident} == 0 ) {
             $header{$ident} = [];
         }
 
-        if( $data{$ident} == 0) {
+        if ( $data{$ident} == 0 ) {
             $data{$ident} = [];
         }
 
-        if ($custom_themes{$ident} == 0) {
+        if ( $custom_themes{$ident} == 0 ) {
             $custom_themes{$ident} = {};
         }
         return;
@@ -654,8 +746,9 @@ EOST
 
     sub get_available_themes {
         my ($self) = @_;
-        return { ( %{ $self->get_predef_themes },
-            %{ $self->get_custom_themes } ) };
+        return {
+            ( %{ $self->get_predef_themes }, %{ $self->get_custom_themes } )
+        };
     }
 }
 
@@ -668,7 +761,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.1.0
+This document describes LaTeX::Table version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -794,7 +887,7 @@ This code will produce this header:
 
 =item C<data>
 
-The data. Once again an reference to an array (rows) of array references
+The data. Once again a reference to an array (rows) of array references
 (columns). 
 
   $table->set_data([ [ 'March', '1' ], [ 'Homer', '4' ] ]);
@@ -877,11 +970,48 @@ returns a true value. Requires C<table_environment>.
 
 =over 
 
+=item C<callback>
+
+If get_callback() returns a true value and the return value is a code reference,
+then this callback function will be called for every column. The passed
+arguments are C<$row>, C<$col> (both starting with 0), C<$value> and 
+C<$is_header>.
+
+   use LaTeX::Encode;
+   ...
+
+   my $table = LaTeX::Table->new(
+       {   header   => $header,
+           data     => $data,
+           callback => sub {
+               my ( $row, $col, $value, $is_header ) = @_;
+               if ( $col == 2 && !$is_header ) {
+                   $value = lc $value;
+               }
+               return latex_encode($value);
+           },
+       }
+   );
+
 =item C<tabledef>
 
 The table definition, e.g. C<|l|r|c|r|>. If unset, C<LaTeX::Table> tries to 
 guess a good definition. Columns containing only numbers are right-justified,
 others left-justified. Default unset (guess good definition).
+
+=item C<text_wrap>
+
+If get_text_wrap returns a true value and if the return value is a reference
+to an array of integer values, then L<Text::Wrap> is used to wrap the line
+after the specified number of characters. More precisely, L<Text::Wrap>
+ensures that no column will have a length longer than C<$characters - 1>.
+
+  # wrap first and last column after 10 characters, second column after 60
+  $table->set_text_wrap([ 10, 60, 10 ]);
+
+Be aware that C<text_wrap> wraps the content of the columns and does not try 
+to filter out LaTeX commands (thus your formatted LaTeX document may display
+less characters than desired).
 
 =back
 
@@ -1037,6 +1167,11 @@ C<HEADER_CENTERED>. Valid values are 0 (not centered) or 1 (centered).
 You have called either generate() or generate_string() with header and data as
 parameters. This is deprecated since C<LaTeX::Table> 0.1.0. 
 
+=item C<callback is not a code reference>
+
+The return value of get_callback() is not a code reference. See 
+L<"TABULAR ENVIRONMENT">.
+
 =item C<Family not known: ... . Valid families are: ...>
 
 You have set a font family to an invalid value.
@@ -1045,9 +1180,19 @@ You have set a font family to an invalid value.
 
 You have set a font size to an invalid value.
 
+=item C<text_wrap is not an array reference>
+
+The return value of get_text_wrap() is not an array reference. See
+L<"TABULAR ENVIRONMENT">.
+
 =item C<Unknown theme: ...>
 
 You have set the option C<theme> to an invalid value.
+
+=item C<Value in text_wrap not an integer: ...>
+
+All values in the text_wrap array reference must either be undef or must match
+the regular expression m{\A \d+ \z}xms.
 
 =item C<xentrystretch not a number>
 
@@ -1062,8 +1207,8 @@ C<LaTeX::Table> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-L<Carp>, L<Fatal>, L<Scalar::Util>, L<English>,
-L<Regexp::Common>, L<Class::Std>
+L<Carp>, L<Class::Std>, L<English>,
+L<Fatal>, L<Regexp::Common>, L<Scalar::Util>, L<Text::Wrap>
 
 =head1 INCOMPATIBILITIES
 
@@ -1085,6 +1230,10 @@ LaTeX table is not possible to generate with C<LaTeX::Table>, it is
 considered as a bug. Please sent appropriate example LaTeX code to me.
 If you think your table theme looks better than the default ones, then 
 please let me know your theme settings.
+
+=head1 SEE ALSO
+
+L<Data::Table>, L<LaTeX::Encode>
 
 =head1 AUTHOR
 

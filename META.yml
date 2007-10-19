@@ -1,23 +1,24 @@
 ---
 name: LaTeX-Table
-version: v0.1.1
+version: 0.2.0
 author:
   - 'Markus Riester <mriester@gmx.de>'
 abstract: Perl extension for the automatic generation of LaTeX tables.
 license: perl
+resources:
+  license: http://dev.perl.org/licenses/
 requires:
   Class::Std: 0
   Regexp::Common: 0
   Scalar::Util: 0
   Test::More: 0
+  Text::Wrap: 0
   version: 0
+provides:
+  LaTeX::Table:
+    file: lib/LaTeX/Table.pm
+    version: 0.2.0
 generated_by: Module::Build version 0.2806
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2
-provides:
-  LaTeX::Table:
-    file: lib/LaTeX/Table.pm
-    version: v0.1.1
-resources:
-  license: http://dev.perl.org/licenses/

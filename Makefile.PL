@@ -13,6 +13,7 @@ WriteMakefile(
         'Class::Std'     => 0,
         'Scalar::Util'   => 0,
         'Regexp::Common' => 0,
+        'Text::Wrap'     => 0,
         'version'        => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

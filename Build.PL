@@ -12,6 +12,7 @@ my $builder = Module::Build->new(
         'Class::Std'     => 0,
         'Scalar::Util'   => 0,
         'Regexp::Common' => 0,
+        'Text::Wrap'     => 0,
         'version'        => 0,
     },
     add_to_cleanup      => [ 'LaTeX-Table-*' ],

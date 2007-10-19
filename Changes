@@ -1,5 +1,10 @@
 Revision history for LaTeX-Table
 
+0.2.0  Fri Oct 19 18:00:00 2007
+       - use Text::Wrap for wrapping lines
+       - callback
+       - xtab tests
+
 0.1.1  Thu Sep 20 18:03:00 2007
        - minor POD corrections
        - Bugfixes:
