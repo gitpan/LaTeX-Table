@@ -1,4 +1,4 @@
-use Test::More tests => 12;
+use Test::More tests => 19;
 
 use LaTeX::Table;
 use English qw( -no_match_vars );
@@ -24,8 +24,8 @@ $table = LaTeX::Table->new(
 );
 
 eval { $table->generate_string; };
-cmp_ok(
-    $EVAL_ERROR, '=~',
+like(
+    $EVAL_ERROR, 
     qr{callback is not a code reference},
     'callback not a code reference'
 ) || diag $EVAL_ERROR;
@@ -46,8 +46,8 @@ $table = LaTeX::Table->new(
 );
 
 eval { $table->generate_string; };
-cmp_ok(
-    $EVAL_ERROR, '=~',
+like(
+    $EVAL_ERROR, 
     qr{text_wrap is not an array reference},
     'text_wrap is not an array reference'
 ) || diag $EVAL_ERROR;
@@ -56,8 +56,8 @@ cmp_ok(
 $table->set_text_wrap(['1', 'b']);
 
 eval { $table->generate_string; };
-cmp_ok(
-    $EVAL_ERROR, '=~',
+like(
+    $EVAL_ERROR, 
     qr{Value in text_wrap not an integer: b},
     'text_wrap: b not integer'
 ) || diag $EVAL_ERROR;
@@ -81,8 +81,8 @@ $table = LaTeX::Table->new(
 );
 
 eval { $table->generate_string; };
-cmp_ok(
-    $EVAL_ERROR, '=~',
+like(
+    $EVAL_ERROR, 
     qr{xentrystretch not a number},
     'xentrystretch not a number'
 ) || diag $EVAL_ERROR;
@@ -102,12 +102,84 @@ $table = LaTeX::Table->new(
 );
 
 eval { $table->generate_string; };
-cmp_ok(
-    $EVAL_ERROR, '=~',
-    qr{Unknown theme: Leipzig},
+like(
+    $EVAL_ERROR, 
+    qr{Theme not known: Leipzig},
     'unknow theme'
 ) || diag $EVAL_ERROR;
 
 $table->set_theme('Dresden');
 eval { $table->generate_string; };
 ok( !$EVAL_ERROR, 'no error with valid theme' ) || diag $EVAL_ERROR;
+
+# size tests
+
+$table = LaTeX::Table->new(
+    {   header  => $header,
+        data    => $data,
+        size    => 'HUGE',
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{Size not known: HUGE. Valid sizes are},
+    'unknow size'
+) || diag $EVAL_ERROR;
+$table->set_size('Huge');
+
+eval { $table->generate_string; };
+ok( !$EVAL_ERROR, 'no error with valid size' ) || diag $EVAL_ERROR;
+
+# header tests
+$table = LaTeX::Table->new(
+    {   header  => 'A, B',
+        data    => $data,
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{header is not an array reference},
+    'header is not an array reference'
+) || diag $EVAL_ERROR;
+$table->set_header([ 'A', 'B' ]);
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{\Qheader[0] is not an array reference.},
+    'header[0] is not an array reference'
+) || diag $EVAL_ERROR;
+
+$table->set_header([ [ 'A', ['B'] ] ]);
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{\Qheader[0][1] is not a scalar.},
+    'header[0][1] is not a scalar'
+) || diag $EVAL_ERROR;
+
+# data tests
+$table = LaTeX::Table->new(
+    {   header  => $header,
+        data    =>  { 'A' => 1, 'B' => 1 },
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{data is not an array reference},
+    'data is not an array reference'
+) || diag $EVAL_ERROR;
+
+$table->set_data([ [ 'A', 'B'], { 'A' => 1, 'B' => 1 } ]);
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{\Qdata[1] is not an array reference.},
+    'data[1] is not an array reference'
+) || diag $EVAL_ERROR;
+

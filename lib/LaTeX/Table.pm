@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-10-19 18:12:35 +0200 (Fri, 19 Oct 2007) $
-# $Revision: 581 $
+#     $Date: 2007-10-20 18:04:35 +0200 (Sat, 20 Oct 2007) $
+# $Revision: 596 $
 #############################################################################
 
 package LaTeX::Table;
@@ -9,7 +9,7 @@ package LaTeX::Table;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.2.1');
+use version; our $VERSION = qv('0.3.0');
 
 use Carp;
 use Fatal qw( open close );
@@ -68,7 +68,14 @@ use Class::Std;
 
     sub generate_string {
         my ( $self, @args ) = @_;
+
+        # support for < 0.1.0 API
         $self->_compatibility_layer(@args);
+
+        # check header and data
+        $self->_check_2d_array($self->get_header, 'header');
+        $self->_check_2d_array($self->get_data, 'data');
+
         my $code = q{};
         $code = $self->_header( $self->get_header, $self->get_data );
 
@@ -113,6 +120,29 @@ use Class::Std;
             if (defined $value && $value !~ m{\A \d+ \z}xms) {
                 croak 'Value in text_wrap not an integer: ' . $value;
             }
+        }
+        return;
+    }
+
+    sub _check_2d_array {
+        my ( $self, $arr_ref_2d, $desc ) = @_;
+        if (!defined reftype $arr_ref_2d || reftype $arr_ref_2d ne 'ARRAY') {
+            croak "$desc is not an array reference.";
+        }
+        my $i = 0;
+        for my $arr_ref (@{$arr_ref_2d}) {
+            if (!defined reftype $arr_ref || reftype $arr_ref ne 'ARRAY') {
+                croak "$desc\[$i\] is not an array reference.";
+            }
+            my $j = 0;
+            for my $scalar (@{$arr_ref}) {
+                my $rt_scalar = reftype $scalar;
+                if (defined $rt_scalar) {
+                    croak "$desc\[$i\]\[$j\] is not a scalar.";
+                }
+                $j++;
+            }
+            $i++;
         }
         return;
     }
@@ -673,7 +703,7 @@ EOST
             return $themes->{ $self->get_theme };
         }
         else {
-            croak( 'Unknown theme: ' . $self->get_theme );
+            croak( 'Theme not known: ' . $self->get_theme );
         }
     }
 
@@ -720,11 +750,11 @@ EOST
 
     sub START {
         my ( $self, $ident, $args_ref ) = @_;
-        if ( $header{$ident} == 0 ) {
+        if ( !$header{$ident} ) {
             $header{$ident} = [];
         }
 
-        if ( $data{$ident} == 0 ) {
+        if ( !$data{$ident} ) {
             $data{$ident} = [];
         }
 
@@ -761,7 +791,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.2.1
+This document describes LaTeX::Table version 0.3.0
 
 =head1 SYNOPSIS
 
@@ -901,23 +931,23 @@ This code will produce this header:
 The data. Once again a reference to an array (rows) of array references
 (columns). 
 
-  $table->set_data([ [ 'March', '1' ], [ 'Homer', '4' ] ]);
+  $table->set_data([ [ 'Marge', '1' ], [ 'Homer', '4' ] ]);
 
 And you will get a table like this:
 
  +-------+---------+
- | March |       1 |
+ | Marge |       1 |
  | Homer |       4 |
  +-------+---------+
 
 An empty column array will produce a horizontal line:
 
-  $table->set_data([ [ 'March', '1' ], [], [ 'Homer', '4' ] ]);
+  $table->set_data([ [ 'Marge', '1' ], [], [ 'Homer', '4' ] ]);
 
 And you will get a table like this:
 
  +-------+---------+
- | March |       1 |
+ | Marge |       1 |
  +-------+---------+
  | Homer |       4 |
  +-------+---------+
@@ -990,7 +1020,9 @@ C<$is_header>.
 
    use LaTeX::Encode;
    ...
-
+   
+   # use LaTeX::Encode to encode LaTeX special characters,
+   # lowercase the third column (only the data)
    my $table = LaTeX::Table->new(
        {   header   => $header,
            data     => $data,
@@ -1013,7 +1045,7 @@ others left-justified. Default unset (guess good definition).
 =item C<text_wrap>
 
 If get_text_wrap() returns a true value and if the return value is a reference
-to an array of integer values, then L<Text::Wrap> is used to wrap the line
+to an array of integer values, then L<Text::Wrap> is used to wrap the column
 after the specified number of characters. More precisely, L<Text::Wrap>
 ensures that no column will have a length longer than C<$characters - 1>.
 
@@ -1086,25 +1118,25 @@ of this distributions generates some examples for all available themes.
 =head2 DRESDEN
 
 The default theme. Nice and clean, with a header written in bold text. Header
-and first column are seperated by a double line. 
+and first column are separated by a double line. 
 
   +-------++-------+
   | Name  || Beers |
   +-------++-------+
   +-------++-------+
-  | March ||     1 |
+  | Marge ||     1 |
   | Homer ||     4 |
   +-------++-------+
  
 =head2 HOUSTON
 
-Very similar to I<Dresden>, but columns are seperated (one inner line).
+Very similar to I<Dresden>, but columns are separated (one inner line).
 
   +-------++-------+
   | Name  || Beers |
   +-------++-------+
   +-------++-------+
-  | March ||     1 |
+  | Marge ||     1 |
   +-------++-------+
   | Homer ||     4 |
   +-------++-------+
@@ -1113,10 +1145,10 @@ Very similar to I<Dresden>, but columns are seperated (one inner line).
 
 A very simple theme. Header once again written in bold text.
 
-    Name  | Beers 
-  --------+--------
-    March |     1 
-    Homer |     4 
+    Name    Beers 
+  -----------------
+    Marge       1 
+    Homer       4 
 
 
 =head2 CUSTOM THEMES
@@ -1160,8 +1192,8 @@ defined as:
 The first integers define one outer line - vertical and horizontal. So a box 
 is drawn around the table. The second integers define two lines between header
 and table and two vertical lines between first and second column. And finally
-the third integers define that columns are seperated by a single vertical line
-whereas rows are not seperated by horizontal lines.
+the third integers define that columns are separated by a single vertical line
+whereas rows are not separated by horizontal lines.
             
 =item Misc
 
@@ -1173,39 +1205,52 @@ C<HEADER_CENTERED>. Valid values are 0 (not centered) or 1 (centered).
 
 =over
 
-=item C<callback is not a code reference>
+=item callback is not a code reference 
 
 The return value of get_callback() is not a code reference. See 
 L<"TABULAR ENVIRONMENT">.
 
-=item C<DEPRECATED. Use options header and data instead.>
+=item data/header is not an array reference 
+
+get_data() (or get_header(), respectively) does not return a 
+reference to an array.
+
+=item data[$i]/header[$i] is not an array reference
+
+The ith element of get_data() (or get_header()) is not an array reference.
+
+=item data[$i][$j]/header[$i][$j] is not a scalar
+
+The jth column in the ith row is not a scalar.
+
+=item DEPRECATED. Use options header and data instead.
 
 You have called either generate() or generate_string() with header and data as
 parameters. This is deprecated since C<LaTeX::Table> 0.1.0. 
 
-=item C<Family not known: ... . Valid families are: ...>
+=item Family not known: ... . Valid families are: ...
 
 You have set a font family to an invalid value.
 
-=item C<Size not known: ... . Valid sizes are: ...>
+=item Size not known: ... . Valid sizes are: ...
 
 You have set a font size to an invalid value.
 
-=item C<text_wrap is not an array reference>
+=item text_wrap is not an array reference
 
 The return value of get_text_wrap() is not an array reference. See
 L<"TABULAR ENVIRONMENT">.
 
-=item C<Unknown theme: ...>
+=item Theme not known: ...
 
 You have set the option C<theme> to an invalid value.
 
-=item C<Value in text_wrap not an integer: ...>
+=item Value in text_wrap not an integer: ...
 
-All values in the text_wrap array reference must either be undef or must match
-the regular expression C<m{\A \d+ \z}xms>.
+All values in the text_wrap array reference must either be C<undef> or must 
+match the regular expression C<m{\A \d+ \z}xms>.
 
-=item C<xentrystretch not a number>
+=item xentrystretch not a number
 
 You have set the option C<xentrystretch> to an invalid value. This option
 requires a number.
@@ -1232,15 +1277,6 @@ No bugs have been reported.
 Please report any bugs or feature requests to
 C<bug-latex-table@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>. 
-
-=head2 SPECIAL NOTE FOR FEATURE REQUESTS
-
-There are many limitations. This module does not want to provide 
-thousands of useless options. However, if a particular - good looking - 
-LaTeX table is not possible to generate with C<LaTeX::Table>, it is 
-considered as a bug. Please sent appropriate example LaTeX code to me.
-If you think your table theme looks better than the default ones, then 
-please let me know your theme settings.
 
 =head1 SEE ALSO
 

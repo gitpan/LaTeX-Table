@@ -1,4 +1,4 @@
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use LaTeX::Table;
 use English qw( -no_match_vars ) ;
@@ -17,3 +17,6 @@ $test_data = [ [ 'a', 2, 4], [ 'b', 3 ] ];
 @summary = $table->_get_data_summary($test_data);
 is_deeply(\@summary, [0,1,1], 'not all integers');
 
+$test_data = [ [ 'a', 2, ], [ '1', 3 ] ];
+@summary = $table->_get_data_summary($test_data);
+is_deeply(\@summary, [0,1], 'not all integers');

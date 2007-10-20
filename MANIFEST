@@ -17,6 +17,8 @@ t/40.miscprivates.t
 t/50.synopsis.t
 t/60.maxchars.t
 t/70.callback.t
+t/80.themes.t
+t/90.combat.t
 t/perlcritic.t
 t/perlcriticrc
 t/pod-coverage.t

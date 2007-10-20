@@ -1,5 +1,10 @@
 Revision history for LaTeX-Table
 
+0.3.0  Sat Oct 20 18:04:00 2007
+       - generate() tests data and header
+       - themes test
+       - pod corrections
+
 0.2.1  Fri Oct 19 18:02:00 2007
        - Bugfix: callback $is_header == 1 in data 
 
