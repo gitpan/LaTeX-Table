@@ -1,5 +1,8 @@
 Revision history for LaTeX-Table
 
+0.4.0  Sat Oct 20 18:04:00 2007
+       - tabledef_strategy
+
 0.3.0  Sat Oct 20 18:04:00 2007
        - generate() tests data and header
        - themes test

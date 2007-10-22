@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-10-20 18:04:35 +0200 (Sat, 20 Oct 2007) $
-# $Revision: 596 $
+#     $Date: 2007-10-22 14:18:58 +0200 (Mon, 22 Oct 2007) $
+# $Revision: 601 $
 #############################################################################
 
 package LaTeX::Table;
@@ -9,7 +9,7 @@ package LaTeX::Table;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.3.0');
+use version; our $VERSION = qv('0.4.0');
 
 use Carp;
 use Fatal qw( open close );
@@ -31,6 +31,7 @@ use Class::Std;
     my %table_environment : ATTR( :name<table_environment> :default(1) );
     my %caption : ATTR( :name<caption> :default(0) );
     my %tabledef : ATTR( :name<tabledef> :default(0) );
+    my %tabledef_strategy : ATTR( :name<tabledef_strategy> :default(0) );
     my %theme : ATTR( :name<theme> :default('Dresden') );
     my %predef_themes : ATTR( :get<predef_themes> );
     my %custom_themes : ATTR( :name<custom_themes> :default(0) );
@@ -73,8 +74,8 @@ use Class::Std;
         $self->_compatibility_layer(@args);
 
         # check header and data
-        $self->_check_2d_array($self->get_header, 'header');
-        $self->_check_2d_array($self->get_data, 'data');
+        $self->_check_2d_array( $self->get_header, 'header' );
+        $self->_check_2d_array( $self->get_data,   'data' );
 
         my $code = q{};
         $code = $self->_header( $self->get_header, $self->get_data );
@@ -102,22 +103,22 @@ use Class::Std;
         $code .= $self->_footer();
         return $code;
     }
-    
+
     sub _check_callback {
-        my ( $self ) = @_;
-        if (reftype $self->get_callback ne 'CODE') {
+        my ($self) = @_;
+        if ( reftype $self->get_callback ne 'CODE' ) {
             croak 'callback is not a code reference.';
         }
         return;
     }
 
     sub _check_text_wrap {
-        my ( $self ) = @_;
-        if (reftype $self->get_text_wrap ne 'ARRAY') {
+        my ($self) = @_;
+        if ( reftype $self->get_text_wrap ne 'ARRAY' ) {
             croak 'text_wrap is not an array reference.';
         }
-        for my $value (@{$self->get_text_wrap}) {
-            if (defined $value && $value !~ m{\A \d+ \z}xms) {
+        for my $value ( @{ $self->get_text_wrap } ) {
+            if ( defined $value && $value !~ m{\A \d+ \z}xms ) {
                 croak 'Value in text_wrap not an integer: ' . $value;
             }
         }
@@ -126,18 +127,19 @@ use Class::Std;
 
     sub _check_2d_array {
         my ( $self, $arr_ref_2d, $desc ) = @_;
-        if (!defined reftype $arr_ref_2d || reftype $arr_ref_2d ne 'ARRAY') {
+        if ( !defined reftype $arr_ref_2d || reftype $arr_ref_2d ne 'ARRAY' )
+        {
             croak "$desc is not an array reference.";
         }
         my $i = 0;
-        for my $arr_ref (@{$arr_ref_2d}) {
-            if (!defined reftype $arr_ref || reftype $arr_ref ne 'ARRAY') {
+        for my $arr_ref ( @{$arr_ref_2d} ) {
+            if ( !defined reftype $arr_ref || reftype $arr_ref ne 'ARRAY' ) {
                 croak "$desc\[$i\] is not an array reference.";
             }
             my $j = 0;
-            for my $scalar (@{$arr_ref}) {
+            for my $scalar ( @{$arr_ref} ) {
                 my $rt_scalar = reftype $scalar;
-                if (defined $rt_scalar) {
+                if ( defined $rt_scalar ) {
                     croak "$desc\[$i\]\[$j\] is not a scalar.";
                 }
                 $j++;
@@ -148,14 +150,16 @@ use Class::Std;
     }
 
     sub _examine_data {
-        my ($self) = @_;
+        my ($self)    = @_;
         my $text_wrap = $self->get_text_wrap;
-        my @data = @{ $self->get_data };
-        if ($self->get_callback ) {
+        my @data      = @{ $self->get_data };
+        if ( $self->get_callback ) {
             $self->_check_callback;
             for my $i ( 0 .. $#data ) {
-                for my $j ( 0 .. (scalar @{$data[$i]}-1) ) {
-                    $data[$i][$j] = &{$self->get_callback}($i, $j, $data[$i][$j],0);
+                for my $j ( 0 .. ( scalar @{ $data[$i] } - 1 ) ) {
+                    $data[$i][$j]
+                        = &{ $self->get_callback }( $i, $j, $data[$i][$j],
+                        0 );
                 }
             }
         }
@@ -164,7 +168,7 @@ use Class::Std;
 
         my @data_wrapped;
         my $i = 0;
-        for my $row ( @data ) {
+        for my $row (@data) {
             my $j = 0;
             my @rows;
             for my $col ( @{$row} ) {
@@ -174,7 +178,7 @@ use Class::Std;
                     my $l = 0;
 
                     ## no critic
-                    local($Text::Wrap::columns) = $text_wrap->[$j];
+                    local ($Text::Wrap::columns) = $text_wrap->[$j];
                     ## use critic
                     my $lines = wrap( q{}, q{}, $col );
                     for my $wrapped_line ( split /\n/xms, $lines ) {
@@ -311,6 +315,35 @@ EOST
         }
     }
 
+    sub _default_tabledef_strategy {
+        my ($self) = @_;
+        my $STRATEGY = {
+            IS_A_NUMBER => $RE{num}{real},
+            IS_LONG     => 50,
+            NUMBER_COL  => 'r',
+            LONG_COL    => 'p{5cm}',
+            DEFAULT     => 'l',
+        };
+        $self->set_tabledef_strategy($STRATEGY);
+        return $STRATEGY;
+    }
+
+    sub _check_tabledef_strategy {
+        my ( $self , $strategy ) = @_;
+        my $rt_strategy = reftype $strategy;
+        if (!defined $rt_strategy || $rt_strategy ne 'HASH') {
+            croak 'tabledef_strategy not a hash reference.';
+        }
+        my $default = $self->_default_tabledef_strategy;
+        for my $key (keys %{$default}) {
+            if (!defined $strategy->{$key}) {
+                $strategy->{$key} = $default->{$key};
+            }
+        }
+        $self->set_tabledef_strategy($strategy);
+        return;
+    }
+
     ###########################################################################
     # Usage      : $self->_get_data_summary(\@data);
     # Purpose    : find out how many columns we need and if column consists of
@@ -325,8 +358,15 @@ EOST
     sub _get_data_summary {
         my ( $self, $data ) = @_;
         my @max_row;
+        my $strategy = $self->get_tabledef_strategy;
+        if ( !$strategy ) {
+            $strategy = $self->_default_tabledef_strategy;
+        } else {
+            $self->_check_tabledef_strategy($strategy);
+        }
         my %is_a_number;
         my %not_a_number;
+        my %is_long;
         for my $row ( @{$data} ) {
             if ( scalar @{$row} > scalar @max_row ) {
                 @max_row = @{$row};
@@ -335,6 +375,9 @@ EOST
             for my $col ( @{$row} ) {
                 if ( $col =~ $RE{num}{real} ) {
                     $is_a_number{$i}++;
+                }
+                elsif ( length $col >= $strategy->{IS_LONG} ) {
+                    $is_long{$i}++;
                 }
                 else {
                     $not_a_number{$i}++;
@@ -347,6 +390,9 @@ EOST
             my $number = 0;
             if ( defined $is_a_number{$i} && !defined $not_a_number{$i} ) {
                 $number = 1;
+            }
+            if ( defined $is_long{$i} && !$self->get_text_wrap ) {
+                $number = 2;
             }
             push @summary, $number;
         }
@@ -368,10 +414,10 @@ EOST
         my $theme  = $self->_get_theme_settings;
         my $hlines = $theme->{'HORIZONTAL_LINES'};
         $code .= "\\hline\n" x $hlines->[0];
-        
+
         my $i = 0;
 
-        if ($self->get_callback) {
+        if ( $self->get_callback ) {
             $self->_check_callback;
         }
 
@@ -390,8 +436,8 @@ EOST
                 my $j = 0;
                 foreach my $col (@cols) {
                     my $align;
-                    if ($self->get_callback) {
-                        $col = &{$self->get_callback}($i,$j,$col,1);
+                    if ( $self->get_callback ) {
+                        $col = &{ $self->get_callback }( $i, $j, $col, 1 );
                     }
                     if ( $j == 0 ) {
                         $align = $v0 . 'c' . $v1;
@@ -525,12 +571,17 @@ EOST
 
         my $table_def = q{};
         my $i         = 0;
+        my $strategy  = $self->get_tabledef_strategy();
+
         foreach my $col (@cols) {
 
             # align text right, numbers left, first col always left
-            my $align = 'l';
-            if ($col) {
-                $align = 'r';
+            my $align = $strategy->{DEFAULT};
+            if ( $col == 1 ) {
+                $align = $strategy->{NUMBER_COL};
+            }
+            elsif ( $col == 2 ) {
+                $align = $strategy->{LONG_COL};
             }
 
             if ( $i == 0 ) {
@@ -791,7 +842,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.3.0
+This document describes LaTeX::Table version 0.4.0
 
 =head1 SYNOPSIS
 
@@ -825,9 +876,6 @@ This document describes LaTeX::Table version 0.3.0
   
   # write LaTeX code in counter.tex
   $table->generate();
-
-  # wrap the second column after 70 characters
-  $table->set_text_wrap([ undef, 70 ]);
 
   # callback functions
   $table->set_callback(sub { 
@@ -873,7 +921,7 @@ as string.
 Returns an hash reference to all available (predefined and customs) themes. 
 See L<"THEMES"> for details.
 
-	foreach my $theme ( keys %{ $table->get_available_themes } ) {
+	for my $theme ( keys %{ $table->get_available_themes } ) {
 		...
 	}
 
@@ -1040,7 +1088,51 @@ C<$is_header>.
 
 The table definition, e.g. C<|l|r|c|r|>. If unset, C<LaTeX::Table> tries to 
 guess a good definition. Columns containing only numbers are right-justified,
-others left-justified. Default unset (guess good definition).
+others left-justified. Columns with cells longer than 50 characters are
+I<paragraph> columns of size 5 cm. These rules can be changed with
+set_tabledef_strategy(). Default is 0 (guess good definition).
+
+=item C<tabledef_strategy>
+
+Controls the behaviour of the C<tabledef> calculation when get_tabledef
+does not return a true value. Is a reference to a hash with following keys:
+
+=over
+
+=item IS_A_NUMBER =E<gt> $regex
+
+Defines a column as I<NUMBER> when B<all> cells in this column match the
+specified reular expression. Default is C<$RE{num}{real}> (L<Regexp::Common>).
+
+=item IS_LONG =E<gt> $n
+
+Defines a column as I<LONG> when B<one> cell is equal or larger than C<$n> 
+characters (default 50).
+
+=item NUMBER_COL =E<gt> $attribute
+
+The C<tabledef> attribute for I<NUMBER> column. Default 'r' (right-justified).
+
+=item LONG_COL =E<gt> $attribute
+
+The C<tabledef> attribute for I<LONG> column. Default 'p{5cm}' (paragraph
+column with text vertically aligned at the top, width 5cm). Note that this
+requires that get_text_wrap returns 0.
+
+=item DEFAULT =E<gt> $attribute
+
+The C<tabledef> attribute for columns that are neither I<NUMBER> nor I<LONG>.
+Default 'l' (left-justified).
+
+=back
+
+Example:
+
+  $table->set_tabledef_strategy({
+    IS_A_NUMBER => qr{\A \d+ \z}xms, # integers only;
+    IS_LONG     => 60, # min. 60 characters
+    LONG_COL    => 'm{7cm}', # vertically aligned at the middle, 7cm
+  });
 
 =item C<text_wrap>
 
@@ -1053,8 +1145,9 @@ ensures that no column will have a length longer than C<$characters - 1>.
   $table->set_text_wrap([ 10, 60, 10 ]);
 
 Be aware that C<text_wrap> wraps the content of the columns and does not try 
-to filter out LaTeX commands (thus your formatted LaTeX document may display
-less characters than desired).
+to filter out LaTeX commands - thus your formatted LaTeX document may display
+less characters than desired. It also turns off the automatic I<p> attribute
+in the table definition.  
 
 =back
 
@@ -1213,28 +1306,36 @@ L<"TABULAR ENVIRONMENT">.
 =item data/header is not an array reference 
 
 get_data() (or get_header(), respectively) does not return a 
-reference to an array.
+reference to an array. See L<"BASIC OPTIONS">.
 
 =item data[$i]/header[$i] is not an array reference
 
-The ith element of get_data() (or get_header()) is not an array reference.
+The ith element of get_data() (or get_header()) is not an array reference. See L<"BASIC OPTIONS">.
+
 
 =item data[$i][$j]/header[$i][$j] is not a scalar
 
-The jth column in the ith row is not a scalar.
+The jth column in the ith row is not a scalar. See L<"BASIC OPTIONS">.
+
 
 =item DEPRECATED. Use options header and data instead.
 
 You have called either generate() or generate_string() with header and data as
-parameters. This is deprecated since C<LaTeX::Table> 0.1.0. 
+parameters. This is deprecated since C<LaTeX::Table> 0.1.0.  See L<"BASIC OPTIONS">.
+
 
 =item Family not known: ... . Valid families are: ...
 
-You have set a font family to an invalid value.
+You have set a font family to an invalid value. See L<"CUSTOM THEMES">.
 
 =item Size not known: ... . Valid sizes are: ...
 
-You have set a font size to an invalid value.
+You have set a font size to an invalid value. See L<"CUSTOM THEMES">.
+
+=item tabledef_strategy not a hash reference.
+
+The return value of get_tabledef_strategy() is not a hash reference. See 
+L<"TABULAR ENVIRONMENT">.
 
 =item text_wrap is not an array reference
 
@@ -1243,17 +1344,20 @@ L<"TABULAR ENVIRONMENT">.
 
 =item Theme not known: ...
 
-You have set the option C<theme> to an invalid value.
+You have set the option C<theme> to an invalid value. See L<"THEMES">.
+
 
 =item Value in text_wrap not an integer: ...
 
 All values in the text_wrap array reference must either be C<undef> or must 
-match the regular expression C<m{\A \d+ \z}xms>.
+match the regular expression C<m{\A \d+ \z}xms>. See 
+L<"TABULAR ENVIRONMENT">.
+
 
 =item xentrystretch not a number
 
 You have set the option C<xentrystretch> to an invalid value. This option
-requires a number.
+requires a number. See L<"MULTIPAGE TABLES">.
 
 =back
 

@@ -1,4 +1,4 @@
-use Test::More tests => 19;
+use Test::More tests => 20;
 
 use LaTeX::Table;
 use English qw( -no_match_vars );
@@ -181,5 +181,14 @@ like(
     $EVAL_ERROR, 
     qr{\Qdata[1] is not an array reference.},
     'data[1] is not an array reference'
+) || diag $EVAL_ERROR;
+
+$table->set_data($data);
+$table->set_tabledef_strategy(1);
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{tabledef_strategy not a hash},
+    'tabledef_strategy not a hash'
 ) || diag $EVAL_ERROR;
 

@@ -15,7 +15,7 @@ t/20.mcdef.t
 t/30.exceptions.t
 t/40.miscprivates.t
 t/50.synopsis.t
-t/60.maxchars.t
+t/60.textwrap.t
 t/70.callback.t
 t/80.themes.t
 t/90.combat.t

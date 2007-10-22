@@ -1,4 +1,4 @@
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use LaTeX::Table;
 
@@ -81,4 +81,35 @@ is_deeply(
     [ split( "\n", $output ) ],
     [ split( "\n", $expected_output ) ],
     'text wrap works with words'
+);
+$table = LaTeX::Table->new(
+    {   header            => $header,
+        data              => $data,
+        tabledef_strategy => { 'LONG_COL' => 'p{4cm}', },
+    }
+);
+$output = $table->generate_string;
+$expected_output = <<'EOT';
+\begin{table}
+\center
+\begin{tabular}{|l||l|p{4cm}|}
+    \hline
+\multicolumn{1}{|c||}{\textbf{Character}} & \multicolumn{1}{c|}{\textbf{Fullname}} & \multicolumn{1}{c|}{\textbf{Voice}}\\ 
+\hline
+\hline
+
+Homer&Homer Jay Simpson&Dan Castellaneta\\ 
+Marge&Marjorie Simpson (née Bouvier)&Julie Kavner\\ 
+Bart&Bartholomew Jojo Simpson&Nancy Cartwright\\ 
+Lisa&Elizabeth Marie Simpson&Yeardley Smith\\ 
+Maggie&Margaret Simpson&Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
+\hline
+\end{tabular}
+\end{table}
+EOT
+;
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'text wrap works with paragraph attribute'
 );

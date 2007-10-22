@@ -103,7 +103,7 @@ $table = LaTeX::Table->new(
 
 print ${OUT} '\section{Advanced Features}\subsection{Text wrapping}' . "\n";
 print ${OUT} <<'EOT'
-Table~\ref{wrap1} demonstrates the \texttt{text\_wrap} feature. 
+Table~\ref{wrap1} demonstrates text wrapping features. 
 EOT
 ;
 #Note the ecoding problems in the Marge Fullname column. Using LaTeX::Encode
@@ -117,6 +117,14 @@ print ${OUT} $table->generate_string;
 #$table->set_caption(
 #    'Text::Wrap example with LaTeX::Encode callback function.');
 #print ${OUT} $table->generate_string;
+
+$table->set_label('wrap3');
+$table->set_caption(
+    'text wrapping example with LaTeX paragraph column attribute.');
+$table->set_text_wrap(0);
+$table->set_tabledef_strategy({ 'LONG_COL' => 'p{4cm}', 'IS_LONG' => 30});
+
+print ${OUT} $table->generate_string;
 
 print ${OUT} "\\end{document}\n";
 
