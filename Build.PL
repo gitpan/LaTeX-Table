@@ -15,6 +15,13 @@ my $builder = Module::Build->new(
         'Text::Wrap'     => 0,
         'version'        => 0,
     },
+    recommends => {
+        'Text::CSV_XS'   => 0,
+        'LaTeX::Driver'  => 0,
+        'LaTeX::Encode'  => 0,
+        'Getopt::Long'   => 0,
+    },    
+    script_files        => [ 'examples/csv2pdf' ], 
     add_to_cleanup      => [ 'LaTeX-Table-*' ],
 );
 

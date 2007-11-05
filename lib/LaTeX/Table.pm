@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-10-22 14:18:58 +0200 (Mon, 22 Oct 2007) $
-# $Revision: 601 $
+#     $Date: 2007-11-05 15:12:52 +0100 (Mon, 05 Nov 2007) $
+# $Revision: 9 $
 #############################################################################
 
 package LaTeX::Table;
@@ -9,7 +9,7 @@ package LaTeX::Table;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.4.0');
+use version; our $VERSION = qv('0.5.0');
 
 use Carp;
 use Fatal qw( open close );
@@ -141,6 +141,9 @@ use Class::Std;
                 my $rt_scalar = reftype $scalar;
                 if ( defined $rt_scalar ) {
                     croak "$desc\[$i\]\[$j\] is not a scalar.";
+                }
+                if (!defined $scalar) {
+                    croak "Undefined value in $desc\[$i\]\[$j\]";
                 }
                 $j++;
             }
@@ -611,27 +614,27 @@ EOST
     sub _get_tabletail_code {
         my ( $self, $data, $final_tabletail ) = @_;
 
-        # if custom table tail is defined, then return it
-        if ( $self->get_tabletail ) {
-            return $self->get_tabletail;
-        }
-
-        # else generate default table tail
-
-        my @cols    = $self->_get_data_summary($data);
-        my $nu_cols = scalar @cols;
+        my $code;
         my $hlines  = $self->_get_theme_settings->{'HORIZONTAL_LINES'};
         my $vlines  = $self->_get_theme_settings->{'VERTICAL_LINES'};
         my $linecode .= "\\hline\n" x $hlines->[0];
 
-        my $v0 = q{|} x $vlines->[0];
+        # if custom table tail is defined, then return it
+        if ( $self->get_tabletail ) {
+            $code = $self->get_tabletail;
+        }
+        else {
+            my @cols    = $self->_get_data_summary($data);
+            my $nu_cols = scalar @cols;
 
+            my $v0 = q{|} x $vlines->[0];
+            $code = "$linecode\\multicolumn{$nu_cols}{${v0}r$v0}{{" .
+                $self->get_tabletailmsg. "}} \\\\ \n";
+        }
         if ($final_tabletail) {
             return "\\tablelasttail{$linecode}";
         }
-        return "\\tabletail{$linecode\\multicolumn{$nu_cols}{${v0}r$v0}{{"
-            . $self->get_tabletailmsg
-            . "}} \\\\ \n$linecode}";
+        return "\\tabletail{$code$linecode}";
     }
 
     ###########################################################################
@@ -842,7 +845,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.4.0
+This document describes LaTeX::Table version 0.5.0
 
 =head1 SYNOPSIS
 
@@ -1094,7 +1097,7 @@ set_tabledef_strategy(). Default is 0 (guess good definition).
 
 =item C<tabledef_strategy>
 
-Controls the behaviour of the C<tabledef> calculation when get_tabledef
+Controls the behaviour of the C<tabledef> calculation when get_tabledef()
 does not return a true value. Is a reference to a hash with following keys:
 
 =over
@@ -1102,7 +1105,7 @@ does not return a true value. Is a reference to a hash with following keys:
 =item IS_A_NUMBER =E<gt> $regex
 
 Defines a column as I<NUMBER> when B<all> cells in this column match the
-specified reular expression. Default is C<$RE{num}{real}> (L<Regexp::Common>).
+specified regular expression. Default is C<$RE{num}{real}> (L<Regexp::Common>).
 
 =item IS_LONG =E<gt> $n
 
@@ -1111,13 +1114,13 @@ characters (default 50).
 
 =item NUMBER_COL =E<gt> $attribute
 
-The C<tabledef> attribute for I<NUMBER> column. Default 'r' (right-justified).
+The C<tabledef> attribute for I<NUMBER> columns. Default 'r' (right-justified).
 
 =item LONG_COL =E<gt> $attribute
 
-The C<tabledef> attribute for I<LONG> column. Default 'p{5cm}' (paragraph
+The C<tabledef> attribute for I<LONG> columns. Default 'p{5cm}' (paragraph
 column with text vertically aligned at the top, width 5cm). Note that this
-requires that get_text_wrap returns 0.
+requires that get_text_wrap() returns 0.
 
 =item DEFAULT =E<gt> $attribute
 
@@ -1346,6 +1349,9 @@ L<"TABULAR ENVIRONMENT">.
 
 You have set the option C<theme> to an invalid value. See L<"THEMES">.
 
+=item Undefined value in data[$i][$j]/header[$i][$j]
+
+The value in this cell is C<undef>. 
 
 =item Value in text_wrap not an integer: ...
 

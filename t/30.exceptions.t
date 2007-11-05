@@ -1,4 +1,4 @@
-use Test::More tests => 20;
+use Test::More tests => 21;
 
 use LaTeX::Table;
 use English qw( -no_match_vars );
@@ -181,6 +181,14 @@ like(
     $EVAL_ERROR, 
     qr{\Qdata[1] is not an array reference.},
     'data[1] is not an array reference'
+) || diag $EVAL_ERROR;
+
+$table->set_data([ [ 'A', 'B'], [ 'A', undef ] ]);
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{Undefined value in data\[1\]\[1\].},
+    'undef value'
 ) || diag $EVAL_ERROR;
 
 $table->set_data($data);
