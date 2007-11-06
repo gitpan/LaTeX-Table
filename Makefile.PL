@@ -16,7 +16,7 @@ WriteMakefile(
         'Text::Wrap'     => 0,
         'version'        => 0,
     },
-    EXE_FILES         => [ 'examples/csv2pdf' ], 
+    EXE_FILES         => [ 'bin/csv2pdf' ], 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'LaTeX-Table-*' },
 );

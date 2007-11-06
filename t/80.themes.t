@@ -41,7 +41,7 @@ my $table = LaTeX::Table->new(
 
 my $expected_output = <<'EOT'
 \begin{table}
-\center
+\begin{center}
 \begin{tabular}{|l||l|l|}
     \hline
 \multicolumn{1}{|c||}{\textsc{A}} & \multicolumn{1}{c|}{\textsc{B}} & \multicolumn{1}{c|}{\textsc{C}}\\ 
@@ -53,6 +53,7 @@ my $expected_output = <<'EOT'
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
+\end{center}
 \end{table}
 EOT
     ;
@@ -71,7 +72,7 @@ $output = $table->generate_string();
 
 $expected_output = <<'EOT'
 \begin{table}
-\center
+\begin{center}
 \begin{tabular}{|l||l|l|}
     \hline
 \multicolumn{1}{|c||}{A} & \multicolumn{1}{c|}{B} & \multicolumn{1}{c|}{C}\\ 
@@ -83,6 +84,7 @@ $expected_output = <<'EOT'
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
+\end{center}
 \end{table}
 EOT
     ;
@@ -100,7 +102,7 @@ $output = $table->generate_string();
 
 $expected_output = <<'EOT'
 \begin{table}
-\center
+\begin{center}
 \begin{tabular}{|l||l|l|}
     \hline
 A & B & C\\ 
@@ -112,6 +114,7 @@ A & B & C\\
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
+\end{center}
 \end{table}
 EOT
     ;

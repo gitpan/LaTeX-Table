@@ -5,9 +5,9 @@ META.yml
 Makefile.PL
 README
 TODO
+bin/csv2pdf
 examples/generate_examples.pl
 examples/examples.pdf
-examples/csv2pdf
 lib/LaTeX/Table.pm
 t/00.load.t
 t/10.table-std.t

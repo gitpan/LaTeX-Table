@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-11-05 15:12:52 +0100 (Mon, 05 Nov 2007) $
-# $Revision: 9 $
+#     $Date: 2007-11-06 11:30:05 +0100 (Tue, 06 Nov 2007) $
+# $Revision: 16 $
 #############################################################################
 
 package LaTeX::Table;
@@ -9,7 +9,7 @@ package LaTeX::Table;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.5.0');
+use version; our $VERSION = qv('0.5.1');
 
 use Carp;
 use Fatal qw( open close );
@@ -244,9 +244,9 @@ use Class::Std;
         my $pos  = $self->_get_tablepos_code() . "\n";
         my $code = $self->_get_header_columns_code($header);
 
-        my $center = q{};
+        my $begin_center = q{};
         if ( $self->get_center ) {
-            $center = "\\center\n";
+            $begin_center = "\\begin{center}\n";
         }
         my $size    = $self->_get_size_code();
         my $caption = $self->_get_caption_code();
@@ -265,18 +265,18 @@ use Class::Std;
         if ( $self->get_type eq 'xtab' ) {
             return <<"EOXT"
 {
-$size$center$caption$xentrystretch$label
+$size$caption$xentrystretch$label
 \\tablehead{$code}
 $tabletail
 $tabletaillast
-\\begin{xtabular}{$table_def}
+$begin_center\\begin{xtabular}{$table_def}
 EOXT
         }
         else {
             my $table_environment = q{};
             if ( $self->get_table_environment ) {
                 $table_environment = join q{}, "\\begin{table}$pos", $size,
-                    $center;
+                    $begin_center;
             }
             return <<"EOST"
 $table_environment\\begin{tabular}{$table_def}
@@ -297,16 +297,20 @@ EOST
         my ($self)  = @_;
         my $label   = $self->_get_label_code();
         my $caption = $self->_get_caption_code();
+        my $end_center   = q{};
+        if ( $self->get_center ) {
+            $end_center = "\\end{center}\n";
+        }
         if ( $self->get_type eq 'xtab' ) {
             return <<"EOXT"
 \\end{xtabular}
-} 
+$end_center} 
 EOXT
         }
         else {
             my $table_environment = q{};
             if ( $self->get_table_environment ) {
-                $table_environment = join q{}, $caption, $label,
+                $table_environment = join q{}, $caption, $label, $end_center,
                     "\\end{table}";
 
             }
@@ -623,7 +627,7 @@ EOST
         if ( $self->get_tabletail ) {
             $code = $self->get_tabletail;
         }
-        else {
+        elsif (!$final_tabletail) {
             my @cols    = $self->_get_data_summary($data);
             my $nu_cols = scalar @cols;
 
@@ -845,7 +849,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.5.0
+This document describes LaTeX::Table version 0.5.1
 
 =head1 SYNOPSIS
 

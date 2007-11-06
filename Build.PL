@@ -21,7 +21,7 @@ my $builder = Module::Build->new(
         'LaTeX::Encode'  => 0,
         'Getopt::Long'   => 0,
     },    
-    script_files        => [ 'examples/csv2pdf' ], 
+    script_files        => [ 'bin/csv2pdf' ], 
     add_to_cleanup      => [ 'LaTeX-Table-*' ],
 );
 

@@ -1,2 +1,3 @@
 - Table width 
 - fine tune default parameters
+- Regex::Common consumes about 80% CPU time. I need to fix this.

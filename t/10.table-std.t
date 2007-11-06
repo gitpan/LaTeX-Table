@@ -73,7 +73,7 @@ $table->set_table_environment(1);
 
 $expected_output = <<'EOT'
 \begin{table}
-\center
+\begin{center}
 \begin{tabular}{|l||r|r|}
     \hline
 \multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{|c|}{\textbf{Beers}}\\ 
@@ -91,6 +91,7 @@ Barney&8&16\\
 \end{tabular}
 \caption[Beer Counter]{\textbf{Beer Counter. }Number of beers before and after 4pm.}
 \label{beercounter}
+\end{center}
 \end{table}
 EOT
     ;
@@ -108,7 +109,7 @@ $table->set_maincaption('');
 
 $expected_output = <<'EOT'
 \begin{table}
-\center
+\begin{center}
 \begin{tabular}{|l||r|r|}
     \hline
 \multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{|c|}{\textbf{Beers}}\\ 
@@ -125,6 +126,7 @@ Barney&8&16\\
 \hline
 \end{tabular}
 \caption{Number of beers before and after 4pm.}
+\end{center}
 \end{table}
 EOT
     ;

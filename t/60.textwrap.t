@@ -17,7 +17,7 @@ my $table = LaTeX::Table->new(
 );
 my $expected_output = <<'EOT'
 \begin{table}
-\center
+\begin{center}
 \begin{tabular}{|l||r|r|}
     \hline
 \multicolumn{1}{|c||}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}}\\ 
@@ -29,6 +29,7 @@ my $expected_output = <<'EOT'
 12345&1234567890&12345\\ 
 \hline
 \end{tabular}
+\end{center}
 \end{table}
 EOT
     ;
@@ -56,7 +57,7 @@ $table = LaTeX::Table->new(
 );
 $expected_output = <<'EOT';
 \begin{table}
-\center
+\begin{center}
 \begin{tabular}{|l||l|l|}
     \hline
 \multicolumn{1}{|c||}{\textbf{Character}} & \multicolumn{1}{c|}{\textbf{Fullname}} & \multicolumn{1}{c|}{\textbf{Voice}}\\ 
@@ -74,6 +75,7 @@ Maggie&Margaret Simpson&Elizabeth Taylor, Nancy\\
 &&Shearer\\ 
 \hline
 \end{tabular}
+\end{center}
 \end{table}
 EOT
 my $output = $table->generate_string;
@@ -91,7 +93,7 @@ $table = LaTeX::Table->new(
 $output = $table->generate_string;
 $expected_output = <<'EOT';
 \begin{table}
-\center
+\begin{center}
 \begin{tabular}{|l||l|p{4cm}|}
     \hline
 \multicolumn{1}{|c||}{\textbf{Character}} & \multicolumn{1}{c|}{\textbf{Fullname}} & \multicolumn{1}{c|}{\textbf{Voice}}\\ 
@@ -105,6 +107,7 @@ Lisa&Elizabeth Marie Simpson&Yeardley Smith\\
 Maggie&Margaret Simpson&Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
 \hline
 \end{tabular}
+\end{center}
 \end{table}
 EOT
 ;

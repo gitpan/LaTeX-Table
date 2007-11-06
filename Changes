@@ -1,5 +1,14 @@
 Revision history for LaTeX-Table
 
+0.5.1  Mon Nov 06 12:00:00 2007
+       - xtab: last page not centered when center=1
+       - csv2pdf:
+           - typos in POD
+           - --man not working
+           - moved to directory bin
+           - removed "continued on next page" tabletail
+           - xentrystretch 0.001 (more rows per page)
+
 0.5.0  Mon Nov 05 15:00:00 2007
        - die when value in cell is undef (fixes many warnings and funny
          results)

@@ -14,7 +14,7 @@ like($WARNMSG, qr{DEPRECATED. Use options header and data instead},
 
 my $expected_output = <<'EOT'
 \begin{table}
-\center
+\begin{center}
 \begin{tabular}{|l||l|l|}
     \hline
 \multicolumn{1}{|c||}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}} & \multicolumn{1}{c|}{\textbf{C}}\\ 
@@ -25,6 +25,7 @@ my $expected_output = <<'EOT'
 2&y&z\\ 
 \hline
 \end{tabular}
+\end{center}
 \end{table}
 EOT
     ;

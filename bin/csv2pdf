@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-11-05 14:41:52 +0100 (Mon, 05 Nov 2007) $
-# $Revision: 8 $
+#     $Date: 2007-11-06 11:30:05 +0100 (Tue, 06 Nov 2007) $
+# $Revision: 16 $
 #############################################################################
 
 use strict;
@@ -46,11 +46,11 @@ if ($version) {
     exit;
 }
 
+if ($man) {
+    pod2usage( -exitstatus => 0, -verbose => 2 );
+}
 if ( $help || !defined $infile ) {
     pod2usage(1);
-}
-elsif ($man) {
-    pod2usage( -exitstatus => 0, -verbose => 2 );
 }
 if ( !defined $outfile ) {
     $outfile = q{./} . fileparse( $infile, qw(csv txt dat) ) . 'pdf';
@@ -84,14 +84,12 @@ while ( my $line = <$IN> ) {
 
 close $IN;
 
-#use Data::Dumper;
-#print Dumper \@header;
-#print Dumper \@data;
-
 my $table = LaTeX::Table->new(
     {   header   => \@header,
         data     => \@data,
         type     => 'xtab',
+        xentrystretch => 0.001,
+        tabletail => q{ },
         callback => sub {
             my ( $row, $col, $value, $is_header ) = @_;
             if ($latex_encode) {
@@ -116,8 +114,6 @@ my $code = '\documentclass' . $ls
     . $table->generate_string
     . '\end{document}';
 ## use critic
-
-#print $code;
 
 my $drv = LaTeX::Driver->new(
     source => \$code,
@@ -152,15 +148,19 @@ Use L<LaTeX::Encode>.
 
 Output the PDF in landscape orientation.
 
+=item C<--man>
+
+Display manpage.
+
 =item C<--version>
 
-Prints version number of this software.
+Print version number of this software.
 
 =back
 
 =head1 DESCRIPTION
 
-Converts a CVS file to PDF. Requires LaTeX.
+Converts a CSV file to PDF. Requires LaTeX. Uses first line as table header.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -180,11 +180,6 @@ No bugs have been reported.
 Please report any bugs or feature requests to
 C<bug-latex-table@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>. 
-
-
-=head1 SEE ALSO
-
-L<LaTeX::Driver>, L<LaTeX::Encode>, L<Text::CSV_XS>
 
 =head1 AUTHOR
 

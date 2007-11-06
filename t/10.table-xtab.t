@@ -23,7 +23,6 @@ my $table = LaTeX::Table->new({ filename => 'out.tex',
 
 my $expected_output =<<'EOT'
 {
-\center
 \bottomcaption[Beer Counter]{\textbf{Beer Counter. }Number of beers before and after 4pm.}
 \label{beercounter}
 
@@ -39,6 +38,7 @@ my $expected_output =<<'EOT'
 }
 \tablelasttail{\hline
 }
+\begin{center}
 \begin{xtabular}{|l||r|r|}
 Lisa&0&0\\ 
 Marge&0&1\\ 
@@ -48,19 +48,18 @@ Homer&2&6\\
 Barney&8&16\\ 
 \hline
 \end{xtabular}
+\end{center}
 } 
 EOT
 ;
 
 my $output = $table->generate_string();
-
 is_deeply([ split("\n",$output) ], [split("\n",$expected_output)], 'without table environment');
 
 $table->set_tabletail(q{ });
 
 $expected_output =<<'EOT'
 {
-\center
 \bottomcaption[Beer Counter]{\textbf{Beer Counter. }Number of beers before and after 4pm.}
 \label{beercounter}
 
@@ -74,6 +73,7 @@ $expected_output =<<'EOT'
 }
 \tablelasttail{\hline
 }
+\begin{center}
 \begin{xtabular}{|l||r|r|}
 Lisa&0&0\\ 
 Marge&0&1\\ 
@@ -83,6 +83,7 @@ Homer&2&6\\
 Barney&8&16\\ 
 \hline
 \end{xtabular}
+\end{center}
 } 
 EOT
 ;
