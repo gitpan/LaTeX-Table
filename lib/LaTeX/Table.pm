@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-11-06 11:30:05 +0100 (Tue, 06 Nov 2007) $
-# $Revision: 16 $
+#     $Date: 2007-11-06 16:51:55 +0100 (Tue, 06 Nov 2007) $
+# $Revision: 25 $
 #############################################################################
 
 package LaTeX::Table;
@@ -9,14 +9,13 @@ package LaTeX::Table;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.5.1');
+use version; our $VERSION = qv('0.5.2');
 
 use Carp;
 use Fatal qw( open close );
 use Scalar::Util qw(reftype);
 use English qw( -no_match_vars );
 
-use Regexp::Common;
 use Text::Wrap qw(wrap);
 
 use Class::Std;
@@ -258,7 +257,8 @@ use Class::Std;
         my $xentrystretch = q{};
         if ( $self->get_xentrystretch ) {
             my $xs = $self->get_xentrystretch();
-            croak('xentrystretch not a number') if $xs !~ $RE{num}{real};
+            croak('xentrystretch not a number') if $xs !~
+                /\A-?(?:\d+(?:\.\d*)?|\.\d+)\z/xms;
             $xentrystretch = "\\xentrystretch{$xs}\n";
         }
 
@@ -325,7 +325,9 @@ EOST
     sub _default_tabledef_strategy {
         my ($self) = @_;
         my $STRATEGY = {
-            IS_A_NUMBER => $RE{num}{real},
+            #IS_A_NUMBER => $RE{num}{real},
+            IS_A_NUMBER =>
+                qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xmso,
             IS_LONG     => 50,
             NUMBER_COL  => 'r',
             LONG_COL    => 'p{5cm}',
@@ -380,7 +382,7 @@ EOST
             }
             my $i = 0;
             for my $col ( @{$row} ) {
-                if ( $col =~ $RE{num}{real} ) {
+                if ( $col =~ $strategy->{IS_A_NUMBER} ) {
                     $is_a_number{$i}++;
                 }
                 elsif ( length $col >= $strategy->{IS_LONG} ) {
@@ -781,6 +783,13 @@ EOST
                 'VERTICAL_LINES'     => [ 1, 2, 1 ],
                 'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
             },
+            'Berlin' => {
+                'HEADER_FONT_STYLE'  => 'bf',
+                'HEADER_CENTERED'    => 1,
+                'CAPTION_FONT_STYLE' => 'bf',
+                'VERTICAL_LINES'     => [ 1, 1, 1 ],
+                'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+            },
             'Houston' => {
                 'HEADER_FONT_STYLE'  => 'bf',
                 'HEADER_CENTERED'    => 1,
@@ -849,7 +858,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.5.1
+This document describes LaTeX::Table version 0.5.2
 
 =head1 SYNOPSIS
 
@@ -1109,7 +1118,8 @@ does not return a true value. Is a reference to a hash with following keys:
 =item IS_A_NUMBER =E<gt> $regex
 
 Defines a column as I<NUMBER> when B<all> cells in this column match the
-specified regular expression. Default is C<$RE{num}{real}> (L<Regexp::Common>).
+specified regular expression. Default is
+C<qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xmso>.
 
 =item IS_LONG =E<gt> $n
 
@@ -1211,44 +1221,56 @@ C<|c|> overrides the LINES settings in the theme (See L<"CUSTOM THEMES">).
 =head1 THEMES
 
 The theme can be selected with $table->set_theme($themename). Currently,
-following predefined themes are available: I<Dresden>, I<Miami> and 
+following predefined themes are available: I<Dresden>, I<Berlin> I<Miami> and
 I<Houston>. The script F<generate_examples.pl> in the I<examples> directory 
 of this distributions generates some examples for all available themes.
 
 =head2 DRESDEN
 
-The default theme. Nice and clean, with a header written in bold text. Header
-and first column are separated by a double line. 
+The default theme. Nice and clean, with a centered header written in bold text. Header
+and first column are separated by a double line.
 
-  +-------++-------+
-  | Name  || Beers |
-  +-------++-------+
-  +-------++-------+
-  | Marge ||     1 |
-  | Homer ||     4 |
-  +-------++-------+
+  +-------++------+------+
+  | Name  || Beer | Wine |
+  +-------++------+------+
+  +-------++------+------+
+  | Marge ||    1 |    0 |
+  | Homer ||    4 |    0 |
+  +-------++------+------+
+
+=head2 BERLIN
+
+First column separated by only one line.
+
+  +-------+------+------+
+  | Name  | Beer | Wine |
+  +-------+------+------+
+  +-------+------+------+
+  | Marge |    1 |    0 |
+  | Homer |    4 |    0 |
+  +-------+------+------+
  
 =head2 HOUSTON
 
 Very similar to I<Dresden>, but columns are separated (one inner line).
 
-  +-------++-------+
-  | Name  || Beers |
-  +-------++-------+
-  +-------++-------+
-  | Marge ||     1 |
-  +-------++-------+
-  | Homer ||     4 |
-  +-------++-------+
+  +-------++------+------+
+  | Name  || Beer | Wine |
+  +-------++------+------+
+  +-------++------+------+
+  | Marge ||    1 |    0 |
+  +-------++------+------+
+  | Homer ||    4 |    0 |
+  +-------++------+------+
 
 =head2 MIAMI
 
 A very simple theme. Header once again written in bold text.
 
-    Name    Beers 
-  -----------------
-    Marge       1 
-    Homer       4 
+    Name    Beer   Wine
+  -----------------------
+    Marge      1      0
+    Homer      4      0
 
 
 =head2 CUSTOM THEMES
@@ -1355,7 +1377,7 @@ You have set the option C<theme> to an invalid value. See L<"THEMES">.
 
 =item Undefined value in data[$i][$j]/header[$i][$j]
 
-The value in this cell is C<undef>. 
+The value in this cell is C<undef>. See L<"BASIC OPTIONS">.
 
 =item Value in text_wrap not an integer: ...
 
@@ -1378,7 +1400,7 @@ C<LaTeX::Table> requires no configuration files or environment variables.
 =head1 DEPENDENCIES
 
 L<Carp>, L<Class::Std>, L<English>,
-L<Fatal>, L<Regexp::Common>, L<Scalar::Util>, L<Text::Wrap>
+L<Fatal>, L<Scalar::Util>, L<Text::Wrap>
 
 =head1 INCOMPATIBILITIES
 

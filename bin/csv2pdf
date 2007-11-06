@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-11-06 11:30:05 +0100 (Tue, 06 Nov 2007) $
-# $Revision: 16 $
+#     $Date: 2007-11-06 17:04:28 +0100 (Tue, 06 Nov 2007) $
+# $Revision: 26 $
 #############################################################################
 
 use strict;
@@ -29,6 +29,7 @@ my ( $infile, $outfile, $help, $man, $version );
 my $sep_char     = q{,};
 my $latex_encode = 0;
 my $landscape    = 0;
+my $theme  = 'Berlin';
 
 my $options_ok = GetOptions(
     'in=s'         => \$infile,
@@ -36,6 +37,7 @@ my $options_ok = GetOptions(
     'sep_char=s'   => \$sep_char,
     'latex_encode' => \$latex_encode,
     'landscape'    => \$landscape,
+    'theme=s'      => \$theme,
     'help|?'       => \$help,
     'version|v'    => \$version,
     'man'          => \$man,
@@ -88,8 +90,9 @@ my $table = LaTeX::Table->new(
     {   header   => \@header,
         data     => \@data,
         type     => 'xtab',
-        xentrystretch => 0.001,
+        xentrystretch => -0.05,
         tabletail => q{ },
+        theme     => $theme,
         callback => sub {
             my ( $row, $col, $value, $is_header ) = @_;
             if ($latex_encode) {
@@ -114,7 +117,7 @@ my $code = '\documentclass' . $ls
     . $table->generate_string
     . '\end{document}';
 ## use critic
-
+#print $code;
 my $drv = LaTeX::Driver->new(
     source => \$code,
     output => $outfile,
@@ -136,7 +139,7 @@ csv2pdf [OPTIONS] --in in.csv [--out out.pdf]
 
 =over
 
-=item C<--sep_char c>
+=item C<--sep_char>
 
 The separator character. Default comma ','.
 
@@ -147,6 +150,10 @@ Use L<LaTeX::Encode>.
 =item C<--landscape>
 
 Output the PDF in landscape orientation.
+
+=item C<--theme>
+
+The table theme. See L<LaTeX::Table>. Default I<Berlin>.
 
 =item C<--man>
 

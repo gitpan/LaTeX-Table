@@ -8,7 +8,7 @@ my $test_header = [ [ 'A', 'B', 'C' ], ];
 my $test_data = [ [ '1', 'w', 'x' ], [ '2', 'y', 'z' ], ];
 
 my $table = LaTeX::Table->new();
-$table->generate($test_header, $test_data);
+$table->generate_string($test_header, $test_data);
 like($WARNMSG, qr{DEPRECATED. Use options header and data instead},
     'DEPRECATED warning');
 

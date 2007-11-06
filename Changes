@@ -1,5 +1,14 @@
 Revision history for LaTeX-Table
 
+0.5.2  Mon Nov 06 18:00:00 2007
+       - tests produced latextable.tex in /
+       - replaced Regexp::Common with perlfaq4 regexes. MUCH faster now.
+       - new theme Berlin
+       - custom IS_A_NUMBER regex ignored
+       - cvs2pdf: 
+           - support for themes
+           - Berlin default (first column contains data in CSV)
+
 0.5.1  Mon Nov 06 12:00:00 2007
        - xtab: last page not centered when center=1
        - csv2pdf:
