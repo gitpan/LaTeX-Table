@@ -19,6 +19,7 @@ my $table = LaTeX::Table->new({ filename => 'out.tex',
                                 header    => $test_header,
                                 data      => $test_data,
                                 type      => 'xtab',
+                                theme             => 'Dresden',
                              });
 
 my $expected_output =<<'EOT'

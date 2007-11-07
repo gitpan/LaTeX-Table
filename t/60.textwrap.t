@@ -13,6 +13,7 @@ my $table = LaTeX::Table->new(
     {   header    => $header,
         data      => $data,
         text_wrap => [ 5, 12, 5 ],
+        theme     => 'Dresden',
     }
 );
 my $expected_output = <<'EOT'
@@ -53,6 +54,7 @@ $table = LaTeX::Table->new(
     {   header    => $header,
         data      => $data,
         text_wrap => [ 15, 30, 30 ],
+        theme     => 'Dresden',
     }
 );
 $expected_output = <<'EOT';
@@ -88,6 +90,7 @@ $table = LaTeX::Table->new(
     {   header            => $header,
         data              => $data,
         tabledef_strategy => { 'LONG_COL' => 'p{4cm}', },
+        theme     => 'Dresden',
     }
 );
 $output = $table->generate_string;

@@ -11,7 +11,6 @@ my $builder = Module::Build->new(
         'Test::More'     => 0,
         'Class::Std'     => 0,
         'Scalar::Util'   => 0,
-        'Regexp::Common' => 0,
         'Text::Wrap'     => 0,
         'version'        => 0,
     },

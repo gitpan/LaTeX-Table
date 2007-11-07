@@ -12,6 +12,7 @@ my $data = [
 my $table = LaTeX::Table->new(
     {   header   => $header,
         data     => $data,
+        theme    => 'Dresden',
         callback => sub {
             my ( $row, $col, $value, $is_header ) = @_;
             if ( $row == 1 && !$is_header ) {

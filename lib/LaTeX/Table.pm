@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-11-06 16:51:55 +0100 (Tue, 06 Nov 2007) $
-# $Revision: 25 $
+#     $Date: 2007-11-07 14:51:34 +0100 (Wed, 07 Nov 2007) $
+# $Revision: 31 $
 #############################################################################
 
 package LaTeX::Table;
@@ -9,7 +9,7 @@ package LaTeX::Table;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.5.2');
+use version; our $VERSION = qv('0.6.0');
 
 use Carp;
 use Fatal qw( open close );
@@ -31,10 +31,11 @@ use Class::Std;
     my %caption : ATTR( :name<caption> :default(0) );
     my %tabledef : ATTR( :name<tabledef> :default(0) );
     my %tabledef_strategy : ATTR( :name<tabledef_strategy> :default(0) );
-    my %theme : ATTR( :name<theme> :default('Dresden') );
+    my %theme : ATTR( :name<theme> :default('Zurich') );
     my %predef_themes : ATTR( :get<predef_themes> );
     my %custom_themes : ATTR( :name<custom_themes> :default(0) );
     my %text_wrap : ATTR( :name<text_wrap> :default(0) );
+    my %width : ATTR( :name<width> :default(0) );
     my %tablepos : ATTR( :name<tablepos> :default(0) );
     my %center : ATTR( :name<center> :default(1) );
     my %size : ATTR( :name<size> :default(0) );
@@ -92,10 +93,10 @@ use Class::Std;
             else {
                 $code .= join( q{&}, @{$row} ) . "\\\\ \n";
                 if ( $i == scalar @data ) {
-                    $code .= "\\hline\n" x $theme->{'HORIZONTAL_LINES'}->[0];
+                    $code .= $self->_get_hline_code(3);
                 }
                 else {
-                    $code .= "\\hline\n" x $theme->{'HORIZONTAL_LINES'}->[2];
+                    $code .= $self->_get_hline_code(2);
                 }
             }
         }
@@ -247,6 +248,15 @@ use Class::Std;
         if ( $self->get_center ) {
             $begin_center = "\\begin{center}\n";
         }
+        my $width = q{};
+        my $asterisk = q{};
+        if ( $self->get_width ) {
+            $width = '{' . $self->get_width . '}';
+            ## no critic
+            $table_def = '@{\extracolsep{\fill}} ' . $table_def;
+            ## use critic
+            $asterisk = q{*};
+        }
         my $size    = $self->_get_size_code();
         my $caption = $self->_get_caption_code();
         my $label   = $self->_get_label_code;
@@ -269,7 +279,7 @@ $size$caption$xentrystretch$label
 \\tablehead{$code}
 $tabletail
 $tabletaillast
-$begin_center\\begin{xtabular}{$table_def}
+$begin_center\\begin{xtabular$asterisk}${width}{$table_def}
 EOXT
         }
         else {
@@ -279,7 +289,7 @@ EOXT
                     $begin_center;
             }
             return <<"EOST"
-$table_environment\\begin{tabular}{$table_def}
+$table_environment\\begin{tabular$asterisk}${width}{$table_def}
     $code
 EOST
                 ;
@@ -301,9 +311,13 @@ EOST
         if ( $self->get_center ) {
             $end_center = "\\end{center}\n";
         }
+        my $asterisk = q{};
+        if ( $self->get_width ) {
+            $asterisk = q{*};
+        }
         if ( $self->get_type eq 'xtab' ) {
             return <<"EOXT"
-\\end{xtabular}
+\\end{xtabular$asterisk}
 $end_center} 
 EOXT
         }
@@ -315,7 +329,7 @@ EOXT
 
             }
             return <<"EOST"
-\\end{tabular}
+\\end{tabular$asterisk}
 $table_environment
 EOST
                 ;
@@ -327,7 +341,7 @@ EOST
         my $STRATEGY = {
             #IS_A_NUMBER => $RE{num}{real},
             IS_A_NUMBER =>
-                qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xmso,
+                qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xms,
             IS_LONG     => 50,
             NUMBER_COL  => 'r',
             LONG_COL    => 'p{5cm}',
@@ -408,6 +422,21 @@ EOST
         return @summary;
     }
 
+    sub _get_hline_code {
+        my ( $self,  $id ) = @_;
+        my $theme  = $self->_get_theme_settings;
+        my $hlines = $theme->{'HORIZONTAL_LINES'};
+        my $line = 'hline';
+        if (defined $theme->{'BOOKTABS'} && $theme->{'BOOKTABS'}) {
+            my @line_type = qw(toprule midrule midrule bottomrule);
+            $line = $line_type[$id];
+        }
+        if ($id == 3) {
+            $id = 0;
+        }
+        return "\\$line\n" x $hlines->[$id];
+    }
+
     ###########################################################################
     # Usage      : $self->_get_header_columns_code(\@header);
     # Purpose    : generate the header LaTeX code
@@ -421,8 +450,7 @@ EOST
         my ( $self, $header ) = @_;
         my $code   = q{};
         my $theme  = $self->_get_theme_settings;
-        my $hlines = $theme->{'HORIZONTAL_LINES'};
-        $code .= "\\hline\n" x $hlines->[0];
+        $code .= $self->_get_hline_code(0);
 
         my $i = 0;
 
@@ -473,7 +501,7 @@ EOST
             $code .= $self->_get_row_code(@cols);
             $i++;
         }
-        $code .= "\\hline\n" x $hlines->[1];
+        $code .= $self->_get_hline_code(1);
         return $code;
     }
 
@@ -782,6 +810,7 @@ EOST
                 'CAPTION_FONT_STYLE' => 'bf',
                 'VERTICAL_LINES'     => [ 1, 2, 1 ],
                 'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+                'BOOKTABS'           => 0,
             },
             'Berlin' => {
                 'HEADER_FONT_STYLE'  => 'bf',
@@ -789,6 +818,15 @@ EOST
                 'CAPTION_FONT_STYLE' => 'bf',
                 'VERTICAL_LINES'     => [ 1, 1, 1 ],
                 'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+                'BOOKTABS'           => 0,
+            },
+            'Zurich' => {
+                'HEADER_FONT_STYLE'  => 'bf',
+                'HEADER_CENTERED'    => 1,
+                'CAPTION_FONT_STYLE' => 'bf',
+                'VERTICAL_LINES'     => [ 0, 0, 0 ],
+                'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
+                'BOOKTABS'           => 1,
             },
             'Houston' => {
                 'HEADER_FONT_STYLE'  => 'bf',
@@ -796,6 +834,7 @@ EOST
                 'CAPTION_FONT_STYLE' => 'bf',
                 'VERTICAL_LINES'     => [ 1, 2, 1 ],
                 'HORIZONTAL_LINES'   => [ 1, 2, 1 ],
+                'BOOKTABS'           => 0,
             },
             'Miami' => {
                 'HEADER_FONT_STYLE'  => 'bf',
@@ -803,6 +842,7 @@ EOST
                 'CAPTION_FONT_STYLE' => 'bf',
                 'VERTICAL_LINES'     => [ 0, 0, 0 ],
                 'HORIZONTAL_LINES'   => [ 0, 1, 0 ],
+                'BOOKTABS'           => 0,
             },
         };
         return;
@@ -858,7 +898,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.5.2
+This document describes LaTeX::Table version 0.6.0
 
 =head1 SYNOPSIS
 
@@ -901,6 +941,19 @@ This document describes LaTeX::Table version 0.5.2
        }
        return $value;
   });     
+
+Now in your LaTeX document:
+
+    \documentclass{article}
+
+    % for multipage tables
+    \usepackage{xtab}
+    % for publication quality tables
+    \usepackage{booktabs}
+
+    \begin{document}
+    \input{counter}
+    \end{document}
   
 =head1 DESCRIPTION
 
@@ -1119,7 +1172,7 @@ does not return a true value. Is a reference to a hash with following keys:
 
 Defines a column as I<NUMBER> when B<all> cells in this column match the
 specified regular expression. Default is
-C<qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xmso>.
+C<qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xms>.
 
 =item IS_LONG =E<gt> $n
 
@@ -1166,6 +1219,15 @@ to filter out LaTeX commands - thus your formatted LaTeX document may display
 less characters than desired. It also turns off the automatic I<p> attribute
 in the table definition.  
 
+=item C<width>
+
+If get_width() returns a true value, then
+C<{tabular*}{width}{@{\extracolsep{\fill}} ... }> (or
+C<{xtabular*}{width}{ ... }>, respectively) is used.
+
+  # use 75% of textwidth 
+  $table->set_width('0.75\textwidth');
+
 =back
 
 =head2 MULTIPAGE TABLES
@@ -1197,7 +1259,7 @@ optimal. Requires a number as parameter. Default is 0 (does not use this option)
 
 =item C<theme>
 
-The name of the theme. Default is I<Dresden>.
+The name of the theme. Default is I<Zurich>.
 
 =item C<predef_themes>
 
@@ -1221,13 +1283,26 @@ C<|c|> overrides the LINES settings in the theme (See L<"CUSTOM THEMES">).
 =head1 THEMES
 
 The theme can be selected with $table->set_theme($themename). Currently,
-following predefined themes are available: I<Dresden>, I<Berlin> I<Miami> and
+following predefined themes are available: I<Zurich>, I<Dresden>, I<Berlin>, I<Miami> and
 I<Houston>. The script F<generate_examples.pl> in the I<examples> directory 
 of this distributions generates some examples for all available themes.
 
+=head2 ZURICH
+
+The default theme. Requires C<\usepackage{booktabs}> in your LaTeX document.
+The top and bottom lines are slightly heavier (ie thicker, or darker) than the
+other lines. No vertical lines.
+
+  ------------------------
+    Name     Beer   Wine  
+  ------------------------
+    Marge       1      0  
+    Homer       4      0  
+  ------------------------
+
 =head2 DRESDEN
 
-The default theme. Nice and clean, with a centered header written in bold text. Header
+Nice and clean, with a centered header written in bold text. Header
 and first column are separated by a double line.
 
   +-------++------+------+
@@ -1281,10 +1356,11 @@ Custom themes can be defined with an array reference containing all options
     my $themes = { 
                 'Leipzig' => {
                     'HEADER_FONT_STYLE'  => 'sc',
-                    'HEADER_CENTERED'     => 1,
+                    'HEADER_CENTERED'    => 1,
                     'CAPTION_FONT_STYLE' => 'sc',
-                    'VERTICAL_LINES'      => [ 1, 2, 1 ],
-                    'HORIZONTAL_LINES'    => [ 1, 2, 0 ],
+                    'VERTICAL_LINES'     => [ 1, 2, 1 ],
+                    'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+                    'BOOKTABS'           => 0,
                 },
             };
 
@@ -1319,7 +1395,18 @@ whereas rows are not separated by horizontal lines.
             
 =item Misc
 
-C<HEADER_CENTERED>. Valid values are 0 (not centered) or 1 (centered).
+=over 
+
+=item C<HEADER_CENTERED>
+
+Valid values are 0 (not centered) or 1 (centered).
+
+=item C<BOOKTABS>
+
+Use the Booktabs package for "Publication quality tables". 0 (don't use this
+package) or 1 (use it).
+
+=back
 
 =back
 

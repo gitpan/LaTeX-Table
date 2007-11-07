@@ -49,7 +49,7 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
         = [ [ 'Name', 'Beers:2|c|' ], [ '', 'before 4pm', 'after 4pm' ] ];
 
     # no vertical lines in the miami theme
-    if ( $theme eq 'Miami' ) {
+    if ( $theme eq 'Miami' || $theme eq 'Zurich' ) {
         $test_header
             = [ [ 'Name', 'Beers:2c' ], [ '', 'before 4pm', 'after 4pm' ] ];
     }
@@ -126,6 +126,23 @@ $table->set_tabledef_strategy({ 'LONG_COL' => 'p{4cm}', 'IS_LONG' => 30});
 
 print ${OUT} $table->generate_string;
 
+print ${OUT} '\subsection{Table width}' . "\n";
+print ${OUT} <<'EOT'
+Table~\ref{width1} demonstrates table width feature. 
+EOT
+;
+    my $test_header
+        = [ [ 'Name', 'Beer', 'Wine']  ];
+$table = LaTeX::Table->new(
+    {   header    => $test_header,
+        data      => $test_data,
+        label     => 'width1',
+        width     => '\textwidth',
+        caption   => '0.8 of textwidth',
+    }
+);
+print ${OUT} $table->generate_string;
+
 print ${OUT} "\\end{document}\n";
 
 
@@ -136,6 +153,7 @@ __DATA__
 \usepackage{url}
 \usepackage{graphics, graphicx}
 \usepackage{xtab}
+\usepackage{booktabs}
 \begin{document}
 \title{LaTeX::Table}
 \date{\today}

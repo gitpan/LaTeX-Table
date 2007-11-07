@@ -15,15 +15,14 @@ like($WARNMSG, qr{DEPRECATED. Use options header and data instead},
 my $expected_output = <<'EOT'
 \begin{table}
 \begin{center}
-\begin{tabular}{|l||l|l|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}} & \multicolumn{1}{c|}{\textbf{C}}\\ 
-\hline
-\hline
+\begin{tabular}{lll}
+    \toprule
+\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
+\midrule
 
 1&w&x\\ 
 2&y&z\\ 
-\hline
+\bottomrule
 \end{tabular}
 \end{center}
 \end{table}

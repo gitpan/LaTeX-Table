@@ -19,6 +19,7 @@ my $table = LaTeX::Table->new(
         maincaption       => 'Beer Counter',
         caption           => 'Number of beers before and after 4pm.',
         table_environment => 0,
+        theme             => 'Dresden',
         header            => $test_header,
         data              => $test_data,
     }
@@ -143,6 +144,7 @@ is_deeply(
 $table = LaTeX::Table->new(
     {   table_environment => 1,
         center            => 0,
+        theme             => 'Dresden',
         header            => $test_header,
         data              => $test_data,
     }
@@ -181,6 +183,7 @@ $table = LaTeX::Table->new(
         tabledef          => "|l||l|l|",
         header            => $test_header,
         data              => $test_data,
+        theme             => 'Dresden',
     }
 );
 $expected_output = <<'EOT'

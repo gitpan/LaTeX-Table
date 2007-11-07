@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-11-06 17:04:28 +0100 (Tue, 06 Nov 2007) $
-# $Revision: 26 $
+#     $Date: 2007-11-07 14:51:34 +0100 (Wed, 07 Nov 2007) $
+# $Revision: 31 $
 #############################################################################
 
 use strict;
@@ -29,7 +29,7 @@ my ( $infile, $outfile, $help, $man, $version );
 my $sep_char     = q{,};
 my $latex_encode = 0;
 my $landscape    = 0;
-my $theme  = 'Berlin';
+my $theme  = 'Zurich';
 
 my $options_ok = GetOptions(
     'in=s'         => \$infile,
@@ -93,6 +93,7 @@ my $table = LaTeX::Table->new(
         xentrystretch => -0.05,
         tabletail => q{ },
         theme     => $theme,
+        #    width     => '\textwidth',
         callback => sub {
             my ( $row, $col, $value, $is_header ) = @_;
             if ($latex_encode) {
@@ -105,7 +106,6 @@ my $table = LaTeX::Table->new(
 
 my $ls = q{};
 my $lg = q{};
-## no critic
 if ($landscape) {
     $ls = '[landscape]';
     $lg = '\usepackage[landscape]{geometry}';
@@ -113,10 +113,10 @@ if ($landscape) {
 my $code = '\documentclass' . $ls
     . '{article}\usepackage{xtab}'
     . $lg
+    . '\usepackage{booktabs}'
     . '\begin{document}'
     . $table->generate_string
     . '\end{document}';
-## use critic
 #print $code;
 my $drv = LaTeX::Driver->new(
     source => \$code,
@@ -153,7 +153,7 @@ Output the PDF in landscape orientation.
 
 =item C<--theme>
 
-The table theme. See L<LaTeX::Table>. Default I<Berlin>.
+The table theme. See L<LaTeX::Table>. Default I<Zurich>.
 
 =item C<--man>
 

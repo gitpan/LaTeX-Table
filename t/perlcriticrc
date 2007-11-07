@@ -9,3 +9,6 @@ severity=1
 
 [Miscellanea::RequireRcsKeywords]
 keywords = Date Author Revision
+
+# this is simply stupid
+[-ValuesAndExpressions::RequireInterpolationOfMetachars]
