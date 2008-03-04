@@ -1,15 +1,16 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-11-07 14:51:34 +0100 (Wed, 07 Nov 2007) $
-# $Revision: 31 $
+#     $Date: 2008-03-04 16:09:23 +0100 (Tue, 04 Mar 2008) $
+# $Revision: 336 $
 #############################################################################
 
 package LaTeX::Table;
+use 5.008;
 
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.6.0');
+use version; our $VERSION = qv('0.6.1');
 
 use Carp;
 use Fatal qw( open close );
@@ -87,7 +88,7 @@ use Class::Std;
         for my $row (@data) {
             $i++;
             if ( !@{$row} ) {
-                $code .= "\\hline\n";
+                $code .= $self->_get_single_hline_code();
                 next ROW;
             }
             else {
@@ -435,6 +436,16 @@ EOST
             $id = 0;
         }
         return "\\$line\n" x $hlines->[$id];
+    }
+
+    sub _get_single_hline_code {
+        my ( $self,  $id ) = @_;
+        my $theme  = $self->_get_theme_settings;
+        my $line = 'hline';
+        if (defined $theme->{'BOOKTABS'} && $theme->{'BOOKTABS'}) {
+            $line = 'midrule';
+        }
+        return "\\$line\n";
     }
 
     ###########################################################################
@@ -898,7 +909,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.6.0
+This document describes LaTeX::Table version 0.6.1
 
 =head1 SYNOPSIS
 
@@ -936,11 +947,13 @@ This document describes LaTeX::Table version 0.6.0
   # callback functions
   $table->set_callback(sub { 
        my ($row, $col, $value, $is_header ) = @_;
-       if ($col == 1) {
+       if ($col == 0) {
            $value = uc $value;
        }
        return $value;
   });     
+  
+  print $table->generate_string();
 
 Now in your LaTeX document:
 
@@ -1282,10 +1295,11 @@ C<|c|> overrides the LINES settings in the theme (See L<"CUSTOM THEMES">).
 
 =head1 THEMES
 
-The theme can be selected with $table->set_theme($themename). Currently,
-following predefined themes are available: I<Zurich>, I<Dresden>, I<Berlin>, I<Miami> and
-I<Houston>. The script F<generate_examples.pl> in the I<examples> directory 
-of this distributions generates some examples for all available themes.
+The theme can be selected with C<$table-E<gt>set_theme($themename)>. 
+Currently, following predefined themes are available: I<Zurich>, I<Dresden>, 
+I<Berlin>, I<Miami> and I<Houston>. The script F<generate_examples.pl> in the 
+I<examples> directory of this distributions generates some examples for all 
+available themes.
 
 =head2 ZURICH
 
@@ -1511,7 +1525,7 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2007, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
 All rights reserved.
 
 This module is free software; you can redistribute it and/or

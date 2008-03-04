@@ -20,8 +20,8 @@ t/60.textwrap.t
 t/70.callback.t
 t/80.themes.t
 t/90.combat.t
+t/kwalitee.t
 t/perlcritic.t
 t/perlcriticrc
 t/pod-coverage.t
 t/pod.t
-META.yml                                 Module meta-data (added by MakeMaker)

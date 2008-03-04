@@ -1,5 +1,11 @@
 Revision history for LaTeX-Table
 
+0.6.1  Tue Mar 04 16:00:00 2008
+       - added kwalitee test
+       - added perl 5.8 dependency
+       - added licence in Makefile.PL
+       - Bugfix: \hline instead of \midrule
+
 0.6.0  Wed Nov 07 15:00:00 2007
        - support for booktabs.sty
        - Zurich standard

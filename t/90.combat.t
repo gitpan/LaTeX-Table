@@ -5,7 +5,7 @@ use Test::More tests => 2;
 use LaTeX::Table;
 
 my $test_header = [ [ 'A', 'B', 'C' ], ];
-my $test_data = [ [ '1', 'w', 'x' ], [ '2', 'y', 'z' ], ];
+my $test_data = [ [ '1', 'w', 'x' ], [], [ '2', 'y', 'z' ], ];
 
 my $table = LaTeX::Table->new();
 $table->generate_string($test_header, $test_data);
@@ -21,6 +21,7 @@ my $expected_output = <<'EOT'
 \midrule
 
 1&w&x\\ 
+\midrule
 2&y&z\\ 
 \bottomrule
 \end{tabular}

@@ -1,3 +1,5 @@
+use 5.008;
+
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
@@ -7,6 +9,8 @@ WriteMakefile(
     AUTHOR              => 'Markus Riester <mriester@gmx.de>',
     VERSION_FROM        => 'lib/LaTeX/Table.pm',
     ABSTRACT_FROM       => 'lib/LaTeX/Table.pm',
+    ((ExtUtils::MakeMaker->VERSION() gt '6.30') ?
+            ('LICENSE'  => 'perl')         : ()),
     PL_FILES            => {},
     PREREQ_PM => {
         'Test::More'     => 0,
