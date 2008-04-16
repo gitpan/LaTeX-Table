@@ -143,6 +143,7 @@ $table = LaTeX::Table->new(
 );
 print ${OUT} $table->generate_string;
 
+print ${OUT} "\\section{Version}\\small{Generated with LaTeX::Table Version $LaTeX::Table::VERSION}\n";
 print ${OUT} "\\end{document}\n";
 
 

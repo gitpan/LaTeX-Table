@@ -1,5 +1,9 @@
 Revision history for LaTeX-Table
 
+0.6.2  Wed Apr 16 11:28:00 2008
+       - made new Perl::Critic happy
+       - Bugfix: \hline in xtab/booktabs
+       
 0.6.1  Tue Mar 04 16:00:00 2008
        - added kwalitee test
        - added perl 5.8 dependency

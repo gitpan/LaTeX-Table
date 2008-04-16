@@ -1,4 +1,5 @@
 severity=1
+verbose=11
 # we use Fatal qw(open close)
 [-InputOutput::RequireCheckedOpen]
 [-InputOutput::RequireCheckedClose]
@@ -12,3 +13,6 @@ keywords = Date Author Revision
 
 # this is simply stupid
 [-ValuesAndExpressions::RequireInterpolationOfMetachars]
+
+[InputOutput::RequireBriefOpen]
+lines = 15

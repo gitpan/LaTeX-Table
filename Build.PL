@@ -9,6 +9,7 @@ my $builder = Module::Build->new(
     dist_author         => 'Markus Riester <mriester@gmx.de>',
     dist_version_from   => 'lib/LaTeX/Table.pm',
     requires => {
+        'perl'           => '5.8.0', 
         'English'        => 0,
         'Class::Std'     => 0,
         'Scalar::Util'   => 0,

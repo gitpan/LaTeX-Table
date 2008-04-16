@@ -34,11 +34,11 @@ my $expected_output =<<'EOT'
 \hline
 }
 \tabletail{\hline
+\hline
 \multicolumn{3}{|r|}{{Continued on next page}} \\ 
 \hline
 }
-\tablelasttail{\hline
-}
+\tablelasttail{}
 \begin{center}
 \begin{xtabular}{|l||r|r|}
 Lisa&0&0\\ 
@@ -55,6 +55,7 @@ EOT
 ;
 
 my $output = $table->generate_string();
+#warn $output;
 is_deeply([ split("\n",$output) ], [split("\n",$expected_output)], 'without table environment');
 
 $table->set_tabletail(q{ });
@@ -72,8 +73,7 @@ $expected_output =<<'EOT'
 }
 \tabletail{ \hline
 }
-\tablelasttail{\hline
-}
+\tablelasttail{}
 \begin{center}
 \begin{xtabular}{|l||r|r|}
 Lisa&0&0\\ 

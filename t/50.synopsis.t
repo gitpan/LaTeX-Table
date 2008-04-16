@@ -6,7 +6,7 @@ my $SYNOPSIS = <<'EOT'
   use LaTeX::Table;
   
   my $header
-  	= [ [ 'Name', 'Beers:2|c|' ], [ '', 'before 4pm', 'after 4pm' ] ];
+  	= [ [ 'Name', 'Beers:2c' ], [ '', 'before 4pm', 'after 4pm' ] ];
   
   my $data = [
   	[ 'Lisa',   '0', '0' ],
@@ -24,7 +24,6 @@ my $SYNOPSIS = <<'EOT'
         caption     => 'Number of beers before and after 4pm.',
         maincaption => 'Beer Counter',
         label       => 'table_beercounter',
-        theme       => 'Houston',
         tablepos    => 'htb',
         header      => $header,
         data        => $data,

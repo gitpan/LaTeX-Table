@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2007-11-07 14:51:34 +0100 (Wed, 07 Nov 2007) $
-# $Revision: 31 $
+#     $Date: 2008-03-14 22:28:01 +0100 (Fri, 14 Mar 2008) $
+# $Revision: 379 $
 #############################################################################
 
 use strict;
@@ -44,7 +44,7 @@ my $options_ok = GetOptions(
 ) or pod2usage(2);
 
 if ($version) {
-    print "$0 $VERSION\n";
+    print "$0 $VERSION\n" or croak q{Can't print to stdout.};
     exit;
 }
 
@@ -58,7 +58,6 @@ if ( !defined $outfile ) {
     $outfile = q{./} . fileparse( $infile, qw(csv txt dat) ) . 'pdf';
 }
 
-open my $IN, '<', $infile;
 my $csv = Text::CSV_XS->new(
     {   binary           => 1,
         sep_char         => $sep_char,
@@ -71,6 +70,7 @@ my @data;
 
 my $line_number = 0;
 
+open my $IN, '<', $infile;
 while ( my $line = <$IN> ) {
     chomp $line;
     my $status = $csv->parse($line);
@@ -80,10 +80,8 @@ while ( my $line = <$IN> ) {
     else {
         push @data, [ $csv->fields() ];
     }
-
     $line_number++;
 }
-
 close $IN;
 
 my $table = LaTeX::Table->new(
@@ -194,7 +192,7 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2007, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
 All rights reserved.
 
 This module is free software; you can redistribute it and/or

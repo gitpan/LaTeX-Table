@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-03-04 16:09:23 +0100 (Tue, 04 Mar 2008) $
-# $Revision: 336 $
+#     $Date: 2008-04-16 11:26:25 +0200 (Wed, 16 Apr 2008) $
+# $Revision: 468 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,7 +10,7 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.6.1');
+use version; our $VERSION = qv('0.6.2');
 
 use Carp;
 use Fatal qw( open close );
@@ -216,7 +216,8 @@ use Class::Std;
         my ( $self, $header, $data ) = @_;
         my $code = $self->generate_string( $header, $data );
         open my $LATEX, '>', $self->get_filename;
-        print {$LATEX} $code;
+        print {$LATEX} $code    or croak q{Couldn't write '}. $self->get_name .
+            "': $OS_ERROR";
         close $LATEX;
         return 1;
     }
@@ -580,7 +581,7 @@ EOST
     # Purpose    : add font family to value of column definition
     # Returns    : new column definition
     # Parameters : column definition and family (tt, bf, it, sc)
-    # Throws     : exception when familiy is not known
+    # Throws     : exception when family is not known
     # Comments   : n/a
     # See also   :
 
@@ -662,7 +663,8 @@ EOST
         my $code;
         my $hlines  = $self->_get_theme_settings->{'HORIZONTAL_LINES'};
         my $vlines  = $self->_get_theme_settings->{'VERTICAL_LINES'};
-        my $linecode .= "\\hline\n" x $hlines->[0];
+        my $linecode1 = $self->_get_hline_code(1);
+        my $linecode2 = $self->_get_hline_code(3);
 
         # if custom table tail is defined, then return it
         if ( $self->get_tabletail ) {
@@ -673,13 +675,13 @@ EOST
             my $nu_cols = scalar @cols;
 
             my $v0 = q{|} x $vlines->[0];
-            $code = "$linecode\\multicolumn{$nu_cols}{${v0}r$v0}{{" .
+            $code = "$linecode1\\multicolumn{$nu_cols}{${v0}r$v0}{{" .
                 $self->get_tabletailmsg. "}} \\\\ \n";
         }
         if ($final_tabletail) {
-            return "\\tablelasttail{$linecode}";
+            return "\\tablelasttail{}";
         }
-        return "\\tabletail{$code$linecode}";
+        return "\\tabletail{$code$linecode2}";
     }
 
     ###########################################################################
@@ -909,14 +911,14 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.6.1
+This document describes LaTeX::Table version 0.6.2
 
 =head1 SYNOPSIS
 
   use LaTeX::Table;
   
   my $header
-  	= [ [ 'Name', 'Beers:2|c|' ], [ '', 'before 4pm', 'after 4pm' ] ];
+  	= [ [ 'Name', 'Beers:2c' ], [ '', 'before 4pm', 'after 4pm' ] ];
   
   my $data = [
   	[ 'Lisa',   '0', '0' ],
@@ -934,7 +936,6 @@ This document describes LaTeX::Table version 0.6.1
         caption     => 'Number of beers before and after 4pm.',
         maincaption => 'Beer Counter',
         label       => 'table_beercounter',
-        theme       => 'Houston',
         tablepos    => 'htb',
         header      => $header,
         data        => $data,
@@ -1385,7 +1386,8 @@ Custom themes can be defined with an array reference containing all options
 =item Fonts
 
 C<HEADER_FONT_STYLE>, C<CAPTION_FONT_STYLE>. Valid values are I<bf> (bold),
-I<it> (italics), I<sc> (caps) and I<tt> (typewriter).
+I<it> (italics), I<sc> (caps) and I<tt> (typewriter). When this option is
+undef, then header (or caption, respectively) is written in normal font.
 
 =item Lines
 
