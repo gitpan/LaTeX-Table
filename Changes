@@ -1,5 +1,10 @@
 Revision history for LaTeX-Table
 
+0.6.3  Fri Jul 25 21:15:00 2008
+       - commands now printed without formatting
+       - removed the simpsons synopsis
+       - Perl::Critic passes again
+
 0.6.2  Wed Apr 16 11:28:00 2008
        - made new Perl::Critic happy
        - Bugfix: \hline in xtab/booktabs

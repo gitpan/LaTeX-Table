@@ -1,37 +1,40 @@
-use Test::More tests => 1;
+use Test::More tests => 2;
+use Test::NoWarnings;
 use English qw( -no_match_vars ) ;
 
 my $SYNOPSIS = <<'EOT'
 
   use LaTeX::Table;
   
-  my $header
-  	= [ [ 'Name', 'Beers:2c' ], [ '', 'before 4pm', 'after 4pm' ] ];
+  my $header = [
+      [ 'Item:2c', '' ],
+      ['\cmidrule(r){1-2}'],
+      [ 'Animal', 'Description', 'Price' ]
+  ];
   
   my $data = [
-  	[ 'Lisa',   '0', '0' ],
-  	[ 'Marge',  '0', '1' ],
-  	[ 'Homer',  '2', '6' ],
-  	[],  # horizontal line
-  	[ 'Wiggum', '0', '5' ],
-  	[ 'Otto',   '1', '3' ],
-  	[ 'Barney', '8', '16' ],
+      [ 'Gnat',      'per gram', '13.65' ],
+      [ '',          'each',      '0.01' ],
+      [ 'Gnu',       'stuffed',  '92.59' ],
+      [ 'Emu',       'stuffed',  '33.33' ],
+      [ 'Armadillo', 'frozen',    '8.99' ],
   ];
+
   
   my $table = LaTeX::Table->new(
   	{   
-        filename    => 'counter.tex',
-        caption     => 'Number of beers before and after 4pm.',
-        maincaption => 'Beer Counter',
-        label       => 'table_beercounter',
+        filename    => 'prices.tex',
+        maincaption => 'Price List',
+        caption     => 'Try our special offer today!',
+        label       => 'table_prices',
         tablepos    => 'htb',
         header      => $header,
         data        => $data,
   	}
   );
   
-  # write LaTeX code in counter.tex
-  $table->generate_string();
+  # write LaTeX code in prices.tex
+  #$table->generate();
 
   # callback functions
   $table->set_callback(sub { 

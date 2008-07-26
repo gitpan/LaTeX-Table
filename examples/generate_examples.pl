@@ -7,13 +7,11 @@ use LaTeX::Table;
 use LaTeX::Encode;
 
 my $test_data = [
-    [ 'Lisa',   '0', '0' ],
-    [ 'Marge',  '0', '1' ],
-    [ 'Homer',  'two', '6' ],
-    [],
-    [ 'Wiggum', '0', '5' ],
-    [ 'Otto',   'one', '3' ],
-    [ 'Barney', 'eight', '16.5' ],
+    [ 'Gnat',      'per gram', '13.65' ],
+    [ '',          'each',     '0.01' ],
+    [ 'Gnu',       'stuffed',  '92.59' ],
+    [ 'Emu',       'stuffed',  '33.33' ],
+    [ 'Armadillo', 'frozen',   '8.99' ],
 ];
 
 my $test_data_large = [];
@@ -24,34 +22,40 @@ for my $i ( 1 .. 6 ) {
 
 my $table = LaTeX::Table->new(
     {   tablepos    => 'htb',
-        maincaption => 'Beer Counter',
-        caption     => 'Number of beers before and after 4pm.',
+        maincaption => 'Price List',
+        caption     => 'Try our special offer today!',
         size        => 'large',
     }
 );
 
 my $themes = {
-            'Custom' => {
-                'HEADER_FONT_STYLE'  => 'sc',
-                'HEADER_CENTERED'     => 1,
-                'CAPTION_FONT_STYLE' => 'sc',
-                'VERTICAL_LINES'      => [ 1, 2, 1 ],
-                'HORIZONTAL_LINES'    => [ 1, 2, 0 ],
-            },
-        };
+    'Custom' => {
+        'HEADER_FONT_STYLE'  => 'sc',
+        'HEADER_CENTERED'    => 1,
+        'CAPTION_FONT_STYLE' => 'sc',
+        'VERTICAL_LINES'     => [ 1, 2, 1 ],
+        'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+    },
+};
 
 $table->set_custom_themes($themes);
-
 
 foreach my $theme ( keys %{ $table->get_available_themes } ) {
 
     my $test_header
-        = [ [ 'Name', 'Beers:2|c|' ], [ '', 'before 4pm', 'after 4pm' ] ];
+        = [ [ 'Item:2|c|', '' ], [ 'Animal', 'Description', 'Price' ] ];
 
     # no vertical lines in the miami theme
-    if ( $theme eq 'Miami' || $theme eq 'Zurich' ) {
+    if ( $theme eq 'Miami' ) {
         $test_header
-            = [ [ 'Name', 'Beers:2c' ], [ '', 'before 4pm', 'after 4pm' ] ];
+            = [ [ 'Item:2c', '' ], [ 'Animal', 'Description', 'Price' ] ];
+    }
+    elsif ( $theme eq 'Zurich' ) {
+        $test_header = [
+            [ 'Item:2c', '' ],
+            ['\cmidrule(r){1-2}'],
+            [ 'Animal', 'Description', 'Price' ]
+        ];
     }
 
     $table->set_filename("$theme.tex");
@@ -60,14 +64,14 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
     $table->set_type('std');
     $table->set_header($test_header);
     $table->set_data($test_data);
-    $table->generate( );
+    $table->generate();
     $table->set_type('xtab');
     $table->set_filename("${theme}multipage.tex");
     $table->set_label("${theme}mpexample");
     $table->set_xentrystretch(-0.1);
     $table->set_header($test_header);
     $table->set_data($test_data_large);
-    $table->generate( );
+    $table->generate();
 }
 
 open my $OUT, '>', 'examples.tex';
@@ -102,15 +106,14 @@ $table = LaTeX::Table->new(
 );
 
 print ${OUT} '\section{Advanced Features}\subsection{Text wrapping}' . "\n";
-print ${OUT} <<'EOT'
-Table~\ref{wrap1} demonstrates text wrapping features. 
-EOT
-;
+print ${OUT} 'Table ~\ref {wrap1} demonstrates text wrapping feature.';
+
 #Note the ecoding problems in the Marge Fullname column. Using LaTeX::Encode
 #in a \texttt{callback} function fixes this problem (see~\ref{wrap2}).
 #EOT
 #;
 print ${OUT} $table->generate_string;
+
 #$table->set_callback(sub { my ( $row, $col, $value ) = @_; return
 #        latex_encode($value) });
 #$table->set_label('wrap2');
@@ -122,30 +125,27 @@ $table->set_label('wrap3');
 $table->set_caption(
     'text wrapping example with LaTeX paragraph column attribute.');
 $table->set_text_wrap(0);
-$table->set_tabledef_strategy({ 'LONG_COL' => 'p{4cm}', 'IS_LONG' => 30});
+$table->set_tabledef_strategy( { 'LONG_COL' => 'p{4cm}', 'IS_LONG' => 30 } );
 
 print ${OUT} $table->generate_string;
 
 print ${OUT} '\subsection{Table width}' . "\n";
-print ${OUT} <<'EOT'
-Table~\ref{width1} demonstrates table width feature. 
-EOT
-;
-    my $test_header
-        = [ [ 'Name', 'Beer', 'Wine']  ];
+print ${OUT} 'Table ~\ref {width1} demonstrates table width feature';
+
+my $test_header = [ [ 'Name', 'Beer', 'Wine' ] ];
 $table = LaTeX::Table->new(
-    {   header    => $test_header,
-        data      => $test_data,
-        label     => 'width1',
-        width     => '\textwidth',
-        caption   => '0.8 of textwidth',
+    {   header  => $test_header,
+        data    => $test_data,
+        label   => 'width1',
+        width   => '\textwidth',
+        caption => '0.8 of textwidth',
     }
 );
 print ${OUT} $table->generate_string;
 
-print ${OUT} "\\section{Version}\\small{Generated with LaTeX::Table Version $LaTeX::Table::VERSION}\n";
+print ${OUT}
+    "\\section{Version}\\small{Generated with LaTeX::Table Version $LaTeX::Table::VERSION}\n";
 print ${OUT} "\\end{document}\n";
-
 
 close $OUT;
 

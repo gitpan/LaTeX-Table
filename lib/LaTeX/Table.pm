@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-04-16 11:26:25 +0200 (Wed, 16 Apr 2008) $
-# $Revision: 468 $
+#     $Date: 2008-07-26 03:16:07 +0200 (Sat, 26 Jul 2008) $
+# $Revision: 809 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,14 +10,23 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.6.2');
+use version; our $VERSION = qv('0.6.3');
 
 use Carp;
 use Fatal qw( open close );
 use Scalar::Util qw(reftype);
 use English qw( -no_match_vars );
+use Readonly;
 
 use Text::Wrap qw(wrap);
+
+Readonly my $RULE_TOP_ID    => 0;
+Readonly my $RULE_MID_ID    => 1;
+Readonly my $RULE_INNER_ID  => 2;
+Readonly my $RULE_BOTTOM_ID => 3;
+
+Readonly my $DEFAULT_IS_LONG  => 50;
+Readonly my $DEFAULT_LONG_COL => 'p{5cm}';
 
 use Class::Std;
 {
@@ -92,12 +101,16 @@ use Class::Std;
                 next ROW;
             }
             else {
+                if (scalar(@{$row}) == 1 && $row->[0] =~ m{\A \s* \\ }xms) {
+                    $code .= $row->[0] . "\n";
+                    next ROW;
+                }
                 $code .= join( q{&}, @{$row} ) . "\\\\ \n";
                 if ( $i == scalar @data ) {
-                    $code .= $self->_get_hline_code(3);
+                    $code .= $self->_get_hline_code($RULE_BOTTOM_ID);
                 }
                 else {
-                    $code .= $self->_get_hline_code(2);
+                    $code .= $self->_get_hline_code($RULE_INNER_ID);
                 }
             }
         }
@@ -344,9 +357,9 @@ EOST
             #IS_A_NUMBER => $RE{num}{real},
             IS_A_NUMBER =>
                 qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xms,
-            IS_LONG     => 50,
+            IS_LONG     => $DEFAULT_IS_LONG,
             NUMBER_COL  => 'r',
-            LONG_COL    => 'p{5cm}',
+            LONG_COL    => $DEFAULT_LONG_COL,
             DEFAULT     => 'l',
         };
         $self->set_tabledef_strategy($STRATEGY);
@@ -433,7 +446,7 @@ EOST
             my @line_type = qw(toprule midrule midrule bottomrule);
             $line = $line_type[$id];
         }
-        if ($id == 3) {
+        if ($id == $RULE_BOTTOM_ID) {
             $id = 0;
         }
         return "\\$line\n" x $hlines->[$id];
@@ -462,20 +475,25 @@ EOST
         my ( $self, $header ) = @_;
         my $code   = q{};
         my $theme  = $self->_get_theme_settings;
-        $code .= $self->_get_hline_code(0);
+        $code .= $self->_get_hline_code($RULE_TOP_ID);
 
         my $i = 0;
 
         if ( $self->get_callback ) {
             $self->_check_callback;
         }
-
+        
+        CENTER_ROW:
         foreach my $row ( @{$header} ) {
             my @cols = @{$row};
-
+            if (scalar(@cols) == 1 && $cols[0] =~ m{\A \s* \\ }xms) {
+                $code .= $cols[0] . "\n";
+                next CENTER_ROW;
+            }
             if ( defined $theme->{'HEADER_CENTERED'}
                 && $theme->{'HEADER_CENTERED'} )
             {
+
                 my $vlines = $theme->{'VERTICAL_LINES'};
 
                 my $v0 = q{|} x $vlines->[0];
@@ -505,6 +523,7 @@ EOST
 
             if ( defined $theme->{'HEADER_FONT_STYLE'} ) {
                 foreach my $col (@cols) {
+                    next FONT_COL if $col =~ m{\A \\ }xms;
                     $col = $self->_add_font_family( $col,
                         $theme->{'HEADER_FONT_STYLE'} );
                 }
@@ -513,7 +532,7 @@ EOST
             $code .= $self->_get_row_code(@cols);
             $i++;
         }
-        $code .= $self->_get_hline_code(1);
+        $code .= $self->_get_hline_code($RULE_MID_ID);
         return $code;
     }
 
@@ -663,8 +682,8 @@ EOST
         my $code;
         my $hlines  = $self->_get_theme_settings->{'HORIZONTAL_LINES'};
         my $vlines  = $self->_get_theme_settings->{'VERTICAL_LINES'};
-        my $linecode1 = $self->_get_hline_code(1);
-        my $linecode2 = $self->_get_hline_code(3);
+        my $linecode1 = $self->_get_hline_code($RULE_MID_ID);
+        my $linecode2 = $self->_get_hline_code($RULE_BOTTOM_ID);
 
         # if custom table tail is defined, then return it
         if ( $self->get_tabletail ) {
@@ -911,38 +930,40 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.6.2
+This document describes LaTeX::Table version 0.6.3
 
 =head1 SYNOPSIS
 
   use LaTeX::Table;
   
-  my $header
-  	= [ [ 'Name', 'Beers:2c' ], [ '', 'before 4pm', 'after 4pm' ] ];
+  my $header = [
+      [ 'Item:2c', '' ],
+      ['\cmidrule(r){1-2}'],
+      [ 'Animal', 'Description', 'Price' ]
+  ];
   
   my $data = [
-  	[ 'Lisa',   '0', '0' ],
-  	[ 'Marge',  '0', '1' ],
-  	[ 'Homer',  '2', '6' ],
-  	[],  # horizontal line
-  	[ 'Wiggum', '0', '5' ],
-  	[ 'Otto',   '1', '3' ],
-  	[ 'Barney', '8', '16' ],
+      [ 'Gnat',      'per gram', '13.65' ],
+      [ '',          'each',      '0.01' ],
+      [ 'Gnu',       'stuffed',  '92.59' ],
+      [ 'Emu',       'stuffed',  '33.33' ],
+      [ 'Armadillo', 'frozen',    '8.99' ],
   ];
+
   
   my $table = LaTeX::Table->new(
   	{   
-        filename    => 'counter.tex',
-        caption     => 'Number of beers before and after 4pm.',
-        maincaption => 'Beer Counter',
-        label       => 'table_beercounter',
+        filename    => 'prices.tex',
+        maincaption => 'Price List',
+        caption     => 'Try our special offer today!',
+        label       => 'table_prices',
         tablepos    => 'htb',
         header      => $header,
         data        => $data,
   	}
   );
   
-  # write LaTeX code in counter.tex
+  # write LaTeX code in prices.tex
   $table->generate();
 
   # callback functions
@@ -966,7 +987,7 @@ Now in your LaTeX document:
     \usepackage{booktabs}
 
     \begin{document}
-    \input{counter}
+    \input{prices}
     \end{document}
   
 =head1 DESCRIPTION

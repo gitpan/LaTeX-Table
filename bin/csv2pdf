@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-03-14 22:28:01 +0100 (Fri, 14 Mar 2008) $
-# $Revision: 379 $
+#     $Date: 2008-07-26 02:55:13 +0200 (Sat, 26 Jul 2008) $
+# $Revision: 807 $
 #############################################################################
 
 use strict;
@@ -17,6 +17,7 @@ use Pod::Usage;
 
 use Text::CSV_XS;
 use File::Basename;
+use Readonly;
 
 use LaTeX::Table;
 use LaTeX::Encode;
@@ -24,12 +25,15 @@ use LaTeX::Driver;
 
 use version; our $VERSION = $LaTeX::Table::VERSION;
 
+Readonly my $DEFAULT_XENTRYSTRETCH => -0.05;
+Readonly my $DEFAULT_THEME         => 'Zurich';
+
 my ( $infile, $outfile, $help, $man, $version );
 
 my $sep_char     = q{,};
 my $latex_encode = 0;
 my $landscape    = 0;
-my $theme  = 'Zurich';
+my $theme        = $DEFAULT_THEME;
 
 my $options_ok = GetOptions(
     'in=s'         => \$infile,
@@ -88,7 +92,7 @@ my $table = LaTeX::Table->new(
     {   header   => \@header,
         data     => \@data,
         type     => 'xtab',
-        xentrystretch => -0.05,
+        xentrystretch => $DEFAULT_XENTRYSTRETCH,
         tabletail => q{ },
         theme     => $theme,
         #    width     => '\textwidth',

@@ -1,4 +1,5 @@
-use Test::More tests => 21;
+use Test::More tests => 22;
+use Test::NoWarnings;
 
 use LaTeX::Table;
 use English qw( -no_match_vars );

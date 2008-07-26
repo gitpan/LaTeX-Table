@@ -16,10 +16,12 @@ my $builder = Module::Build->new(
         'Text::Wrap'     => 0,
         'Carp'           => 0,
         'version'        => 0,
+        'Readonly'       => 0,
     },
     build_requires => {
-        'Test::More'     => 0,
-        'File::Spec'     => 0,
+        'Test::More'       => 0,
+        'Test::NoWarnings' => 0,
+        'File::Spec'       => 0,
     }, 
     recommends => {
         'Text::CSV_XS'   => 0,
