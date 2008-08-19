@@ -1,5 +1,9 @@
 Revision history for LaTeX-Table
 
+0.7.0  Tue Aug 19 21:15:00 2008
+       - plain theme
+       - POD updates
+
 0.6.3  Fri Jul 25 21:15:00 2008
        - commands now printed without formatting
        - removed the simpsons synopsis

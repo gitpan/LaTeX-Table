@@ -46,7 +46,7 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
         = [ [ 'Item:2|c|', '' ], [ 'Animal', 'Description', 'Price' ] ];
 
     # no vertical lines in the miami theme
-    if ( $theme eq 'Miami' ) {
+    if ( $theme eq 'Miami' || $theme eq 'plain' ) {
         $test_header
             = [ [ 'Item:2c', '' ], [ 'Animal', 'Description', 'Price' ] ];
     }

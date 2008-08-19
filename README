@@ -1,8 +1,9 @@
-LaTeX-Table version 0.6.3
+LaTeX-Table version 0.7.0
 
 LaTeX::Table provides functionality for an intuitive and easy generation of
 LaTeX tables for reports or theses. It ships with some predefined good looking
-table styles. Supports multipage tables via the xtab package.
+table styles. Supports multipage tables via the xtab package and publication
+quality tables with the booktabs package.
 
 INSTALLATION
 

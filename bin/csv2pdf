@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-07-26 02:55:13 +0200 (Sat, 26 Jul 2008) $
-# $Revision: 807 $
+#     $Date: 2008-08-18 11:06:13 +0200 (Mon, 18 Aug 2008) $
+# $Revision: 816 $
 #############################################################################
 
 use strict;
@@ -15,7 +15,7 @@ use Fatal qw(open close);
 use Getopt::Long;
 use Pod::Usage;
 
-use Text::CSV_XS;
+use Text::CSV;
 use File::Basename;
 use Readonly;
 
@@ -62,7 +62,7 @@ if ( !defined $outfile ) {
     $outfile = q{./} . fileparse( $infile, qw(csv txt dat) ) . 'pdf';
 }
 
-my $csv = Text::CSV_XS->new(
+my $csv = Text::CSV->new(
     {   binary           => 1,
         sep_char         => $sep_char,
         allow_whitespace => 1
@@ -179,8 +179,8 @@ C<csv2pdf> does not support configuration files or environment variables.
 
 LaTeX.
 
-L<Getopt::Long>, L<LaTeX::Driver>, L<LaTeX::Encode>, L<LaTeX::Table>, 
-L<Text::CSV_XS>
+L<Fatal>, L<File::Basename>, L<Getopt::Long>, L<LaTeX::Driver>, L<LaTeX::Encode>, L<LaTeX::Table>, 
+L<Pod::Usage>, L<Readonly>, L<Text::CSV>
 
 =head1 BUGS AND LIMITATIONS
 

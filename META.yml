@@ -1,6 +1,6 @@
 ---
 name: LaTeX-Table
-version: 0.6.3
+version: 0.7.0
 author:
   - 'Markus Riester <mriester@gmx.de>'
 abstract: Perl extension for the automatic generation of LaTeX tables.
@@ -28,7 +28,7 @@ recommends:
 provides:
   LaTeX::Table:
     file: lib/LaTeX/Table.pm
-    version: 0.6.3
+    version: 0.7.0
 generated_by: Module::Build version 0.2808
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
