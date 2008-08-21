@@ -28,6 +28,7 @@ my $builder = Module::Build->new(
         'LaTeX::Driver'  => 0,
         'LaTeX::Encode'  => 0,
         'Getopt::Long'   => 0,
+        'Number::Format' => 0,
     },    
     script_files        => [ 'bin/csv2pdf' ], 
     add_to_cleanup      => [ 'LaTeX-Table-*' ],

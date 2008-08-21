@@ -1,4 +1,4 @@
-use Test::More tests => 7;
+use Test::More tests => 9;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -19,7 +19,7 @@ my $table = LaTeX::Table->new(
         label             => 'beercounter',
         maincaption       => 'Beer Counter',
         caption           => 'Number of beers before and after 4pm.',
-        table_environment => 0,
+        environment       => 0,
         theme             => 'Dresden',
         header            => $test_header,
         data              => $test_data,
@@ -71,11 +71,11 @@ is_deeply( \@filecontent, [@expected_output],
 unlink 't/tmp/out.tex';
 rmdir 't/tmp';
 ## with table environment
-$table->set_table_environment(1);
+$table->set_environment(1);
 
 $expected_output = <<'EOT'
 \begin{table}
-\begin{center}
+\centering
 \begin{tabular}{|l||r|r|}
     \hline
 \multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{|c|}{\textbf{Beers}}\\ 
@@ -93,7 +93,6 @@ Barney&8&16\\
 \end{tabular}
 \caption[Beer Counter]{\textbf{Beer Counter. }Number of beers before and after 4pm.}
 \label{beercounter}
-\end{center}
 \end{table}
 EOT
     ;
@@ -105,13 +104,13 @@ is_deeply(
 );
 
 # without label and maincaption
-$table->set_table_environment(1);
+$table->set_environment(1);
 $table->set_label('');
 $table->set_maincaption('');
 
 $expected_output = <<'EOT'
 \begin{table}
-\begin{center}
+\centering
 \begin{tabular}{|l||r|r|}
     \hline
 \multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{|c|}{\textbf{Beers}}\\ 
@@ -128,7 +127,6 @@ Barney&8&16\\
 \hline
 \end{tabular}
 \caption{Number of beers before and after 4pm.}
-\end{center}
 \end{table}
 EOT
     ;
@@ -143,7 +141,7 @@ is_deeply(
 ## without center
 
 $table = LaTeX::Table->new(
-    {   table_environment => 1,
+    {   environment       => 1,
         center            => 0,
         theme             => 'Dresden',
         header            => $test_header,
@@ -178,10 +176,10 @@ is_deeply(
     'with table environment, without maincaption, center and label'
 );
 
-## with tabledef
+## with coldef
 $table = LaTeX::Table->new(
-    {   table_environment => 0,
-        tabledef          => "|l||l|l|",
+    {   environment => 0,
+        coldef          => "|l||l|l|",
         header            => $test_header,
         data              => $test_data,
         theme             => 'Dresden',
@@ -211,6 +209,83 @@ $output = $table->generate_string();
 is_deeply(
     [ split( "\n", $output ) ],
     [ split( "\n", $expected_output ) ],
-    'with tabledef'
+    'with coldef'
 );
 
+my $header = [ [ 'Character', 'Fullname', 'Voice' ], ];
+my $data = [
+    [ 'Homer', 'Homer Jay Simpson',               'Dan Castellaneta', ],
+    [ 'Marge', 'Marjorie Simpson (née Bouvier)', 'Julie Kavner', ],
+    [ 'Bart',  'Bartholomew Jojo Simpson',        'Nancy Cartwright', ],
+    [ 'Lisa',  'Elizabeth Marie Simpson',         'Yeardley Smith', ],
+    [   'Maggie',
+        'Margaret Simpson',
+        'Elizabeth Taylor, Nancy Cartwright, James Earl Jones,'
+            . 'Yeardley Smith, Harry Shearer',
+    ],
+];
+
+$table = LaTeX::Table->new(
+    {   header            => $header,
+        data              => $data,
+        width             => '0.9\textwidth',
+        width_environment => 'tabularx',
+        position          => 'ht',
+    }
+);
+
+$expected_output = <<'EOT'
+\begin{table}[ht]
+\centering
+\begin{tabularx}{0.9\textwidth}{lXX}
+    \toprule
+\multicolumn{1}{c}{\textbf{Character}} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}}\\ 
+\midrule
+
+Homer&Homer Jay Simpson&Dan Castellaneta\\ 
+Marge&Marjorie Simpson (née Bouvier)&Julie Kavner\\ 
+Bart&Bartholomew Jojo Simpson&Nancy Cartwright\\ 
+Lisa&Elizabeth Marie Simpson&Yeardley Smith\\ 
+Maggie&Margaret Simpson&Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
+\bottomrule
+\end{tabularx}
+\end{table}
+
+EOT
+    ;
+
+$output = $table->generate_string();
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'with coldef'
+);
+
+$table->set_width_environment('tabular*');
+
+$expected_output = <<'EOT'
+\begin{table}[ht]
+\centering
+\begin{tabular*}{0.9\textwidth}{@{\extracolsep{\fill}} lp{5cm}p{5cm}}
+    \toprule
+\multicolumn{1}{c}{\textbf{Character}} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}}\\ 
+\midrule
+
+Homer&Homer Jay Simpson&Dan Castellaneta\\ 
+Marge&Marjorie Simpson (née Bouvier)&Julie Kavner\\ 
+Bart&Bartholomew Jojo Simpson&Nancy Cartwright\\ 
+Lisa&Elizabeth Marie Simpson&Yeardley Smith\\ 
+Maggie&Margaret Simpson&Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
+\bottomrule
+\end{tabular*}
+\end{table}
+
+EOT
+    ;
+
+$output = $table->generate_string();
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'with coldef'
+);

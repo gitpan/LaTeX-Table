@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-08-19 18:12:28 +0200 (Tue, 19 Aug 2008) $
-# $Revision: 826 $
+#     $Date: 2008-08-21 14:35:50 +0200 (Thu, 21 Aug 2008) $
+# $Revision: 853 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,7 +10,7 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.7.0');
+use version; our $VERSION = qv('0.8.0');
 
 use Carp;
 use Fatal qw( open close );
@@ -25,8 +25,9 @@ Readonly my $RULE_MID_ID    => 1;
 Readonly my $RULE_INNER_ID  => 2;
 Readonly my $RULE_BOTTOM_ID => 3;
 
-Readonly my $DEFAULT_IS_LONG  => 50;
-Readonly my $DEFAULT_LONG_COL => 'p{5cm}';
+Readonly my $DEFAULT_IS_LONG  => 30;
+Readonly my $DEFAULT_LONG_COL   => 'p{5cm}';
+Readonly my $DEFAULT_LONG_COL_X => 'X';
 
 use Class::Std;
 {
@@ -37,16 +38,21 @@ use Class::Std;
     my %maincaption : ATTR( :name<maincaption> :default(0) );
     my %header : ATTR( :name<header> :default(0));
     my %data : ATTR( :name<data> :default(0) );
-    my %table_environment : ATTR( :name<table_environment> :default(1) );
+    my %table_environment : ATTR( :name<table_environment> :default('deprecated') );
+    my %environment : ATTR( :name<environment> :default('table') );
     my %caption : ATTR( :name<caption> :default(0) );
-    my %tabledef : ATTR( :name<tabledef> :default(0) );
-    my %tabledef_strategy : ATTR( :name<tabledef_strategy> :default(0) );
+    my %tabledef : ATTR( :name<tabledef> :default('deprecated') );
+    my %tabledef_strategy : ATTR( :name<tabledef_strategy> :default('deprecated') );
+    my %coldef : ATTR( :name<coldef> :default(0) );
+    my %coldef_strategy : ATTR( :name<coldef_strategy> :default(0) );
     my %theme : ATTR( :name<theme> :default('Zurich') );
     my %predef_themes : ATTR( :get<predef_themes> );
     my %custom_themes : ATTR( :name<custom_themes> :default(0) );
     my %text_wrap : ATTR( :name<text_wrap> :default(0) );
     my %width : ATTR( :name<width> :default(0) );
-    my %tablepos : ATTR( :name<tablepos> :default(0) );
+    my %width_environment : ATTR( :name<width_environment> :default('tabular*') );
+    my %tablepos : ATTR( :name<tablepos> :default('deprecated') );
+    my %position : ATTR( :name<position> :default(0) );
     my %center : ATTR( :name<center> :default(1) );
     my %size : ATTR( :name<size> :default(0) );
     my %callback : ATTR( :name<callback> :default(0) );
@@ -57,6 +63,22 @@ use Class::Std;
 
     sub _compatibility_layer {
         my ( $self, @args ) = @_;
+        if ($self->get_tablepos ne 'deprecated') {
+            carp('DEPRECATED: Use position instead of tablepos.');
+            $self->set_position($self->get_tablepos);
+        }
+        if ($self->get_table_environment ne 'deprecated') {
+            carp('DEPRECATED: Use environment instead of table_environment.');
+            $self->set_environment($self->get_table_environment);
+        }
+        if ($self->get_tabledef ne 'deprecated') {
+            carp('DEPRECATED: Use coldef instead of tabledef.');
+            $self->set_coldef($self->get_tabledef);
+        }
+        if ($self->get_tabledef_strategy ne 'deprecated') {
+            carp('DEPRECATED: Use coldef_strategy instead of tabledef_strategy.');
+            $self->set_coldef_strategy($self->get_tabledef_strategy);
+        }
         return if !defined $args[0];
         if ( reftype $args[0] eq 'ARRAY' ) {
             carp('DEPRECATED. Use options header and data instead.');
@@ -82,7 +104,10 @@ use Class::Std;
 
         # support for < 0.1.0 API
         $self->_compatibility_layer(@args);
-
+        
+        if ($self->get_environment eq '1') {
+            $self->set_environment('table');
+        }
         # check header and data
         $self->_check_2d_array( $self->get_header, 'header' );
         $self->_check_2d_array( $self->get_data,   'data' );
@@ -173,11 +198,12 @@ use Class::Std;
         if ( $self->get_callback ) {
             $self->_check_callback;
             for my $i ( 0 .. $#data ) {
+                my @row = @{$data[$i]};
                 for my $j ( 0 .. ( scalar @{ $data[$i] } - 1 ) ) {
-                    $data[$i][$j]
-                        = &{ $self->get_callback }( $i, $j, $data[$i][$j],
+                    $row[$j] = &{ $self->get_callback }( $i, $j, $data[$i][$j],
                         0 );
                 }
+                $data[$i] = \@row;
             }
         }
         return @data if !$text_wrap;
@@ -247,30 +273,46 @@ use Class::Std;
     sub _header {
         my ( $self, $header, $data ) = @_;
 
-        # if specified, use tabledef, otherwise guess a good definition
+        # if specified, use coldef, otherwise guess a good definition
         my $table_def;
-        if ( $self->get_tabledef ) {
-            $table_def = $self->get_tabledef;
+        if ( $self->get_coldef ) {
+            $table_def = $self->get_coldef;
         }
         else {
-            $table_def = $self->_get_tabledef_code($data);
+            $table_def = $self->_get_coldef_code($data);
         }
 
-        my $pos  = $self->_get_tablepos_code() . "\n";
+        my $pos  = $self->_get_pos_code() . "\n";
         my $code = $self->_get_header_columns_code($header);
 
         my $begin_center = q{};
         if ( $self->get_center ) {
-            $begin_center = "\\begin{center}\n";
+            $begin_center = "\\centering\n";
         }
         my $width = q{};
         my $asterisk = q{};
         if ( $self->get_width ) {
             $width = '{' . $self->get_width . '}';
+            if ($self->get_width_environment eq 'tabular*') {
             ## no critic
             $table_def = '@{\extracolsep{\fill}} ' . $table_def;
             ## use critic
             $asterisk = q{*};
+            }
+            elsif ($self->get_width_environment eq 'tabularx' &&
+                $self->get_type eq 'std' ) {
+                $asterisk = q{x};
+            }
+            else {
+                croak(
+                    'Width environment not known: ',
+                    $self->get_width_environment ,
+                 '. Valid environments are: tabular*, tabularx (not for xtab).'
+                );
+            }
+        }
+        elsif( $self->get_width_environment eq 'tabularx') {
+            croak('width_environment is tabularx and width is unset.');
         }
         my $size    = $self->_get_size_code();
         my $caption = $self->_get_caption_code();
@@ -298,13 +340,14 @@ $begin_center\\begin{xtabular$asterisk}${width}{$table_def}
 EOXT
         }
         else {
-            my $table_environment = q{};
-            if ( $self->get_table_environment ) {
-                $table_environment = join q{}, "\\begin{table}$pos", $size,
+            my $environment = q{};
+            if ( $self->get_environment ) {
+                $environment = join q{},
+                '\\begin{', $self->get_environment, "}$pos", $size,
                     $begin_center;
             }
             return <<"EOST"
-$table_environment\\begin{tabular$asterisk}${width}{$table_def}
+$environment\\begin{tabular$asterisk}${width}{$table_def}
     $code
 EOST
                 ;
@@ -322,63 +365,67 @@ EOST
         my ($self)  = @_;
         my $label   = $self->_get_label_code();
         my $caption = $self->_get_caption_code();
-        my $end_center   = q{};
-        if ( $self->get_center ) {
-            $end_center = "\\end{center}\n";
-        }
         my $asterisk = q{};
         if ( $self->get_width ) {
-            $asterisk = q{*};
+            if ($self->get_width_environment eq 'tabular*') {
+                $asterisk = q{*};
+            }
+            else {
+                $asterisk = q{x};
+            }
         }
         if ( $self->get_type eq 'xtab' ) {
             return <<"EOXT"
 \\end{xtabular$asterisk}
-$end_center} 
+} 
 EOXT
         }
         else {
-            my $table_environment = q{};
-            if ( $self->get_table_environment ) {
-                $table_environment = join q{}, $caption, $label, $end_center,
-                    "\\end{table}";
+            my $environment = q{};
+            if ( $self->get_environment ) {
+                $environment = join q{}, $caption, $label,
+                    '\\end{', $self->get_environment, '}';
 
             }
             return <<"EOST"
 \\end{tabular$asterisk}
-$table_environment
+$environment
 EOST
                 ;
         }
     }
 
-    sub _default_tabledef_strategy {
+    sub _default_coldef_strategy {
         my ($self) = @_;
         my $STRATEGY = {
             #IS_A_NUMBER => $RE{num}{real},
             IS_A_NUMBER =>
                 qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xms,
-            IS_LONG     => $DEFAULT_IS_LONG,
-            NUMBER_COL  => 'r',
-            LONG_COL    => $DEFAULT_LONG_COL,
-            DEFAULT     => 'l',
+            IS_LONG       => $DEFAULT_IS_LONG,
+            NUMBER_COL    => 'r',
+            NUMBER_COL_X  => 'r',
+            LONG_COL      => $DEFAULT_LONG_COL,
+            LONG_COL_X    => $DEFAULT_LONG_COL_X,
+            DEFAULT       => 'l',
+            DEFAULT_X     => 'l',
         };
-        $self->set_tabledef_strategy($STRATEGY);
+        $self->set_coldef_strategy($STRATEGY);
         return $STRATEGY;
     }
 
-    sub _check_tabledef_strategy {
+    sub _check_coldef_strategy {
         my ( $self , $strategy ) = @_;
         my $rt_strategy = reftype $strategy;
         if (!defined $rt_strategy || $rt_strategy ne 'HASH') {
-            croak 'tabledef_strategy not a hash reference.';
+            croak 'coldef_strategy not a hash reference.';
         }
-        my $default = $self->_default_tabledef_strategy;
+        my $default = $self->_default_coldef_strategy;
         for my $key (keys %{$default}) {
             if (!defined $strategy->{$key}) {
                 $strategy->{$key} = $default->{$key};
             }
         }
-        $self->set_tabledef_strategy($strategy);
+        $self->set_coldef_strategy($strategy);
         return;
     }
 
@@ -396,11 +443,11 @@ EOST
     sub _get_data_summary {
         my ( $self, $data ) = @_;
         my @max_row;
-        my $strategy = $self->get_tabledef_strategy;
+        my $strategy = $self->get_coldef_strategy;
         if ( !$strategy ) {
-            $strategy = $self->_default_tabledef_strategy;
+            $strategy = $self->_default_coldef_strategy;
         } else {
-            $self->_check_tabledef_strategy($strategy);
+            $self->_check_coldef_strategy($strategy);
         }
         my %is_a_number;
         my %not_a_number;
@@ -619,7 +666,7 @@ EOST
     }
 
     ###########################################################################
-    # Usage      : $self->_get_tabledef_code(\@data);
+    # Usage      : $self->_get_coldef_code(\@data);
     # Purpose    : generate the LaTeX code of the table definition (e.g.
     #              |l|r|r|r|)
     # Returns    : LaTeX code
@@ -628,7 +675,7 @@ EOST
     # Comments   : Tries to be intelligent. Hope it is ;)
     # See also   :
 
-    sub _get_tabledef_code {
+    sub _get_coldef_code {
         my ( $self, $data ) = @_;
         my @cols   = $self->_get_data_summary($data);
         my $vlines = $self->_get_theme_settings->{'VERTICAL_LINES'};
@@ -639,17 +686,22 @@ EOST
 
         my $table_def = q{};
         my $i         = 0;
-        my $strategy  = $self->get_tabledef_strategy();
+        my $strategy  = $self->get_coldef_strategy();
+        my $tabularx  = q{};
+        
+        if ($self->get_width_environment eq 'tabularx') {
+            $tabularx = '_X';
+        }
 
         foreach my $col (@cols) {
 
             # align text right, numbers left, first col always left
-            my $align = $strategy->{DEFAULT};
+            my $align = $strategy->{"DEFAULT$tabularx"};
             if ( $col == 1 ) {
-                $align = $strategy->{NUMBER_COL};
+                $align = $strategy->{"NUMBER_COL$tabularx"};
             }
             elsif ( $col == 2 ) {
-                $align = $strategy->{LONG_COL};
+                $align = $strategy->{"LONG_COL$tabularx"};
             }
 
             if ( $i == 0 ) {
@@ -790,15 +842,15 @@ EOST
     }
 
     ###########################################################################
-    # Usage      : $self->_get_tablepos_code();
+    # Usage      : $self->_get_pos_code();
     # Purpose    : generates the LaTeX code of the table position (e.g. [htb])
     # Returns    : LaTeX code
     # Parameters : none
 
-    sub _get_tablepos_code {
+    sub _get_pos_code {
         my ($self) = @_;
-        if ( $self->get_tablepos ) {
-            return '[' . $self->get_tablepos . ']';
+        if ( $self->get_position ) {
+            return '[' . $self->get_position . ']';
         }
         else {
             return q{};
@@ -855,7 +907,6 @@ EOST
             'Zurich' => {
                 'HEADER_FONT_STYLE'  => 'bf',
                 'HEADER_CENTERED'    => 1,
-                'CAPTION_FONT_STYLE' => 'bf',
                 'VERTICAL_LINES'     => [ 0, 0, 0 ],
                 'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
                 'BOOKTABS'           => 1,
@@ -935,12 +986,13 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.7.0
+This document describes LaTeX::Table version 0.8.0
 
 =head1 SYNOPSIS
 
   use LaTeX::Table;
-  
+  use Number::Format qw(:subs);  # use mighty CPAN to format values
+
   my $header = [
       [ 'Item:2c', '' ],
       ['\cmidrule(r){1-2}'],
@@ -948,11 +1000,11 @@ This document describes LaTeX::Table version 0.7.0
   ];
   
   my $data = [
-      [ 'Gnat',      'per gram', '13.65' ],
-      [ '',          'each',      '0.01' ],
-      [ 'Gnu',       'stuffed',  '92.59' ],
-      [ 'Emu',       'stuffed',  '33.33' ],
-      [ 'Armadillo', 'frozen',    '8.99' ],
+      [ 'Gnat',      'per gram', '13.65'   ],
+      [ '',          'each',      '0.0173' ],
+      [ 'Gnu',       'stuffed',  '92.59'   ],
+      [ 'Emu',       'stuffed',  '33.33'   ],
+      [ 'Armadillo', 'frozen',    '8.99'   ],
   ];
 
   
@@ -962,7 +1014,7 @@ This document describes LaTeX::Table version 0.7.0
         maincaption => 'Price List',
         caption     => 'Try our special offer today!',
         label       => 'table:prices',
-        tablepos    => 'htb',
+        pos         => 'htb',
         header      => $header,
         data        => $data,
   	}
@@ -971,11 +1023,18 @@ This document describes LaTeX::Table version 0.7.0
   # write LaTeX code in prices.tex
   $table->generate();
 
-  # callback functions
+  # callback functions help you to format values easily (as
+  # a great alternative to LaTeX packages like rccol)
+  #
+  # Here, the first colum and the header is printed in upper
+  # case and the third colum is formatted with format_price()
   $table->set_callback(sub { 
        my ($row, $col, $value, $is_header ) = @_;
-       if ($col == 0) {
+       if ($col == 0 || $is_header) {
            $value = uc $value;
+       }
+       elsif ($col == 2 && $!is_header) {
+           $value = format_price($value, 2, '');
        }
        return $value;
   });     
@@ -1000,7 +1059,13 @@ Now in your LaTeX document:
 LaTeX::Table provides functionality for an intuitive and easy generation of
 LaTeX tables for reports or theses. It ships with some predefined good looking
 table styles. Supports multipage tables via the xtab package and publication
-quality tables with the booktabs package. 
+quality tables with the booktabs package. It also supports the tabularx
+package for nicer fixed-width tables. 
+
+LaTeX makes professional typesetting easy. Unfortunately,
+this is not entirely true for tables. Many additional, highly specialized packages are 
+therefore available on CTAN. This module supports the best packages and
+visualizes your in Perl generated or summarized results with high quality. 
 
 =head1 INTERFACE 
 
@@ -1056,9 +1121,9 @@ The name of the LaTeX output file. Default is
 =item C<type>
 
 Can be either I<std> for the standard LaTeX table or I<xtab> for
-a xtabular table for multipage tables. The later requires the C<xtab>
-latex-package (C<\usepackage{xtab}> in your LaTeX document). Default is 
-I<std>.
+a xtabular table for multipage tables (in appendices for example). The latter 
+requires the C<xtab> latex-package (C<\usepackage{xtab}> in your LaTeX document). 
+Default is I<std>.
 
 =item C<header>
 
@@ -1137,17 +1202,18 @@ command is used, i.e. C<\midrule> vs. C<\hline>).
 
 =back
 
-=head2 TABLE ENVIRONMENT
+=head2 FLOATING TABLES
 
 =over
 
-=item C<table_environment>
+=item C<environment>
 
-If 1, then a table environment will be generated. Default 1. This option only
-affects tables of C<type> I<std>.
+If get_environment returns a true value, then a floating environment will be 
+generated. Default is 'table'. You can use 'sidewaystable' for rotated tables
+(requires the rotating package). This option only affects tables of C<type> I<std>.
 
     \begin{table}[htb]
-        \center
+        \centering
         \begin{tabular}{lrr}
         ...
         \end{tabular}
@@ -1158,35 +1224,35 @@ affects tables of C<type> I<std>.
 =item C<caption>
 
 The caption of the table. Only generated if get_caption() returns a true value. 
-Default is 0. Requires C<table_environment>.
+Default is 0. Requires C<environment>.
 
 =item C<center>
 
 Defines whether the table is centered. Default 1 (centered). Requires 
-C<table_environment>.
+C<environment>.
 
 =item C<label>
 
 The label of the table. Only generated if get_label() returns a true value.
 In Latex you can create a reference to the table with C<\ref{label}>.
-Default is 0. Requires C<table_environment>.
+Default is 0. Requires C<environment>.
 
 =item C<maincaption>
 
 If get_maincaption() returns a true value, then this value will be displayed 
 in the Table Listing (C<\listoftables>) and before the C<caption>. Default
-0. Requires C<table_environment>.
+0. Requires C<environment>.
 
 =item C<size>
 
 Font size. Valid values are 'tiny', 'scriptsize', 'footnotesize', 'small',
 'normal', 'large', 'Large', 'LARGE', 'huge', 'Huge' and 0. Default is 0 
-(does not define a font size). Requires C<table_environment>.
+(does not define a font size). Requires C<environment>.
 
-=item C<tablepos>
+=item C<position>
 
-The position of the table, e.g. C<htb>. Only generated if get_tablepos()
-returns a true value. Requires C<table_environment>.
+The position of the environment, e.g. C<htb>. Only generated if get_position()
+returns a true value. Requires C<environment>.
 
 =back
 
@@ -1199,45 +1265,49 @@ returns a true value. Requires C<table_environment>.
 If get_callback() returns a true value and the return value is a code reference,
 then this callback function will be called for every column in C<header>
 and C<data>. The return value of this function is then printed instead of the 
-column value.
+column value. 
 
 The passed arguments are C<$row>, C<$col> (both starting with 0), C<$value> and 
 C<$is_header>.
 
    use LaTeX::Encode;
+   use Number::Format qw(:subs);  
    ...
    
    # use LaTeX::Encode to encode LaTeX special characters,
-   # lowercase the third column (only the data)
+   # format the third column with Format::Number (only the data)
    my $table = LaTeX::Table->new(
        {   header   => $header,
            data     => $data,
            callback => sub {
                my ( $row, $col, $value, $is_header ) = @_;
                if ( $col == 2 && !$is_header ) {
-                   $value = lc $value;
+                   $value = format_price($value, 2, '');
                }
-               return latex_encode($value);
+               else {
+                   $value = latex_encode($value);
+               }
+               return $value;
            },
        }
    );
 
-=item C<tabledef>
+=item C<coldef>
 
-The table definition, e.g. C<lrcr> which would result in:
+The table column definition, e.g. C<lrcr> which would result in:
 
   \begin{tabular}{lrcr}
   ..
 
 If unset, C<LaTeX::Table> tries to 
 guess a good definition. Columns containing only numbers are right-justified,
-others left-justified. Columns with cells longer than 50 characters are
+others left-justified. Columns with cells longer than 30 characters are
 I<paragraph> columns of size 5 cm. These rules can be changed with
-set_tabledef_strategy(). Default is 0 (guess good definition).
+set_coldef_strategy(). Default is 0 (guess good definition).
 
-=item C<tabledef_strategy>
+=item C<coldef_strategy>
 
-Controls the behaviour of the C<tabledef> calculation when get_tabledef()
+Controls the behaviour of the C<coldef> calculation when get_coldef()
 does not return a true value. Is a reference to a hash with following keys:
 
 =over
@@ -1251,28 +1321,28 @@ C<qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xms>.
 =item IS_LONG =E<gt> $n
 
 Defines a column as I<LONG> when B<one> cell is equal or larger than C<$n> 
-characters (default 50).
+characters (default 30).
 
-=item NUMBER_COL =E<gt> $attribute
+=item NUMBER_COL =E<gt> $attribute, NUMBER_COL_X =E<gt> $attribute
 
-The C<tabledef> attribute for I<NUMBER> columns. Default 'r' (right-justified).
+The C<coldef> attribute for I<NUMBER> columns. Default 'r' (right-justified).
 
-=item LONG_COL =E<gt> $attribute
+=item LONG_COL =E<gt> $attribute, LONG_COL_X =E<gt> $attribute
 
-The C<tabledef> attribute for I<LONG> columns. Default 'p{5cm}' (paragraph
-column with text vertically aligned at the top, width 5cm). Note that this
-requires that get_text_wrap() returns 0.
+The C<coldef> attribute for I<LONG> columns. Default 'p{5cm}' (paragraph
+column with text vertically aligned at the top, width 5cm) and 'X' when the
+C<tabularx> package is used. Note that this requires that get_text_wrap() returns 0.
 
-=item DEFAULT =E<gt> $attribute
+=item DEFAULT =E<gt> $attribute, DEFAULT_X =E<gt> $attribute
 
-The C<tabledef> attribute for columns that are neither I<NUMBER> nor I<LONG>.
+The C<coldef> attribute for columns that are neither I<NUMBER> nor I<LONG>.
 Default 'l' (left-justified).
 
 =back
 
 Example:
 
-  $table->set_tabledef_strategy({
+  $table->set_coldef_strategy({
     IS_A_NUMBER => qr{\A \d+ \z}xms, # integers only
     IS_LONG     => 60, # min. 60 characters
     LONG_COL    => 'm{7cm}', # vertically aligned at the middle, 7cm
@@ -1298,9 +1368,20 @@ in the table definition.
 If get_width() returns a true value, then
 C<{tabular*}{width}{@{\extracolsep{\fill}} ... }> (or
 C<{xtabular*}{width}{ ... }>, respectively) is used.
+For tables of type 'std', you can also use the tabularx package (see below).
 
   # use 75% of textwidth 
   $table->set_width('0.75\textwidth');
+  
+  # or 300 points (1/72 inch)
+  $table->set_width('300pt');
+
+=item C<width_environment>
+
+If get_width() (see above) returns a true value and table is of type std, then
+this option specifies whether C<tabular*> or the C<tabularx> package should be
+used. The latter is great when you have long columns because C<tabularx> tries
+to optimize the column widths. Default is 'tabular*'.
 
 =back
 
@@ -1351,8 +1432,9 @@ Multicolumns can be defined in LaTeX with
 C<\multicolumn{#cols}{definition}{text}>. Because multicolumns are often 
 needed and this is way too much code to type, a shortcut was implemented. Now,
 C<text:#colsdefinition> is equivalent to original LaTeX code. For example,
-C<Beers:2|c|> is equivalent to C<\multicolumn{2}{|c|}{Beers}>. Note that 
-C<|c|> overrides the LINES settings in the theme (See L<"CUSTOM THEMES">).
+C<Item:2c> is equivalent to C<\multicolumn{2}{c}{Item}>. Note that vertical 
+lines (C<|>) defined here override the LINES settings in the theme 
+(See L<"CUSTOM THEMES">).
 
 =head1 THEMES
 
@@ -1452,10 +1534,10 @@ The ith element of get_data() (or get_header()) is not an array reference. See L
 
 The jth column in the ith row is not a scalar. See L<"BASIC OPTIONS">.
 
-=item DEPRECATED. Use options C<header> and C<data> instead.
+=item DEPRECATED. ...  
 
-You have called either generate() or generate_string() with header and data as
-parameters. This is deprecated since C<LaTeX::Table> 0.1.0.  See L<"BASIC OPTIONS">.
+There were some minor API changes in C<LaTeX::Table> 0.1.0 and 0.8.0.  Just
+apply the changes to the script and/or contact its author.
 
 =item Family not known: ... . Valid families are: ...
 
@@ -1465,9 +1547,9 @@ You have set a font family to an invalid value. See L<"CUSTOM THEMES">.
 
 You have set a font size to an invalid value. See L<"CUSTOM THEMES">.
 
-=item C<tabledef_strategy> not a hash reference.
+=item C<coldef_strategy> not a hash reference.
 
-The return value of get_tabledef_strategy() is not a hash reference. See 
+The return value of get_coldef_strategy() is not a hash reference. See 
 L<"TABULAR ENVIRONMENT">.
 
 =item C<text_wrap> is not an array reference
@@ -1488,6 +1570,15 @@ The value in this cell is C<undef>. See L<"BASIC OPTIONS">.
 All values in the text_wrap array reference must either be C<undef> or must 
 match the regular expression C<m{\A \d+ \z}xms>. See 
 L<"TABULAR ENVIRONMENT">.
+
+=item Width not known: ...
+
+You have set option C<width_environment> to an invalid value. See 
+L<"TABULAR ENVIRONMENT">
+
+=item width_environment is C<tabularx> and C<width> is unset.
+
+You have to specify a width when using the tabularx package.
 
 =item C<xentrystretch> not a number
 

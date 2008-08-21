@@ -27,7 +27,7 @@ my $SYNOPSIS = <<'EOT'
         maincaption => 'Price List',
         caption     => 'Try our special offer today!',
         label       => 'table_prices',
-        tablepos    => 'htb',
+        position    => 'htb',
         header      => $header,
         data        => $data,
   	}

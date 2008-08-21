@@ -1,5 +1,19 @@
 Revision history for LaTeX-Table
 
+0.8.0  Tue Aug 21 14:30:00 2008
+       - centering instead of center
+       - Bugfix: callback function overwrote values in arrays
+       - maincaption not bold in Zurich
+       - API change: table_environment now environment, environment can be chosen, e.g.
+         'sidewaystable'
+       - API change: tablepos renamed to position  
+       - API change: tabledef renamed to coldef 
+       - API change: tabledef_strategy renamed to coldef_strategy 
+       - tabularx package
+       - default value for long col now 30
+       - POD updates
+       - examples.pdf better
+
 0.7.0  Tue Aug 19 21:15:00 2008
        - plain theme
        - POD updates

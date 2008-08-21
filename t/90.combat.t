@@ -7,15 +7,19 @@ use LaTeX::Table;
 my $test_header = [ [ 'A', 'B', 'C' ], ];
 my $test_data = [ [ '1', 'w', 'x' ], [], [ '2', 'y', 'z' ], ];
 
-my $table = LaTeX::Table->new();
+my $table = LaTeX::Table->new({ tablepos => 'ht',
+                                table_environment => 'sidewaystable',
+                                tabledef  => 'lcc',
+                            });
+
 $table->generate_string($test_header, $test_data);
 like($WARNMSG, qr{DEPRECATED. Use options header and data instead},
     'DEPRECATED warning');
 
 my $expected_output = <<'EOT'
-\begin{table}
-\begin{center}
-\begin{tabular}{lll}
+\begin{sidewaystable}[ht]
+\centering
+\begin{tabular}{lcc}
     \toprule
 \multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
 \midrule
@@ -25,8 +29,7 @@ my $expected_output = <<'EOT'
 2&y&z\\ 
 \bottomrule
 \end{tabular}
-\end{center}
-\end{table}
+\end{sidewaystable}
 EOT
     ;
 

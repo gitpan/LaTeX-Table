@@ -40,7 +40,7 @@ my $expected_output =<<'EOT'
 \hline
 }
 \tablelasttail{}
-\begin{center}
+\centering
 \begin{xtabular}{|l||r|r|}
 Lisa&0&0\\ 
 Marge&0&1\\ 
@@ -50,7 +50,6 @@ Homer&2&6\\
 Barney&8&16\\ 
 \hline
 \end{xtabular}
-\end{center}
 } 
 EOT
 ;
@@ -75,7 +74,7 @@ $expected_output =<<'EOT'
 \tabletail{ \hline
 }
 \tablelasttail{}
-\begin{center}
+\centering
 \begin{xtabular}{|l||r|r|}
 Lisa&0&0\\ 
 Marge&0&1\\ 
@@ -85,7 +84,6 @@ Homer&2&6\\
 Barney&8&16\\ 
 \hline
 \end{xtabular}
-\end{center}
 } 
 EOT
 ;

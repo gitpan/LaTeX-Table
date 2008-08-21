@@ -30,7 +30,7 @@ my $test_header = [ [ 'A', 'B', 'C' ], ];
 my $test_data = [ [ '1', 'w', 'x' ], [ '2', 'y', 'z' ], ];
 
 my $table = LaTeX::Table->new(
-    {   table_environment => 1,
+    {   environment       => 'sidewaystable',
         caption           => 'Test Caption',
         maincaption       => 'Test',
         header            => $test_header,
@@ -41,8 +41,8 @@ my $table = LaTeX::Table->new(
 );
 
 my $expected_output = <<'EOT'
-\begin{table}
-\begin{center}
+\begin{sidewaystable}
+\centering
 \begin{tabular}{|l||l|l|}
     \hline
 \multicolumn{1}{|c||}{\textsc{A}} & \multicolumn{1}{c|}{\textsc{B}} & \multicolumn{1}{c|}{\textsc{C}}\\ 
@@ -54,8 +54,7 @@ my $expected_output = <<'EOT'
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
-\end{center}
-\end{table}
+\end{sidewaystable}
 EOT
     ;
 
@@ -69,11 +68,12 @@ is_deeply(
 );
 
 $table->set_theme('Leipzig2');
+$table->set_environment('table');
 $output = $table->generate_string();
 
 $expected_output = <<'EOT'
 \begin{table}
-\begin{center}
+\centering
 \begin{tabular}{|l||l|l|}
     \hline
 \multicolumn{1}{|c||}{A} & \multicolumn{1}{c|}{B} & \multicolumn{1}{c|}{C}\\ 
@@ -85,7 +85,6 @@ $expected_output = <<'EOT'
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
-\end{center}
 \end{table}
 EOT
     ;
@@ -103,7 +102,7 @@ $output = $table->generate_string();
 
 $expected_output = <<'EOT'
 \begin{table}
-\begin{center}
+\centering
 \begin{tabular}{|l||l|l|}
     \hline
 A & B & C\\ 
@@ -115,7 +114,6 @@ A & B & C\\
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
-\end{center}
 \end{table}
 EOT
     ;

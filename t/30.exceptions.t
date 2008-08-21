@@ -1,4 +1,4 @@
-use Test::More tests => 22;
+use Test::More tests => 25;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -193,11 +193,55 @@ like(
 ) || diag $EVAL_ERROR;
 
 $table->set_data($data);
-$table->set_tabledef_strategy(1);
+$table->set_coldef_strategy(1);
 eval { $table->generate_string; };
 like(
     $EVAL_ERROR, 
-    qr{tabledef_strategy not a hash},
-    'tabledef_strategy not a hash'
+    qr{coldef_strategy not a hash},
+    'coldef_strategy not a hash'
 ) || diag $EVAL_ERROR;
 
+$table = LaTeX::Table->new(
+    {   header  => $header,
+        data    => $data,
+        width   => '100pt',
+        width_environment => 'tabulary',
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{Width environment not known:},
+    'unknown width environment'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header  => $header,
+        data    => $data,
+        width_environment => 'tabularx',
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{width_environment is tabularx and width is unset},
+    'unknown width environment'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header  => $header,
+        data    => $data,
+        type    => 'xtab',
+        width   => '100pt',
+        width_environment => 'tabularx',
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{Width environment not known:},
+    'unknown width environment with xtab'
+) || diag $EVAL_ERROR;

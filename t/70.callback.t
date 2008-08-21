@@ -31,7 +31,7 @@ my $table = LaTeX::Table->new(
 );
 my $expected_output = <<'EOT'
 \begin{table}
-\begin{center}
+\centering
 \begin{tabular}{|l||l|l|}
     \hline
 \multicolumn{1}{|c||}{\textbf{a}} & \multicolumn{1}{c|}{\textbf{b}} & \multicolumn{1}{c|}{\textbf{c}}\\ 
@@ -44,7 +44,6 @@ marge&homer&bart\\
 MARGE&foo&BART\\ 
 \hline
 \end{tabular}
-\end{center}
 \end{table}
 EOT
     ;
