@@ -1,4 +1,4 @@
-use Test::More tests => 25;
+use Test::More tests => 21;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -37,40 +37,6 @@ $table->set_callback( sub { return 'a'; } );
 eval { $table->generate_string; };
 ok( !$EVAL_ERROR, 'no error with valid callback' ) || diag $EVAL_ERROR;
 
-# text_wrap test 1
-
-$table = LaTeX::Table->new(
-    {   header    => $header,
-        data      => $data,
-        text_wrap => {},
-    }
-);
-
-eval { $table->generate_string; };
-like(
-    $EVAL_ERROR, 
-    qr{text_wrap is not an array reference},
-    'text_wrap is not an array reference'
-) || diag $EVAL_ERROR;
-
-# text_wrap test 2
-$table->set_text_wrap(['1', 'b']);
-
-eval { $table->generate_string; };
-like(
-    $EVAL_ERROR, 
-    qr{Value in text_wrap not an integer: b},
-    'text_wrap: b not integer'
-) || diag $EVAL_ERROR;
-
-# text_wrap test 3
-$table->set_text_wrap([10, 10]);
-eval { $table->generate_string; };
-ok( !$EVAL_ERROR, 'no error with valid text_wrap' ) || diag $EVAL_ERROR;
-
-$table->set_text_wrap([undef,10]);
-eval { $table->generate_string; };
-ok( !$EVAL_ERROR, 'no error with valid text_wrap' ) || diag $EVAL_ERROR;
 
 # xentrystretch test 1
 $table = LaTeX::Table->new(

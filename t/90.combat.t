@@ -24,9 +24,9 @@ my $expected_output = <<'EOT'
 \multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
 \midrule
 
-1&w&x\\ 
+1 & w & x\\ 
 \midrule
-2&y&z\\ 
+2 & y & z\\ 
 \bottomrule
 \end{tabular}
 \end{sidewaystable}

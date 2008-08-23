@@ -5,7 +5,8 @@ use English qw( -no_match_vars ) ;
 my $SYNOPSIS = <<'EOT'
 
   use LaTeX::Table;
-  
+  #use Number::Format qw(:subs);  # use mighty CPAN to format values
+
   my $header = [
       [ 'Item:2c', '' ],
       ['\cmidrule(r){1-2}'],
@@ -13,11 +14,11 @@ my $SYNOPSIS = <<'EOT'
   ];
   
   my $data = [
-      [ 'Gnat',      'per gram', '13.65' ],
-      [ '',          'each',      '0.01' ],
-      [ 'Gnu',       'stuffed',  '92.59' ],
-      [ 'Emu',       'stuffed',  '33.33' ],
-      [ 'Armadillo', 'frozen',    '8.99' ],
+      [ 'Gnat',      'per gram', '13.65'   ],
+      [ '',          'each',      '0.0173' ],
+      [ 'Gnu',       'stuffed',  '92.59'   ],
+      [ 'Emu',       'stuffed',  '33.33'   ],
+      [ 'Armadillo', 'frozen',    '8.99'   ],
   ];
 
   
@@ -26,7 +27,7 @@ my $SYNOPSIS = <<'EOT'
         filename    => 'prices.tex',
         maincaption => 'Price List',
         caption     => 'Try our special offer today!',
-        label       => 'table_prices',
+        label       => 'table:prices',
         position    => 'htb',
         header      => $header,
         data        => $data,
@@ -34,13 +35,20 @@ my $SYNOPSIS = <<'EOT'
   );
   
   # write LaTeX code in prices.tex
-  #$table->generate();
+  $table->generate_string();
 
-  # callback functions
+  # callback functions help you to format values easily (as
+  # a great alternative to LaTeX packages like rccol)
+  #
+  # Here, the first colum and the header is printed in upper
+  # case and the third colum is formatted with format_price()
   $table->set_callback(sub { 
        my ($row, $col, $value, $is_header ) = @_;
-       if ($col == 0) {
+       if ($col == 0 || $is_header) {
            $value = uc $value;
+       }
+       elsif ($col == 2 && !$is_header) {
+         #  $value = format_price($value, 2, '');
        }
        return $value;
   });     

@@ -1,7 +1,9 @@
-use Test::More tests => 4;
-use Test::NoWarnings;
+BEGIN { our $WARNMSG; $SIG{'__WARN__'} = sub { $WARNMSG = $_[0]; } };
+
+use Test::More tests => 7;
 
 use LaTeX::Table;
+use English qw( -no_match_vars );
 
 # test no words wrapping
 my $header = [ [ 'A', 'B', ], ];
@@ -26,9 +28,9 @@ my $expected_output = <<'EOT'
 \hline
 \hline
 
-1234&12345678901&12345\\ 
-5678&234567890&\\ 
-12345&1234567890&12345\\ 
+1234 & 12345678901 & 12345\\ 
+5678 & 234567890 & \\ 
+12345 & 1234567890 & 12345\\ 
 \hline
 \end{tabular}
 \end{table}
@@ -66,15 +68,15 @@ $expected_output = <<'EOT';
 \hline
 \hline
 
-Homer&Homer Jay Simpson&Dan Castellaneta\\ 
-Marge&Marjorie Simpson (née&Julie Kavner\\ 
-&Bouvier)&\\ 
-Bart&Bartholomew Jojo Simpson&Nancy Cartwright\\ 
-Lisa&Elizabeth Marie Simpson&Yeardley Smith\\ 
-Maggie&Margaret Simpson&Elizabeth Taylor, Nancy\\ 
-&&Cartwright, James Earl\\ 
-&&Jones,Yeardley Smith, Harry\\ 
-&&Shearer\\ 
+Homer & Homer Jay Simpson & Dan Castellaneta\\ 
+Marge & Marjorie Simpson (née & Julie Kavner\\ 
+ & Bouvier) & \\ 
+Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
+Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
+Maggie & Margaret Simpson & Elizabeth Taylor, Nancy\\ 
+ &  & Cartwright, James Earl\\ 
+ &  & Jones,Yeardley Smith, Harry\\ 
+ &  & Shearer\\ 
 \hline
 \end{tabular}
 \end{table}
@@ -102,11 +104,11 @@ $expected_output = <<'EOT';
 \hline
 \hline
 
-Homer&Homer Jay Simpson&Dan Castellaneta\\ 
-Marge&Marjorie Simpson (née Bouvier)&Julie Kavner\\ 
-Bart&Bartholomew Jojo Simpson&Nancy Cartwright\\ 
-Lisa&Elizabeth Marie Simpson&Yeardley Smith\\ 
-Maggie&Margaret Simpson&Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
+Homer & Homer Jay Simpson & Dan Castellaneta\\ 
+Marge & Marjorie Simpson (née Bouvier) & Julie Kavner\\ 
+Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
+Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
+Maggie & Margaret Simpson & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
 \hline
 \end{tabular}
 \end{table}
@@ -117,3 +119,41 @@ is_deeply(
     [ split( "\n", $expected_output ) ],
     'text wrap works with paragraph attribute'
 );
+
+# text_wrap test 1
+
+my $header = [ [ 'a', 'b' ] ];
+my $data   = [ [ '1', '2' ] ];
+
+$table = LaTeX::Table->new(
+    {   header    => $header,
+        data      => $data,
+        text_wrap => {},
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{text_wrap is not an array reference},
+    'text_wrap is not an array reference'
+) || diag $EVAL_ERROR;
+
+# text_wrap test 2
+$table->set_text_wrap(['1', 'b']);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{Value in text_wrap not an integer: b},
+    'text_wrap: b not integer'
+) || diag $EVAL_ERROR;
+
+# text_wrap test 3
+$table->set_text_wrap([10, 10]);
+eval { $table->generate_string; };
+ok( !$EVAL_ERROR, 'no error with valid text_wrap' ) || diag $EVAL_ERROR;
+
+$table->set_text_wrap([undef,10]);
+eval { $table->generate_string; };
+ok( !$EVAL_ERROR, 'no error with valid text_wrap' ) || diag $EVAL_ERROR;

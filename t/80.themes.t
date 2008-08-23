@@ -49,8 +49,8 @@ my $expected_output = <<'EOT'
 \hline
 \hline
 
-1&w&x\\ 
-2&y&z\\ 
+1 & w & x\\ 
+2 & y & z\\ 
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
@@ -80,8 +80,8 @@ $expected_output = <<'EOT'
 \hline
 \hline
 
-1&w&x\\ 
-2&y&z\\ 
+1 & w & x\\ 
+2 & y & z\\ 
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
@@ -109,8 +109,8 @@ A & B & C\\
 \hline
 \hline
 
-1&w&x\\ 
-2&y&z\\ 
+1 & w & x\\ 
+2 & y & z\\ 
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}

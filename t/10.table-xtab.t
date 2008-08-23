@@ -1,9 +1,9 @@
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Test::NoWarnings;
 
 use LaTeX::Table;
 
-my $test_header =  [ ['Name','Beers:2|c|'], ['','before 4pm', 'after 4pm'] ];
+my $test_header =  [ ['Name','Beers:2c'], ['','before 4pm', 'after 4pm'] ];
 my $test_data   =  [ 
 						['Lisa','0','0'], 
 						[ 'Marge','0','1'], 
@@ -29,7 +29,7 @@ my $expected_output =<<'EOT'
 \label{beercounter}
 
 \tablehead{\hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{|c|}{\textbf{Beers}}\\ 
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
 \multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
 \hline
 \hline
@@ -40,16 +40,17 @@ my $expected_output =<<'EOT'
 \hline
 }
 \tablelasttail{}
-\centering
+\begin{center}
 \begin{xtabular}{|l||r|r|}
-Lisa&0&0\\ 
-Marge&0&1\\ 
-Wiggum&0&5\\ 
-Otto&1&3\\ 
-Homer&2&6\\ 
-Barney&8&16\\ 
+Lisa & 0 & 0\\ 
+Marge & 0 & 1\\ 
+Wiggum & 0 & 5\\ 
+Otto & 1 & 3\\ 
+Homer & 2 & 6\\ 
+Barney & 8 & 16\\ 
 \hline
 \end{xtabular}
+\end{center}
 } 
 EOT
 ;
@@ -66,7 +67,7 @@ $expected_output =<<'EOT'
 \label{beercounter}
 
 \tablehead{\hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{|c|}{\textbf{Beers}}\\ 
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
 \multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
 \hline
 \hline
@@ -74,16 +75,17 @@ $expected_output =<<'EOT'
 \tabletail{ \hline
 }
 \tablelasttail{}
-\centering
+\begin{center}
 \begin{xtabular}{|l||r|r|}
-Lisa&0&0\\ 
-Marge&0&1\\ 
-Wiggum&0&5\\ 
-Otto&1&3\\ 
-Homer&2&6\\ 
-Barney&8&16\\ 
+Lisa & 0 & 0\\ 
+Marge & 0 & 1\\ 
+Wiggum & 0 & 5\\ 
+Otto & 1 & 3\\ 
+Homer & 2 & 6\\ 
+Barney & 8 & 16\\ 
 \hline
 \end{xtabular}
+\end{center}
 } 
 EOT
 ;
@@ -91,4 +93,41 @@ EOT
 $output = $table->generate_string();
 
 is_deeply([ split("\n",$output) ], [split("\n",$expected_output)], 
-    'without table environment, custom tabletail');
+    'without table environment, custom tabletail') || diag $output;
+
+$table->set_caption_top(1);
+
+
+$expected_output =<<'EOT'
+{
+\topcaption[Beer Counter]{\textbf{Beer Counter. }Number of beers before and after 4pm.}
+\label{beercounter}
+
+\tablehead{\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
+\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\hline
+\hline
+}
+\tabletail{ \hline
+}
+\tablelasttail{}
+\begin{center}
+\begin{xtabular}{|l||r|r|}
+Lisa & 0 & 0\\ 
+Marge & 0 & 1\\ 
+Wiggum & 0 & 5\\ 
+Otto & 1 & 3\\ 
+Homer & 2 & 6\\ 
+Barney & 8 & 16\\ 
+\hline
+\end{xtabular}
+\end{center}
+} 
+EOT
+;
+
+$output = $table->generate_string();
+
+is_deeply([ split("\n",$output) ], [split("\n",$expected_output)], 
+    'without table environment, topcaption custom tabletail');

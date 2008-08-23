@@ -1,6 +1,19 @@
 Revision history for LaTeX-Table
 
-0.8.0  Tue Aug 21 14:30:00 2008
+0.9.0  Sat Aug 23 19:00:00 2008
+       - caption_top
+       - themes can now define header font color and bgcolors
+       - multicol shortcut now automatically adds vertical lines
+       - resizebox
+       - Bugfix: centering now only in std.
+       - Bugfix: callback function could destroy our multicolumn shortcut
+       - Bugfix: callback function in header only applied when HEADER_CENTERED
+                 in theme
+       - API change: text_wrap now deprecated. tabularx produces so much nicer
+         tables and it does not break the callback row ids. If you really think this
+         is useful somehow, drop me a mail
+       
+0.8.0  Thu Aug 21 14:30:00 2008
        - centering instead of center
        - Bugfix: callback function overwrote values in arrays
        - maincaption not bold in Zurich

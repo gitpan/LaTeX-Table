@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-08-21 14:35:50 +0200 (Thu, 21 Aug 2008) $
-# $Revision: 853 $
+#     $Date: 2008-08-23 18:54:44 +0200 (Sat, 23 Aug 2008) $
+# $Revision: 892 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,7 +10,7 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.8.0');
+use version; our $VERSION = qv('0.9.0');
 
 use Carp;
 use Fatal qw( open close );
@@ -41,6 +41,7 @@ use Class::Std;
     my %table_environment : ATTR( :name<table_environment> :default('deprecated') );
     my %environment : ATTR( :name<environment> :default('table') );
     my %caption : ATTR( :name<caption> :default(0) );
+    my %caption_top : ATTR( :name<caption_top> :default(0) );
     my %tabledef : ATTR( :name<tabledef> :default('deprecated') );
     my %tabledef_strategy : ATTR( :name<tabledef_strategy> :default('deprecated') );
     my %coldef : ATTR( :name<coldef> :default(0) );
@@ -60,6 +61,7 @@ use Class::Std;
         ATTR( :name<tabletailmsg> :default('Continued on next page') );
     my %tabletail : ATTR( :name<tabletail> :default(0) );
     my %xentrystretch : ATTR( :name<xentrystretch> :default(0) );
+    my %resizebox : ATTR( :name<resizebox> :default(0) );
 
     sub _compatibility_layer {
         my ( $self, @args ) = @_;
@@ -102,7 +104,7 @@ use Class::Std;
     sub generate_string {
         my ( $self, @args ) = @_;
 
-        # support for < 0.1.0 API
+        # support for < 0.8.0 API
         $self->_compatibility_layer(@args);
         
         if ($self->get_environment eq '1') {
@@ -112,25 +114,41 @@ use Class::Std;
         $self->_check_2d_array( $self->get_header, 'header' );
         $self->_check_2d_array( $self->get_data,   'data' );
 
-        my $code = q{};
-        $code = $self->_header( $self->get_header, $self->get_data );
+        # generate the table header LaTeX code
+        my $code = $self->_header( $self->get_header, $self->get_data );
 
         my $theme = $self->_get_theme_settings;
-        my $i     = 0;
+        my $i      = 0;
+        my $row_id = 0;
+
+        # check the data and apply callback function
         my @data  = $self->_examine_data;
     ROW:
         for my $row (@data) {
             $i++;
+
+            # empty rows produce a horizontal line
             if ( !@{$row} ) {
                 $code .= $self->_get_single_hline_code();
                 next ROW;
             }
             else {
+                $row_id++;
+                # single column rows that start with a backslash are just
+                # printed out
                 if (scalar(@{$row}) == 1 && $row->[0] =~ m{\A \s* \\ }xms) {
                     $code .= $row->[0] . "\n";
                     next ROW;
                 }
-                $code .= join( q{&}, @{$row} ) . "\\\\ \n";
+
+                # now print the row LaTeX code
+                my $bgcolor = $theme->{'DATA_BG_COLOR_EVEN'};
+                if (($row_id % 2) == 1) {
+                    $bgcolor = $theme->{'DATA_BG_COLOR_ODD'};
+                }
+                $code .= $self->_get_row_code( $row, $bgcolor );
+
+                # do we have to draw a horizontal line?
                 if ( $i == scalar @data ) {
                     $code .= $self->_get_hline_code($RULE_BOTTOM_ID);
                 }
@@ -139,6 +157,8 @@ use Class::Std;
                 }
             }
         }
+
+        # and finally the footer
         $code .= $self->_footer();
         return $code;
     }
@@ -161,6 +181,7 @@ use Class::Std;
                 croak 'Value in text_wrap not an integer: ' . $value;
             }
         }
+        carp('DEPRECATED: use for example tabularx instead.');
         return;
     }
 
@@ -191,6 +212,14 @@ use Class::Std;
         return;
     }
 
+    sub _apply_callback {
+        my ( $self, $i, $j, $value, $is_header ) = @_;
+        my $col_cb = $self->_get_mc_def($value);
+        $col_cb->{value}  = &{ $self->get_callback }( $i, $j,
+            $col_cb->{value}, $is_header );
+        return $self->_get_mc_value($col_cb);
+    }
+
     sub _examine_data {
         my ($self)    = @_;
         my $text_wrap = $self->get_text_wrap;
@@ -200,8 +229,8 @@ use Class::Std;
             for my $i ( 0 .. $#data ) {
                 my @row = @{$data[$i]};
                 for my $j ( 0 .. ( scalar @{ $data[$i] } - 1 ) ) {
-                    $row[$j] = &{ $self->get_callback }( $i, $j, $data[$i][$j],
-                        0 );
+                    $row[$j] = $self->_apply_callback( $i, $j,
+                        $data[$i][$j],0);
                 }
                 $data[$i] = \@row;
             }
@@ -287,7 +316,12 @@ use Class::Std;
 
         my $begin_center = q{};
         if ( $self->get_center ) {
-            $begin_center = "\\centering\n";
+            if ($self->get_type eq 'std') {
+                $begin_center = "\\centering\n";
+            }
+            else {
+                $begin_center = "\\begin{center}\n";
+            }
         }
         my $width = q{};
         my $asterisk = q{};
@@ -314,12 +348,28 @@ use Class::Std;
         elsif( $self->get_width_environment eq 'tabularx') {
             croak('width_environment is tabularx and width is unset.');
         }
+        my $colordef = q{};
+
+        if (defined $self->_get_theme_settings->{DEFINE_COLORS}) {
+            $colordef = $self->_get_theme_settings->{DEFINE_COLORS} . "\n";
+        }
+
         my $size    = $self->_get_size_code();
-        my $caption = $self->_get_caption_code();
+        my $caption = $self->_get_caption_code(0);
         my $label   = $self->_get_label_code;
 
         my $tabletail     = $self->_get_tabletail_code( $data, 0 );
         my $tabletaillast = $self->_get_tabletail_code( $data, 1 );
+
+        my $begin_resizebox = q{};
+        if ($self->get_resizebox) {
+            my $rb_width = $self->get_resizebox->[0];
+            my $rb_height = q{!};
+            if (defined $self->get_resizebox->[1]) {
+                $rb_height =  $self->get_resizebox->[1];
+            }
+            $begin_resizebox = "\\resizebox{$rb_width}{$rb_height}{\n";
+        }
 
         my $xentrystretch = q{};
         if ( $self->get_xentrystretch ) {
@@ -332,22 +382,23 @@ use Class::Std;
         if ( $self->get_type eq 'xtab' ) {
             return <<"EOXT"
 {
-$size$caption$xentrystretch$label
+$colordef$size$caption$xentrystretch$label
 \\tablehead{$code}
 $tabletail
 $tabletaillast
-$begin_center\\begin{xtabular$asterisk}${width}{$table_def}
+$begin_center$begin_resizebox\\begin{xtabular$asterisk}${width}{$table_def}
 EOXT
         }
         else {
             my $environment = q{};
+            $caption = $self->_get_caption_code(1);
             if ( $self->get_environment ) {
                 $environment = join q{},
                 '\\begin{', $self->get_environment, "}$pos", $size,
-                    $begin_center;
+                    $begin_center, $caption;
             }
             return <<"EOST"
-$environment\\begin{tabular$asterisk}${width}{$table_def}
+$colordef$environment$begin_resizebox\\begin{tabular$asterisk}${width}{$table_def}
     $code
 EOST
                 ;
@@ -364,7 +415,7 @@ EOST
     sub _footer {
         my ($self)  = @_;
         my $label   = $self->_get_label_code();
-        my $caption = $self->_get_caption_code();
+        my $caption = $self->_get_caption_code(0);
         my $asterisk = q{};
         if ( $self->get_width ) {
             if ($self->get_width_environment eq 'tabular*') {
@@ -374,9 +425,18 @@ EOST
                 $asterisk = q{x};
             }
         }
+        my $end_resizebox = q{};
+        if ($self->get_resizebox) {
+            $end_resizebox = "}\n";
+        }
         if ( $self->get_type eq 'xtab' ) {
+            my $end_center = q{};
+            if ( $self->get_center ) {
+                $end_center = '\\end{center}';
+            }
             return <<"EOXT"
 \\end{xtabular$asterisk}
+$end_resizebox$end_center
 } 
 EOXT
         }
@@ -389,7 +449,7 @@ EOXT
             }
             return <<"EOST"
 \\end{tabular$asterisk}
-$environment
+$end_resizebox$environment
 EOST
                 ;
         }
@@ -537,46 +597,31 @@ EOST
                 $code .= $cols[0] . "\n";
                 next CENTER_ROW;
             }
-            if ( defined $theme->{'HEADER_CENTERED'}
-                && $theme->{'HEADER_CENTERED'} )
-            {
 
-                my $vlines = $theme->{'VERTICAL_LINES'};
+            my $j = 0;
 
-                my $v0 = q{|} x $vlines->[0];
-                my $v1 = q{|} x $vlines->[1];
-                my $v2 = q{|} x $vlines->[2];
-
-                my $j = 0;
-                foreach my $col (@cols) {
-                    my $align;
-                    if ( $self->get_callback ) {
-                        $col = &{ $self->get_callback }( $i, $j, $col, 1 );
-                    }
-                    if ( $j == 0 ) {
-                        $align = $v0 . 'c' . $v1;
-                    }
-                    elsif ( $j == ( scalar(@cols) - 1 ) ) {
-                        $align = 'c' . $v0;
-                    }
-                    else {
-                        $align = 'c' . $v2;
-                    }
-                    $col = $self->_add_mc_def(
-                        { value => $col, align => $align, cols => '1' } );
-                    $j++;
+            foreach my $col (@cols) {
+                next if $col =~ m{\A \\ }xms;
+                if ( $self->get_callback ) {
+                    $col = $self->_apply_callback($i, $j, $col, 1);
                 }
-            }
-
-            if ( defined $theme->{'HEADER_FONT_STYLE'} ) {
-                foreach my $col (@cols) {
-                    next FONT_COL if $col =~ m{\A \\ }xms;
+                if ( defined $theme->{'HEADER_CENTERED'}
+                    && $theme->{'HEADER_CENTERED'} ) {
+                    $col = $self->_add_mc_def(
+                        { value => $col, align => 'c', cols => '1' } );
+                }
+                if ( defined $theme->{'HEADER_FONT_STYLE'} ) {
                     $col = $self->_add_font_family( $col,
                         $theme->{'HEADER_FONT_STYLE'} );
                 }
+                if ( defined $theme->{'HEADER_FONT_COLOR'} ) {
+                    $col = $self->_add_font_color( $col,
+                        $theme->{'HEADER_FONT_COLOR'} );
+                }
+                $j++;
             }
 
-            $code .= $self->_get_row_code(@cols);
+            $code .= $self->_get_row_code(\@cols, $theme->{'HEADER_BG_COLOR'});
             $i++;
         }
         $code .= $self->_get_hline_code($RULE_MID_ID);
@@ -584,7 +629,7 @@ EOST
     }
 
     ###########################################################################
-    # Usage      : $self->_get_row_code(@cols);
+    # Usage      : $self->_get_row_code($cols_ref);
     # Purpose    : generate the LaTeX code of a row
     # Returns    : LaTeX code
     # Parameters : the columns
@@ -593,20 +638,53 @@ EOST
     # See also   :
 
     sub _get_row_code {
-        my ( $self, @cols ) = @_;
-        my @cols_defs = map { $self->_get_mc_def($_) } @cols;
-        @cols = ();
+        my ( $self, $cols_ref, $bgcolor ) = @_;
+        my @cols_defs = map { $self->_get_mc_def($_) } @{$cols_ref};
+        my @cols = ();
+        my $theme  = $self->_get_theme_settings;
+        my $vlines = $theme->{'VERTICAL_LINES'};
+        my $v0 = q{|} x $vlines->[0];
+        my $v1 = q{|} x $vlines->[1];
+        my $v2 = q{|} x $vlines->[2];
+        my $j = 0;
         foreach my $col_def (@cols_defs) {
             if ( defined $col_def->{cols} ) {
+                my $vl_pre  = q{};
+                my $vl_post = q{};
+
+                if ( $j == 0 ) {
+                    $vl_pre = $v0;
+                }
+
+                if ( $j == ( scalar(@cols_defs) - 1 ) ) {
+                    $vl_post =  $v0;
+                }
+                elsif ( $j == 0  && $col_def->{cols}  == 1) {
+                    $vl_post =  $v1;
+                }
+                else {
+                    $vl_post =  $v2;
+                }
+
+                my $color_code = q{};
+                if (defined $bgcolor) {
+                    $color_code = '>{\columncolor{' . $bgcolor . '}}';
+                }
+
                 push @cols,
                     '\\multicolumn{'
                     . $col_def->{cols} . '}{'
-                    . $col_def->{align} . '}{'
+                    . $vl_pre . $color_code . $col_def->{align} . $vl_post . '}{'
                     . $col_def->{value} . '}';
+
             }
             else {
                 push @cols, $col_def->{value};
             }
+            $j++;
+        }
+        if (defined $bgcolor && scalar(@cols) >= 0) {
+            $cols[0] = "\\rowcolor{$bgcolor}" . $cols[0];
         }
         return join( ' & ', @cols ) . "\\\\ \n";
     }
@@ -634,7 +712,7 @@ EOST
 
     sub _get_mc_def {
         my ( $self, $value ) = @_;
-        if ( $value =~ m{ \A (.*)\:(\d)([|clr]+) \z }xms ) {
+        if ( $value =~ m{ \A (.*)\:(\d)([clr]) \z }xms ) {
             return { value => $1, cols => $2, align => $3 };
         }
         else {
@@ -662,6 +740,13 @@ EOST
         }
         my $col_def = $self->_get_mc_def($col);
         $col_def->{value} = "\\text$family" . '{' . $col_def->{value} . '}';
+        return $self->_get_mc_value($col_def);
+    }
+
+    sub _add_font_color {
+        my ( $self, $col, $color ) = @_;
+        my $col_def = $self->_get_mc_def($col);
+        $col_def->{value} = "\\color{$color}" . $col_def->{value};
         return $self->_get_mc_value($col_def);
     }
 
@@ -693,7 +778,7 @@ EOST
             $tabularx = '_X';
         }
 
-        foreach my $col (@cols) {
+        for my $col (@cols) {
 
             # align text right, numbers left, first col always left
             my $align = $strategy->{"DEFAULT$tabularx"};
@@ -759,17 +844,49 @@ EOST
     # Usage      : $self->_get_caption_code();
     # Purpose    : generates the LaTeX code of the caption
     # Returns    : LaTeX code
-    # Parameters : none
+    # Parameters : header (1)
     # Throws     :
-    # Comments   : n/a
+    # Comments   : header specifies whether this function has been called in
+    #              the header or footer. ignored for xtab, because there it  
+    #              is always placed on top
     # See also   :
 
     sub _get_caption_code {
-        my ($self)    = @_;
+        my ($self, $header)  = @_;
         my $f_caption = q{};
         my $s_caption = q{};
         my $theme     = $self->_get_theme_settings;
-
+        
+        my $c_caption;
+        if ($self->get_caption_top) {
+            if ( $self->get_type eq 'xtab' ) {
+                $c_caption = $self->get_caption_top;
+                if ($c_caption eq '1') {
+                    $c_caption = 'topcaption';
+                }
+            }
+            else {
+                if (!$header) {
+                    return q{};
+                }
+                $c_caption = $self->get_caption_top;
+                $c_caption =~ s{ \A \\ }{}xms;
+                if ($c_caption eq '1') {
+                    $c_caption = 'caption';
+                }
+            }
+        }
+        else {
+            if ( $self->get_type eq 'xtab' ) {
+                $c_caption = 'bottomcaption';
+            }
+            else {
+                if ($header) {
+                    return q{};
+                }
+                $c_caption = 'caption';
+            }
+        }
         my $tmp = q{};
         if ( $self->get_maincaption ) {
             $f_caption = '[' . $self->get_maincaption . ']';
@@ -784,11 +901,6 @@ EOST
         }
 
         $s_caption = '{' . $tmp . $self->get_caption . '}';
-        my $c_caption = 'caption';
-
-        if ( $self->get_type eq 'xtab' ) {
-            $c_caption = 'bottomcaption';
-        }
 
         return q{\\} . $c_caption . $f_caption . $s_caption . "\n";
     }
@@ -927,6 +1039,19 @@ EOST
                 'HORIZONTAL_LINES'   => [ 0, 1, 0 ],
                 'BOOKTABS'           => 0,
             },
+            'NYC' => {
+                'HEADER_FONT_STYLE'  => 'bf',
+                'HEADER_FONT_COLOR'  => 'white',
+                'HEADER_BG_COLOR'    => 'latextbl',
+                'DATA_BG_COLOR_ODD'  => 'latextbl!25',
+                'DATA_BG_COLOR_EVEN' => 'latextbl!10',
+                'DEFINE_COLORS'      =>
+                '\definecolor{latextbl}{RGB}{78,130,190}',
+                'HEADER_CENTERED'    => 1,
+                'VERTICAL_LINES'     => [ 1, 0, 0 ],
+                'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
+                'BOOKTABS'           => 0,
+            },
             'plain' => {
                 'VERTICAL_LINES'     => [ 0, 0, 0 ],
                 'HORIZONTAL_LINES'   => [ 0, 0, 0 ],
@@ -986,7 +1111,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.8.0
+This document describes LaTeX::Table version 0.9.0
 
 =head1 SYNOPSIS
 
@@ -1014,7 +1139,7 @@ This document describes LaTeX::Table version 0.8.0
         maincaption => 'Price List',
         caption     => 'Try our special offer today!',
         label       => 'table:prices',
-        pos         => 'htb',
+        position    => 'htb',
         header      => $header,
         data        => $data,
   	}
@@ -1033,7 +1158,7 @@ This document describes LaTeX::Table version 0.8.0
        if ($col == 0 || $is_header) {
            $value = uc $value;
        }
-       elsif ($col == 2 && $!is_header) {
+       elsif ($col == 2 && !$is_header) {
            $value = format_price($value, 2, '');
        }
        return $value;
@@ -1058,9 +1183,10 @@ Now in your LaTeX document:
 
 LaTeX::Table provides functionality for an intuitive and easy generation of
 LaTeX tables for reports or theses. It ships with some predefined good looking
-table styles. Supports multipage tables via the xtab package and publication
-quality tables with the booktabs package. It also supports the tabularx
-package for nicer fixed-width tables. 
+table styles. Supports multipage tables via the C<xtab> package and publication
+quality tables with the C<booktabs> package. It also supports the C<tabularx>
+package for nicer fixed-width tables. Furthermore, it supports the C<colortbl>
+package for colored tables optimized for presentations.
 
 LaTeX makes professional typesetting easy. Unfortunately,
 this is not entirely true for tables. Many additional, highly specialized packages are 
@@ -1208,7 +1334,7 @@ command is used, i.e. C<\midrule> vs. C<\hline>).
 
 =item C<environment>
 
-If get_environment returns a true value, then a floating environment will be 
+If get_environment() returns a true value, then a floating environment will be 
 generated. Default is 'table'. You can use 'sidewaystable' for rotated tables
 (requires the rotating package). This option only affects tables of C<type> I<std>.
 
@@ -1226,6 +1352,29 @@ generated. Default is 'table'. You can use 'sidewaystable' for rotated tables
 The caption of the table. Only generated if get_caption() returns a true value. 
 Default is 0. Requires C<environment>.
 
+=item C<caption_top>
+
+If get_caption_top() returns a true value, then the caption is placed above the
+table. To use the standard caption command (C<\caption> in I<std>,
+C<\topcaption> in I<xtab>) , use 
+
+   ...
+   caption_top => 1, 
+   ...
+
+You can specify an alternative command here:
+
+   ...
+   caption_top => 'topcaption', # would require the topcapt package
+
+Or even multiple commands: 
+
+   caption_top =>
+     '\setlength{\abovecaptionskip}{0pt}\setlength{\belowcaptionskip}{10pt}\caption',
+   ...
+
+Default 0 (caption below the table).  
+
 =item C<center>
 
 Defines whether the table is centered. Default 1 (centered). Requires 
@@ -1234,7 +1383,7 @@ C<environment>.
 =item C<label>
 
 The label of the table. Only generated if get_label() returns a true value.
-In Latex you can create a reference to the table with C<\ref{label}>.
+In LaTeX you can create a reference to the table with C<\ref{label}>.
 Default is 0. Requires C<environment>.
 
 =item C<maincaption>
@@ -1246,8 +1395,8 @@ in the Table Listing (C<\listoftables>) and before the C<caption>. Default
 =item C<size>
 
 Font size. Valid values are 'tiny', 'scriptsize', 'footnotesize', 'small',
-'normal', 'large', 'Large', 'LARGE', 'huge', 'Huge' and 0. Default is 0 
-(does not define a font size). Requires C<environment>.
+'normal', 'large', 'Large', 'LARGE', 'huge', 'Huge' and 0. Default is 0 (does 
+not define a font size). Requires C<environment>.
 
 =item C<position>
 
@@ -1331,7 +1480,7 @@ The C<coldef> attribute for I<NUMBER> columns. Default 'r' (right-justified).
 
 The C<coldef> attribute for I<LONG> columns. Default 'p{5cm}' (paragraph
 column with text vertically aligned at the top, width 5cm) and 'X' when the
-C<tabularx> package is used. Note that this requires that get_text_wrap() returns 0.
+C<tabularx> package is used.
 
 =item DEFAULT =E<gt> $attribute, DEFAULT_X =E<gt> $attribute
 
@@ -1348,20 +1497,17 @@ Example:
     LONG_COL    => 'm{7cm}', # vertically aligned at the middle, 7cm
   });
 
-=item C<text_wrap>
+=item C<resizebox>
 
-If get_text_wrap() returns a true value and if the return value is a reference
-to an array of integer values, then L<Text::Wrap> is used to wrap the column
-after the specified number of characters. More precisely, L<Text::Wrap>
-ensures that no column will have a length longer than C<$characters - 1>.
+If get_resizebox() returns a true value, then the resizebox command is used to
+resize the table. Takes as argument a reference to an array. The first element
+is the desired witdth. If a second element is not given, then the hight is set to
+a value so that the aspect ratio is still the same. Requires the C<graphicx>
+LaTeX package. Default 0.
 
-  # wrap first and last column after 10 characters, second column after 60
-  $table->set_text_wrap([ 10, 60, 10 ]);
+  $table->set_resizebox([ '0.6\textwidth' ]);
 
-Be aware that C<text_wrap> wraps the content of the columns and does not try 
-to filter out LaTeX commands - thus your formatted LaTeX document may display
-less characters than desired. It also turns off the automatic I<p> attribute
-in the table definition.  
+  $table->set_resizebox([ '300pt', '200pt' ]);
 
 =item C<width>
 
@@ -1429,34 +1575,39 @@ All custom themes. See L<"CUSTOM THEMES">.
 =head1 MULTICOLUMNS 
 
 Multicolumns can be defined in LaTeX with
-C<\multicolumn{#cols}{definition}{text}>. Because multicolumns are often 
-needed and this is way too much code to type, a shortcut was implemented. Now,
-C<text:#colsdefinition> is equivalent to original LaTeX code. For example,
-C<Item:2c> is equivalent to C<\multicolumn{2}{c}{Item}>. Note that vertical 
-lines (C<|>) defined here override the LINES settings in the theme 
-(See L<"CUSTOM THEMES">).
+C<\multicolumn{#cols}{definition}{text}>. 
+This module supports a simple shortcut of the format C<$text:$cols$alignment>. 
+For example, C<Item:2c> is equivalent to C<\multicolumn{2}{c}{Item}>. Note that
+vertical lines (C<|>) are automatically added here according the LINES settings
+in the theme (See L<"CUSTOM THEMES">).
 
 =head1 THEMES
 
 The theme can be selected with C<$table-E<gt>set_theme($themename)>. 
 Currently, following predefined themes are available: I<Zurich>, I<plain> (no
-formatting), I<Dresden>, I<Berlin>, I<Miami> and I<Houston>. The script F<generate_examples.pl> in the 
-I<examples> directory of this distributions generates some examples for all 
-available themes.
+formatting), I<NYC> (for presentations), I<Dresden>, I<Berlin>, I<Miami> and 
+I<Houston>. The script F<generate_examples.pl> in the I<examples> directory of
+this distributions generates some examples for all available themes.
 
-The default theme, Zurich, is highly recommended. It requires C<\usepackage{booktabs}> in 
-your LaTeX document. The top and bottom lines are slightly heavier (ie thicker, or darker) than the
-other lines. No vertical lines. You want this. Believe it.
+The default theme, Zurich, is highly recommended. It requires 
+C<\usepackage{booktabs}> in your LaTeX document. The top and bottom lines are 
+slightly heavier (ie thicker, or darker) than the other lines. No vertical 
+lines. You want this. Believe it.
 
 =head2 CUSTOM THEMES
 
 Custom themes can be defined with an array reference containing all options
 (explained later):
 
+    # a very ugly theme...
     my $themes = { 
                 'Leipzig' => {
                     'HEADER_FONT_STYLE'  => 'sc',
+                    'HEADER_FONT_COLOR'  => 'white',
+                    'HEADER_BG_COLOR'    => 'blue',
                     'HEADER_CENTERED'    => 1,
+                    'DATA_BG_COLOR_ODD'  => 'blue!30',
+                    'DATA_BG_COLOR_EVEN' => 'blue!10',
                     'CAPTION_FONT_STYLE' => 'sc',
                     'VERTICAL_LINES'     => [ 1, 2, 1 ],
                     'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
@@ -1473,6 +1624,19 @@ Custom themes can be defined with an array reference containing all options
 C<HEADER_FONT_STYLE>, C<CAPTION_FONT_STYLE>. Valid values are I<bf> (bold),
 I<it> (italics), I<sc> (caps) and I<tt> (typewriter). When this option is
 undef, then header (or caption, respectively) is written in normal font.
+
+=item Colors
+
+C<HEADER_FONT_COLOR> can be used to specify a different font color for the
+header. Requires the C<color> LaTeX package.
+
+Set C<HEADER_BG_COLOR> to use a background color in the header,
+C<DATA_BG_COLOR_EVEN> and C<DATA_BG_COLOR_ODD> for even and odd data rows. 
+Requires the C<colortbl> and the C<xcolor> LaTeX package. 
+
+You can define colors with C<DEFINE_COLORS>, for example:
+
+ 'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
 
 =item Lines
 
@@ -1512,7 +1676,19 @@ C<\hline>, C<LaTeX::Table> then uses C<\toprule>, C<\midrule> and C<\bottomrule>
 
 =back
 
+=head1 EXAMPLES
+
+See I<examples/examples.pdf> in this distribution for examples of most of the
+features of this module. This document was generated with
+I<examples/generate_examples.pl>.
+
 =head1 DIAGNOSTICS
+
+If you get a LaTeX error message, please check whether you have included all
+required packages. The packages we use are C<booktabs>, C<color>, C<colortbl>,
+C<graphicx>, C<rotating>, C<tabularx>, C<xcolor> and C<xtab>. 
+
+C<LaTeX::Table> may throw one of these errors:
 
 =over
 
@@ -1528,7 +1704,8 @@ reference to an array. See L<"BASIC OPTIONS">.
 
 =item C<data[$i]/header[$i]> is not an array reference
 
-The ith element of get_data() (or get_header()) is not an array reference. See L<"BASIC OPTIONS">.
+The ith element of get_data() (or get_header()) is not an array reference. See
+L<"BASIC OPTIONS">.
 
 =item C<data[$i][$j]/header[$i][$j]> is not a scalar
 
@@ -1552,11 +1729,6 @@ You have set a font size to an invalid value. See L<"CUSTOM THEMES">.
 The return value of get_coldef_strategy() is not a hash reference. See 
 L<"TABULAR ENVIRONMENT">.
 
-=item C<text_wrap> is not an array reference
-
-The return value of get_text_wrap() is not an array reference. See
-L<"TABULAR ENVIRONMENT">.
-
 =item Theme not known: ...
 
 You have set the option C<theme> to an invalid value. See L<"THEMES">.
@@ -1565,20 +1737,15 @@ You have set the option C<theme> to an invalid value. See L<"THEMES">.
 
 The value in this cell is C<undef>. See L<"BASIC OPTIONS">.
 
-=item Value in C<text_wrap> not an integer: ...
-
-All values in the text_wrap array reference must either be C<undef> or must 
-match the regular expression C<m{\A \d+ \z}xms>. See 
-L<"TABULAR ENVIRONMENT">.
-
 =item Width not known: ...
 
 You have set option C<width_environment> to an invalid value. See 
-L<"TABULAR ENVIRONMENT">
+L<"TABULAR ENVIRONMENT">.
 
 =item width_environment is C<tabularx> and C<width> is unset.
 
-You have to specify a width when using the tabularx package.
+You have to specify a width when using the tabularx package. See
+L<"TABULAR ENVIRONMENT">.
 
 =item C<xentrystretch> not a number
 
