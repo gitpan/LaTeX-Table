@@ -96,6 +96,7 @@ is_deeply([ split("\n",$output) ], [split("\n",$expected_output)],
     'without table environment, custom tabletail') || diag $output;
 
 $table->set_caption_top(1);
+$table->set_center(0);
 
 
 $expected_output =<<'EOT'
@@ -112,7 +113,6 @@ $expected_output =<<'EOT'
 \tabletail{ \hline
 }
 \tablelasttail{}
-\begin{center}
 \begin{xtabular}{|l||r|r|}
 Lisa & 0 & 0\\ 
 Marge & 0 & 1\\ 
@@ -122,7 +122,7 @@ Homer & 2 & 6\\
 Barney & 8 & 16\\ 
 \hline
 \end{xtabular}
-\end{center}
+
 } 
 EOT
 ;

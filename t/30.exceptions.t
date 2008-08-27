@@ -1,4 +1,4 @@
-use Test::More tests => 21;
+use Test::More tests => 28;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -160,6 +160,16 @@ like(
 
 $table->set_data($data);
 $table->set_coldef_strategy(1);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{coldef_strategy not a hash},
+    'coldef_strategy not a hash'
+) || diag $EVAL_ERROR;
+
+$table->set_coldef_strategy(['a', 'b']);
+
 eval { $table->generate_string; };
 like(
     $EVAL_ERROR, 
@@ -210,4 +220,87 @@ like(
     $EVAL_ERROR, 
     qr{Width environment not known:},
     'unknown width environment with xtab'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header              => $header,
+        data                => $data,
+        columns_like_header => 2,
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{columns_like_header is not an array reference},
+    'columns_like_header not an array reference'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header              => $header,
+        data                => $data,
+        columns_like_header => { 1 => 2 },
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{columns_like_header is not an array reference},
+    'columns_like_header not an array reference'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header              => $header,
+        data                => $data,
+        columns_like_header => 0,
+    }
+);
+
+eval { $table->generate_string; };
+ok(
+    !$EVAL_ERROR, 
+    'columns_like_header 0 is ok'
+) || diag $EVAL_ERROR;
+
+## resizebox
+
+$table = LaTeX::Table->new(
+    {   header              => $header,
+        data                => $data,
+        resizebox => 2,
+    }
+);
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{resizebox is not an array reference},
+    'resizebox not an array reference'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header              => $header,
+        data                => $data,
+        resizebox => { 1 => 2 },
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{resizebox is not an array reference},
+    'resizebox not an array reference'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header              => $header,
+        data                => $data,
+        resizebox => 0,
+    }
+);
+
+eval { $table->generate_string; };
+ok(
+    !$EVAL_ERROR, 
+    'resizebox 0 is ok'
 ) || diag $EVAL_ERROR;

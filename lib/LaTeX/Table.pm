@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-08-23 18:54:44 +0200 (Sat, 23 Aug 2008) $
-# $Revision: 892 $
+#     $Date: 2008-08-27 21:45:12 +0200 (Wed, 27 Aug 2008) $
+# $Revision: 932 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,7 +10,7 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.9.0');
+use version; our $VERSION = qv('0.9.1');
 
 use Carp;
 use Fatal qw( open close );
@@ -25,7 +25,7 @@ Readonly my $RULE_MID_ID    => 1;
 Readonly my $RULE_INNER_ID  => 2;
 Readonly my $RULE_BOTTOM_ID => 3;
 
-Readonly my $DEFAULT_IS_LONG  => 30;
+Readonly my $DEFAULT_IS_LONG    => 30;
 Readonly my $DEFAULT_LONG_COL   => 'p{5cm}';
 Readonly my $DEFAULT_LONG_COL_X => 'X';
 
@@ -50,6 +50,7 @@ use Class::Std;
     my %predef_themes : ATTR( :get<predef_themes> );
     my %custom_themes : ATTR( :name<custom_themes> :default(0) );
     my %text_wrap : ATTR( :name<text_wrap> :default(0) );
+    my %columns_like_header : ATTR( :name<columns_like_header> :default(0) );
     my %width : ATTR( :name<width> :default(0) );
     my %width_environment : ATTR( :name<width_environment> :default('tabular*') );
     my %tablepos : ATTR( :name<tablepos> :default('deprecated') );
@@ -92,11 +93,12 @@ use Class::Std;
         return;
     }
 
+
     ###########################################################################
-    # Usage      : $table->generate_string(\@header, \@data);
+    # Usage      : $table->generate_string();
     # Purpose    : generates LaTex data
     # Returns    : code
-    # Parameters : data columns
+    # Parameters : node
     # Throws     :
     # Comments   : n/a
     # See also   :
@@ -106,13 +108,9 @@ use Class::Std;
 
         # support for < 0.8.0 API
         $self->_compatibility_layer(@args);
-        
-        if ($self->get_environment eq '1') {
-            $self->set_environment('table');
-        }
-        # check header and data
-        $self->_check_2d_array( $self->get_header, 'header' );
-        $self->_check_2d_array( $self->get_data,   'data' );
+
+        # are the user provided options ok?
+        $self->_check_options();
 
         # generate the table header LaTeX code
         my $code = $self->_header( $self->get_header, $self->get_data );
@@ -133,7 +131,6 @@ use Class::Std;
                 next ROW;
             }
             else {
-                $row_id++;
                 # single column rows that start with a backslash are just
                 # printed out
                 if (scalar(@{$row}) == 1 && $row->[0] =~ m{\A \s* \\ }xms) {
@@ -141,12 +138,14 @@ use Class::Std;
                     next ROW;
                 }
 
+                $row_id++;
+
                 # now print the row LaTeX code
                 my $bgcolor = $theme->{'DATA_BG_COLOR_EVEN'};
                 if (($row_id % 2) == 1) {
                     $bgcolor = $theme->{'DATA_BG_COLOR_ODD'};
                 }
-                $code .= $self->_get_row_code( $row, $bgcolor );
+                $code .= $self->_get_row_code( $row, $bgcolor, 0 );
 
                 # do we have to draw a horizontal line?
                 if ( $i == scalar @data ) {
@@ -163,11 +162,30 @@ use Class::Std;
         return $code;
     }
 
-    sub _check_callback {
-        my ($self) = @_;
-        if ( reftype $self->get_callback ne 'CODE' ) {
+    sub _check_options {
+        my ( $self ) = @_;
+
+        # default floating enviromnent is table
+        if ($self->get_environment eq '1') {
+            $self->set_environment('table');
+        }
+
+        # check header and data
+        $self->_check_2d_array( $self->get_header, 'header' );
+        $self->_check_2d_array( $self->get_data,   'data' );
+
+        if ( $self->get_callback && reftype $self->get_callback ne 'CODE' ) {
             croak 'callback is not a code reference.';
         }
+        if ($self->get_columns_like_header) {
+            $self->_check_1d_array($self->get_columns_like_header,
+                'columns_like_header');
+        }
+        if ($self->get_resizebox) {
+            $self->_check_1d_array($self->get_resizebox,
+                'resizebox');
+        }
+
         return;
     }
 
@@ -185,17 +203,21 @@ use Class::Std;
         return;
     }
 
-    sub _check_2d_array {
-        my ( $self, $arr_ref_2d, $desc ) = @_;
-        if ( !defined reftype $arr_ref_2d || reftype $arr_ref_2d ne 'ARRAY' )
+    sub _check_1d_array {
+        my ( $self, $arr_ref_1d, $desc ) = @_;
+        if ( !defined reftype $arr_ref_1d || reftype $arr_ref_1d ne 'ARRAY' )
         {
             croak "$desc is not an array reference.";
         }
+        return;
+    }
+
+    sub _check_2d_array {
+        my ( $self, $arr_ref_2d, $desc ) = @_;
+        $self->_check_1d_array($arr_ref_2d, $desc);
         my $i = 0;
         for my $arr_ref ( @{$arr_ref_2d} ) {
-            if ( !defined reftype $arr_ref || reftype $arr_ref ne 'ARRAY' ) {
-                croak "$desc\[$i\] is not an array reference.";
-            }
+            $self->_check_1d_array($arr_ref, "$desc\[$i\]");
             my $j = 0;
             for my $scalar ( @{$arr_ref} ) {
                 my $rt_scalar = reftype $scalar;
@@ -225,12 +247,13 @@ use Class::Std;
         my $text_wrap = $self->get_text_wrap;
         my @data      = @{ $self->get_data };
         if ( $self->get_callback ) {
-            $self->_check_callback;
             for my $i ( 0 .. $#data ) {
                 my @row = @{$data[$i]};
+                my $k = 0;
                 for my $j ( 0 .. ( scalar @{ $data[$i] } - 1 ) ) {
-                    $row[$j] = $self->_apply_callback( $i, $j,
+                    $row[$j] = $self->_apply_callback( $i, $k,
                         $data[$i][$j],0);
+                    $k += $self->_extract_number_columns($data[$i][$j])
                 }
                 $data[$i] = \@row;
             }
@@ -432,7 +455,7 @@ EOST
         if ( $self->get_type eq 'xtab' ) {
             my $end_center = q{};
             if ( $self->get_center ) {
-                $end_center = '\\end{center}';
+                $end_center = "\\end{center}";
             }
             return <<"EOXT"
 \\end{xtabular$asterisk}
@@ -489,6 +512,17 @@ EOST
         return;
     }
 
+    sub _extract_number_columns {
+        my ( $self, $col ) = @_;
+        my $def = $self->_get_mc_def($col);
+        if (defined $def->{cols}) {
+            return $def->{cols};
+        }
+        else {
+            return 1;
+        }
+    }
+
     ###########################################################################
     # Usage      : $self->_get_data_summary(\@data);
     # Purpose    : find out how many columns we need and if column consists of
@@ -527,7 +561,7 @@ EOST
                 else {
                     $not_a_number{$i}++;
                 }
-                $i++;
+                $i += $self->_extract_number_columns($col);
             }
         }
         my @summary;
@@ -586,10 +620,6 @@ EOST
 
         my $i = 0;
 
-        if ( $self->get_callback ) {
-            $self->_check_callback;
-        }
-        
         CENTER_ROW:
         foreach my $row ( @{$header} ) {
             my @cols = @{$row};
@@ -605,27 +635,54 @@ EOST
                 if ( $self->get_callback ) {
                     $col = $self->_apply_callback($i, $j, $col, 1);
                 }
-                if ( defined $theme->{'HEADER_CENTERED'}
-                    && $theme->{'HEADER_CENTERED'} ) {
-                    $col = $self->_add_mc_def(
-                        { value => $col, align => 'c', cols => '1' } );
-                }
-                if ( defined $theme->{'HEADER_FONT_STYLE'} ) {
-                    $col = $self->_add_font_family( $col,
-                        $theme->{'HEADER_FONT_STYLE'} );
-                }
-                if ( defined $theme->{'HEADER_FONT_COLOR'} ) {
-                    $col = $self->_add_font_color( $col,
-                        $theme->{'HEADER_FONT_COLOR'} );
-                }
-                $j++;
+                $col = $self->_apply_header_formatting($col, 1);
+
+                $j += $self->_extract_number_columns($col);
             }
 
-            $code .= $self->_get_row_code(\@cols, $theme->{'HEADER_BG_COLOR'});
+            $code .= $self->_get_row_code(\@cols, $theme->{'HEADER_BG_COLOR'}, 1);
             $i++;
         }
-        $code .= $self->_get_hline_code($RULE_MID_ID);
+
+        # without header, just draw the topline
+        if ($i) {
+            $code .= $self->_get_hline_code($RULE_MID_ID);
+        }
         return $code;
+    }
+    
+    sub _apply_header_formatting {
+        my ( $self, $col, $aligning ) = @_;
+        my $theme  = $self->_get_theme_settings;
+        if ( $aligning && defined $theme->{'HEADER_CENTERED'}
+            && $theme->{'HEADER_CENTERED'} ) {
+            $col = $self->_add_mc_def(
+                { value => $col, align => 'c', cols => '1' } );
+        }
+        if ( defined $theme->{'HEADER_FONT_STYLE'} ) {
+            $col = $self->_add_font_family( $col,
+                $theme->{'HEADER_FONT_STYLE'} );
+        }
+        if ( defined $theme->{'HEADER_FONT_COLOR'} ) {
+            $col = $self->_add_font_color( $col,
+                $theme->{'HEADER_FONT_COLOR'} );
+        }
+        return $col;
+    }
+
+    sub _get_cell_bg_color {
+        my ( $self, $row_bg_color, $col_id ) = @_;
+        my $cell_bg_color = $row_bg_color;
+        if ($self->get_columns_like_header) {
+            HEADER_COLUMN:
+            for my $i ( @{ $self->get_columns_like_header } ) {
+                if ($i == $col_id) {
+                    $cell_bg_color = $self->_get_theme_settings->{'HEADER_BG_COLOR'};
+                    last HEADER_COLUMN;
+                }
+            }
+        }
+        return $cell_bg_color;
     }
 
     ###########################################################################
@@ -638,7 +695,7 @@ EOST
     # See also   :
 
     sub _get_row_code {
-        my ( $self, $cols_ref, $bgcolor ) = @_;
+        my ( $self, $cols_ref, $bgcolor, $is_header ) = @_;
         my @cols_defs = map { $self->_get_mc_def($_) } @{$cols_ref};
         my @cols = ();
         my $theme  = $self->_get_theme_settings;
@@ -646,8 +703,21 @@ EOST
         my $v0 = q{|} x $vlines->[0];
         my $v1 = q{|} x $vlines->[1];
         my $v2 = q{|} x $vlines->[2];
-        my $j = 0;
-        foreach my $col_def (@cols_defs) {
+        my $j = 0; my $col_id = 0;
+        for my $col_def (@cols_defs) {
+            if (!$is_header && $self->get_columns_like_header) {
+                HEADER_COLUMN:
+                for my $i ( @{ $self->get_columns_like_header } ) {
+                    next HEADER_COLUMN if $i != $col_id;
+                    $col_def = $self->_get_mc_def(
+                        $self->_apply_header_formatting(
+                            $self->_get_mc_value( $col_def ), 0 ) );
+                    if (!defined $col_def->{cols}) {
+                        $col_def->{cols} = 1;
+                        $col_def->{align} = 'l';
+                    }
+                }
+            }
             if ( defined $col_def->{cols} ) {
                 my $vl_pre  = q{};
                 my $vl_post = q{};
@@ -667,8 +737,10 @@ EOST
                 }
 
                 my $color_code = q{};
-                if (defined $bgcolor) {
-                    $color_code = '>{\columncolor{' . $bgcolor . '}}';
+
+                my $cell_bg_color = $self->_get_cell_bg_color($bgcolor, $col_id);
+                if (defined $cell_bg_color) {
+                    $color_code = '>{\columncolor{' . $cell_bg_color . '}}';
                 }
 
                 push @cols,
@@ -677,9 +749,11 @@ EOST
                     . $vl_pre . $color_code . $col_def->{align} . $vl_post . '}{'
                     . $col_def->{value} . '}';
 
+                $col_id += $col_def->{cols};
             }
             else {
                 push @cols, $col_def->{value};
+                $col_id++;
             }
             $j++;
         }
@@ -1016,6 +1090,17 @@ EOST
                 'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
                 'BOOKTABS'           => 0,
             },
+            'Paris' => {
+                'HEADER_FONT_STYLE'  => 'bf',
+                'HEADER_CENTERED'    => 1,
+                'HEADER_BG_COLOR'    => 'latextblgray',
+                'DEFINE_COLORS'      =>
+                '\definecolor{latextblgray}{gray}{0.7}',
+                'CAPTION_FONT_STYLE' => 'bf',
+                'VERTICAL_LINES'     => [ 1, 1, 1 ],
+                'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
+                'BOOKTABS'           => 0,
+            },
             'Zurich' => {
                 'HEADER_FONT_STYLE'  => 'bf',
                 'HEADER_CENTERED'    => 1,
@@ -1111,7 +1196,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.0
+This document describes LaTeX::Table version 0.9.1
 
 =head1 SYNOPSIS
 
@@ -1120,7 +1205,7 @@ This document describes LaTeX::Table version 0.9.0
 
   my $header = [
       [ 'Item:2c', '' ],
-      ['\cmidrule(r){1-2}'],
+      [ '\cmidrule(r){1-2}' ],
       [ 'Animal', 'Description', 'Price' ]
   ];
   
@@ -1168,25 +1253,25 @@ This document describes LaTeX::Table version 0.9.0
 
 Now in your LaTeX document:
 
-    \documentclass{article}
+  \documentclass{article}
 
-    % for multipage tables
-    \usepackage{xtab}
-    % for publication quality tables
-    \usepackage{booktabs}
+  % for multipage tables
+  \usepackage{xtab}
+  % for publication quality tables
+  \usepackage{booktabs}
 
-    \begin{document}
-    \input{prices}
-    \end{document}
+  \begin{document}
+  \input{prices}
+  \end{document}
   
 =head1 DESCRIPTION
 
 LaTeX::Table provides functionality for an intuitive and easy generation of
-LaTeX tables for reports or theses. It ships with some predefined good looking
-table styles. Supports multipage tables via the C<xtab> package and publication
-quality tables with the C<booktabs> package. It also supports the C<tabularx>
-package for nicer fixed-width tables. Furthermore, it supports the C<colortbl>
-package for colored tables optimized for presentations.
+LaTeX tables. It ships with some predefined good looking
+table styles. This module supports multipage tables via the C<xtab> package and 
+publication quality tables with the C<booktabs> package. It also supports the
+C<tabularx> package for nicer fixed-width tables. Furthermore, it supports 
+the C<colortbl> package for colored tables optimized for presentations.
 
 LaTeX makes professional typesetting easy. Unfortunately,
 this is not entirely true for tables. Many additional, highly specialized packages are 
@@ -1222,9 +1307,9 @@ as string.
 Returns an hash reference to all available (predefined and customs) themes. 
 See L<"THEMES"> for details.
 
-	for my $theme ( keys %{ $table->get_available_themes } ) {
-		...
-	}
+  for my $theme ( keys %{ $table->get_available_themes } ) {
+    ...
+  }
 
 
 =back
@@ -1241,14 +1326,13 @@ created.
 
 =item C<filename>
 
-The name of the LaTeX output file. Default is
-'latextable.tex'.
+The name of the LaTeX output file. Default is 'latextable.tex'.
 
 =item C<type>
 
 Can be either I<std> for the standard LaTeX table or I<xtab> for
 a xtabular table for multipage tables (in appendices for example). The latter 
-requires the C<xtab> latex-package (C<\usepackage{xtab}> in your LaTeX document). 
+requires the C<xtab> LaTeX package (C<\usepackage{xtab}> in your LaTeX document). 
 Default is I<std>.
 
 =item C<header>
@@ -1290,7 +1374,7 @@ will produce following LaTeX code in the default Zurich theme:
   \cline{1-2}
   \multicolumn{1}{c}{\textbf{Animal}} & \multicolumn{1}{c}{\textbf{Description}} & \multicolumn{1}{c}{\textbf{Price}}\\ 
 
-Note that there is no multicolum, textbf, & or \\ added to the second row.
+Note that there is no multicolum, textbf or \\ added to the second row.
 
 =item C<data>
 
@@ -1301,10 +1385,10 @@ The data. Once again a reference to an array (rows) of array references
 
 And you will get a table like this:
 
- +-------+---------+
- | Gnu   |   92.59 |
- | Emu   |   33.33 |
- +-------+---------+
+  +-------+---------+
+  | Gnu   |   92.59 |
+  | Emu   |   33.33 |
+  +-------+---------+
 
 An empty column array will produce a horizontal line:
 
@@ -1312,11 +1396,11 @@ An empty column array will produce a horizontal line:
 
 And you will get a table like this:
 
- +-------+---------+
- | Gnu   |   92.59 |
- +-------+---------+
- | Emu   |   33.33 |
- +-------+---------+
+  +-------+---------+
+  | Gnu   |   92.59 |
+  +-------+---------+
+  | Emu   |   33.33 |
+  +-------+---------+
 
 Single column rows starting with a backslash are again printed without any
 formatting. So,
@@ -1336,16 +1420,16 @@ command is used, i.e. C<\midrule> vs. C<\hline>).
 
 If get_environment() returns a true value, then a floating environment will be 
 generated. Default is 'table'. You can use 'sidewaystable' for rotated tables
-(requires the rotating package). This option only affects tables of C<type> I<std>.
+(requires the C<rotating> package). This option only affects tables of C<type> I<std>.
 
-    \begin{table}[htb]
-        \centering
-        \begin{tabular}{lrr}
-        ...
-        \end{tabular}
-        \caption{Price list}
-        \label{table:prices}
-    \end{table} 
+  \begin{table}[htb]
+      \centering
+      \begin{tabular}{lrr}
+      ...
+      \end{tabular}
+      \caption{Price list}
+      \label{table:prices}
+  \end{table} 
 
 =item C<caption>
 
@@ -1461,28 +1545,28 @@ does not return a true value. Is a reference to a hash with following keys:
 
 =over
 
-=item IS_A_NUMBER =E<gt> $regex
+=item C<IS_A_NUMBER =E<gt> $regex>
 
 Defines a column as I<NUMBER> when B<all> cells in this column match the
 specified regular expression. Default is
 C<qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xms>.
 
-=item IS_LONG =E<gt> $n
+=item C<IS_LONG =E<gt> $n>
 
 Defines a column as I<LONG> when B<one> cell is equal or larger than C<$n> 
 characters (default 30).
 
-=item NUMBER_COL =E<gt> $attribute, NUMBER_COL_X =E<gt> $attribute
+=item C<NUMBER_COL =E<gt> $attribute>, C<NUMBER_COL_X =E<gt> $attribute>
 
 The C<coldef> attribute for I<NUMBER> columns. Default 'r' (right-justified).
 
-=item LONG_COL =E<gt> $attribute, LONG_COL_X =E<gt> $attribute
+=item C<LONG_COL =E<gt> $attribute>, C<LONG_COL_X =E<gt> $attribute>
 
 The C<coldef> attribute for I<LONG> columns. Default 'p{5cm}' (paragraph
 column with text vertically aligned at the top, width 5cm) and 'X' when the
 C<tabularx> package is used.
 
-=item DEFAULT =E<gt> $attribute, DEFAULT_X =E<gt> $attribute
+=item C<DEFAULT =E<gt> $attribute>, C<DEFAULT_X =E<gt> $attribute>
 
 The C<coldef> attribute for columns that are neither I<NUMBER> nor I<LONG>.
 Default 'l' (left-justified).
@@ -1514,7 +1598,7 @@ LaTeX package. Default 0.
 If get_width() returns a true value, then
 C<{tabular*}{width}{@{\extracolsep{\fill}} ... }> (or
 C<{xtabular*}{width}{ ... }>, respectively) is used.
-For tables of type 'std', you can also use the tabularx package (see below).
+For tables of type 'std', you can also use the C<tabularx> LaTeX package (see below).
 
   # use 75% of textwidth 
   $table->set_width('0.75\textwidth');
@@ -1570,16 +1654,34 @@ All predefined themes. Getter only.
 
 All custom themes. See L<"CUSTOM THEMES">.
 
+=item C<columns_like_header>
+
+Takes as argument a reference to an array with column ids (again, starting
+with 0). These columns are formatted like header columns.
+
+   # a "transposed" table ...
+   my $table = LaTeX::Table->new(
+       {   data     => $data,
+           columns_like_header => [ 0 ],
+       };
+
 =back
 
 =head1 MULTICOLUMNS 
 
-Multicolumns can be defined in LaTeX with
-C<\multicolumn{#cols}{definition}{text}>. 
-This module supports a simple shortcut of the format C<$text:$cols$alignment>. 
-For example, C<Item:2c> is equivalent to C<\multicolumn{2}{c}{Item}>. Note that
-vertical lines (C<|>) are automatically added here according the LINES settings
-in the theme (See L<"CUSTOM THEMES">).
+Multicolumns are defined in LaTeX with
+C<\multicolumn{$cols}{$alignment}{$text}>. This module supports a simple 
+shortcut of the format C<$text:$cols$alignment>. For example, C<Item:2c> is 
+equivalent to C<\multicolumn{2}{c}{Item}>. Note that vertical lines (C<|>) are
+automatically added here according the LINES settings in the theme. 
+See L<"CUSTOM THEMES">. C<LaTeX::Table> also uses this shortcut to determine
+the column ids. So in this example,
+
+ my $data = [ [' \multicolumn{2}{c}{A}', 'B' ], [ 'C:2c', 'D' ] ];
+
+'B' would have an column id of 1 and 'D' 2 ('A' and 'C' both 0). This is important 
+for callback functions and for the coldef calculation. 
+See L<"TABULAR ENVIRONMENT">.
 
 =head1 THEMES
 
@@ -1678,7 +1780,7 @@ C<\hline>, C<LaTeX::Table> then uses C<\toprule>, C<\midrule> and C<\bottomrule>
 
 =head1 EXAMPLES
 
-See I<examples/examples.pdf> in this distribution for examples of most of the
+See I<examples/examples.pdf> in this distribution for examples for most of the
 features of this module. This document was generated with
 I<examples/generate_examples.pl>.
 
@@ -1694,8 +1796,13 @@ C<LaTeX::Table> may throw one of these errors:
 
 =item C<callback> is not a code reference 
 
-The return value of C<get_callback()> is not a code reference. See 
+The return value of get_callback() is not a code reference. See 
 L<"TABULAR ENVIRONMENT">.
+
+=item C<columns_like_header> is not an array reference 
+
+The return value of get_columns_like_header() is not an array reference.
+See L<"THEMES">.
 
 =item C<data/header> is not an array reference 
 
@@ -1727,6 +1834,11 @@ You have set a font size to an invalid value. See L<"CUSTOM THEMES">.
 =item C<coldef_strategy> not a hash reference.
 
 The return value of get_coldef_strategy() is not a hash reference. See 
+L<"TABULAR ENVIRONMENT">.
+
+=item C<resizebox> is not an array reference
+
+The return value of get_resizebox() is not a reference to an array. See 
 L<"TABULAR ENVIRONMENT">.
 
 =item Theme not known: ...

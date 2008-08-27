@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 17;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -286,6 +286,7 @@ is_deeply(
 my $header = [ [ 'Character', 'Fullname', 'Voice' ], ];
 my $data = [
     [ 'Homer', 'Homer Jay Simpson',               'Dan Castellaneta', ],
+    [],
     [ 'Marge', 'Marjorie Simpson (née Bouvier)', 'Julie Kavner', ],
     [ 'Bart',  'Bartholomew Jojo Simpson',        'Nancy Cartwright', ],
     [ 'Lisa',  'Elizabeth Marie Simpson',         'Yeardley Smith', ],
@@ -296,6 +297,42 @@ my $data = [
     ],
 ];
 
+#no header test
+$table = LaTeX::Table->new(
+    {   data              => $data,
+        width             => '0.9\textwidth',
+        width_environment => 'tabularx',
+        position          => 'ht',
+    }
+);
+$expected_output = <<'EOT'
+\begin{table}[ht]
+\centering
+\begin{tabularx}{0.9\textwidth}{lXX}
+    \toprule
+
+Homer & Homer Jay Simpson & Dan Castellaneta\\ 
+\midrule
+Marge & Marjorie Simpson (née Bouvier) & Julie Kavner\\ 
+Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
+Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
+Maggie & Margaret Simpson & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
+\bottomrule
+\end{tabularx}
+\end{table}
+
+EOT
+    ;
+
+$output = $table->generate_string();
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'no header'
+);
+
+
+## tabularx test
 $table = LaTeX::Table->new(
     {   header            => $header,
         data              => $data,
@@ -314,6 +351,7 @@ $expected_output = <<'EOT'
 \midrule
 
 Homer & Homer Jay Simpson & Dan Castellaneta\\ 
+\midrule
 Marge & Marjorie Simpson (née Bouvier) & Julie Kavner\\ 
 Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
 Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
@@ -343,6 +381,7 @@ $expected_output = <<'EOT'
 \midrule
 
 Homer & Homer Jay Simpson & Dan Castellaneta\\ 
+\midrule
 Marge & Marjorie Simpson (née Bouvier) & Julie Kavner\\ 
 Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
 Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
@@ -400,7 +439,6 @@ is_deeply(
 );
 
 $table->set_theme('NYC');
-$output = $table->generate_string();
 
 $expected_output = <<'EOT'
 \definecolor{latextbl}{RGB}{78,130,190}
@@ -424,3 +462,93 @@ is_deeply(
     [ split( "\n", $expected_output ) ],
     'theme with colordef'
 );
+
+$table->set_resizebox(['0.6\textwidth']);
+
+
+$expected_output = <<'EOT'
+\definecolor{latextbl}{RGB}{78,130,190}
+\resizebox{0.6\textwidth}{!}{
+\begin{tabular}{|lll|}
+    \hline
+\rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}}\\ 
+\rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}}\\ 
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{B}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{C}}\\ 
+\hline
+
+\rowcolor{latextbl!25}1 & w & x\\ 
+\rowcolor{latextbl!10}2 & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c}\\ 
+\hline
+\end{tabular}
+}
+EOT
+    ;
+
+$output = $table->generate_string();
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'theme with colordef and resizebox'
+);
+
+$table->set_resizebox(['300pt', '200pt']);
+$expected_output = <<'EOT'
+\definecolor{latextbl}{RGB}{78,130,190}
+\resizebox{300pt}{200pt}{
+\begin{tabular}{|lll|}
+    \hline
+\rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}}\\ 
+\rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}}\\ 
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{B}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{C}}\\ 
+\hline
+
+\rowcolor{latextbl!25}1 & w & x\\ 
+\rowcolor{latextbl!10}2 & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c}\\ 
+\hline
+\end{tabular}
+}
+EOT
+    ;
+
+$output = $table->generate_string();
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'theme with colordef and resizebox'
+);
+
+$test_data = [ [ '1', 'w', 'x' ],['\hline' ], [ '2', 'c:2c' ], ];
+
+$table = LaTeX::Table->new(
+    { 
+        data                => $test_data,
+        theme               => 'NYC',
+        columns_like_header => [ 0 ],
+    }
+);
+
+$expected_output = <<'EOT'
+\definecolor{latextbl}{RGB}{78,130,190}
+\begin{table}
+\centering
+\begin{tabular}{|lll|}
+    \hline
+
+\rowcolor{latextbl!25}\multicolumn{1}{|>{\columncolor{latextbl}}l}{\color{white}\textbf{1}} & w & x\\ 
+\hline
+\rowcolor{latextbl!10}\multicolumn{1}{|>{\columncolor{latextbl}}l}{\color{white}\textbf{2}} & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c}\\ 
+\hline
+\end{tabular}
+\end{table}
+EOT
+    ;
+
+
+$output = $table->generate_string();
+
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'theme with colordef and resizebox'
+);
+

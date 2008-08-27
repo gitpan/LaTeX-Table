@@ -1,5 +1,16 @@
 Revision history for LaTeX-Table
 
+0.9.1  Wed Aug 27 21:38:00 2008
+       - Bugfix: no midrule without header
+       - Bugfix: calculation of column ids (callback, coldef_strategy) now
+                 supports multicolumn shortcuts
+       - Bugfix: specified Latex commands in data (with single column arrays)
+                 counted as rows (problem for DATA_BG_COLOR_ODD/EVEN)
+       - colums_like_header()
+       - more tests
+       - Paris Theme
+       - POD corrections
+
 0.9.0  Sat Aug 23 19:00:00 2008
        - caption_top
        - themes can now define header font color and bgcolors

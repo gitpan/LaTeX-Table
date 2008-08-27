@@ -1,4 +1,4 @@
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -93,3 +93,57 @@ is_deeply(
     [ split( "\n", $expected_output ) ],
     'callback seems to work with uc headers and shortcuts',
 );
+
+
+$header = [ [ 'A:3c'], ['A:2c', 'B'], ['A', 'B', 'C'], ];
+$data   = [ [ 'D:3c'], ['D:2c', 'E'], ['D', 'E', 'F'], ];
+
+$table = LaTeX::Table->new(
+    {   header   => $header,
+        data     => $data,
+        callback => sub {
+            my ( $row, $col, $value, $is_header ) = @_;
+            if ( $col == 0) {
+                return 'X' . $value;
+            }    
+            elsif ( $col == 1) {
+                return 'Y' . $value;
+            }
+            else {
+                return 'Z' . $value;
+            }
+        },
+    }
+);
+
+$output = $table->generate_string;
+
+$expected_output = <<'EOT'
+\begin{table}
+\centering
+\begin{tabular}{lll}
+    \toprule
+\multicolumn{3}{c}{\textbf{XA}}\\ 
+\multicolumn{2}{c}{\textbf{XA}} & \multicolumn{1}{c}{\textbf{ZB}}\\ 
+\multicolumn{1}{c}{\textbf{XA}} & \multicolumn{1}{c}{\textbf{YB}} & \multicolumn{1}{c}{\textbf{ZC}}\\ 
+\midrule
+
+\multicolumn{3}{c}{XD}\\ 
+\multicolumn{2}{c}{XD} & ZE\\ 
+XD & YE & ZF\\ 
+\bottomrule
+\end{tabular}
+\end{table}
+
+EOT
+    ;
+
+$output = $table->generate_string;
+
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'callback works with complicated shortcutted headers and data',
+);
+
+
