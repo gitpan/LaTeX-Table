@@ -21,7 +21,7 @@ WriteMakefile(
         'version'        => 0,
         'Readonly'       => 0,
     },
-    EXE_FILES         => [ 'bin/csv2pdf' ], 
+    EXE_FILES         => [ 'bin/csv2pdf', 'bin/ltpretty' ], 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'LaTeX-Table-*' },
 );

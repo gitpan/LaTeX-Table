@@ -132,7 +132,6 @@ print ${OUT} "{\\tiny\\begin{lstlisting}\n$code\n\\end{lstlisting}}";
 print ${OUT} $table->generate_string;
 
 $code = << 'EOC'
-
 We can use the \texttt{tabularx} package to find better column widths than the
 default 5cm. See Table \ref{wrap2} for the results.
 {
@@ -405,6 +404,7 @@ $table->set_callback(sub {
 
 $table->set_header($header);
 $table->set_theme('NYC');
+$table->set_caption_top(0);
 $table->set_label('table:customtheme1');
 
 print $OUT $code .  $table->generate_string() ;
@@ -553,7 +553,7 @@ __DATA__
 \date{\today}
 \author{Markus Riester}
 \maketitle
-\section{LaTeX::Table}
+\begin{abstract}
 
 \textsc{LaTeX::Table} is a Perl module that provides functionality for an intuitive and easy generation of
 LaTeX tables. It ships with some predefined good looking
@@ -563,10 +563,7 @@ quality tables with the \texttt{booktabs} package. It also supports the
 package for nicer fixed-width tables. Furthermore, it supports the \texttt{colortbl}
 package for colored tables optimized for presentations.
 
-LaTeX makes professional typesetting easy. Unfortunately,
-this is not entirely true for tables. Many additional, highly specialized packages are 
-therefore available on CTAN. This module supports the best packages and
-visualizes your in Perl generated or summarized results with high quality. 
+\end{abstract}
 
 \section{Installation}
 You can install it with the \texttt{cpan} command.

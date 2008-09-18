@@ -1,5 +1,9 @@
 Revision history for LaTeX-Table
 
+0.9.2  Thu  Sep 18 14:00:00 2008
+       - POD corrections
+       - added ltpretty. I use it in vim to format my tables with LaTeX::Table
+
 0.9.1  Wed Aug 27 21:38:00 2008
        - Bugfix: no midrule without header
        - Bugfix: calculation of column ids (callback, coldef_strategy) now

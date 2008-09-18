@@ -550,5 +550,5 @@ is_deeply(
     [ split( "\n", $output ) ],
     [ split( "\n", $expected_output ) ],
     'theme with colordef and resizebox'
-);
+) || diag $output;
 

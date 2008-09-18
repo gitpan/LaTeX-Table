@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-08-27 21:45:12 +0200 (Wed, 27 Aug 2008) $
-# $Revision: 932 $
+#     $Date: 2008-09-05 12:43:30 +0200 (Fri, 05 Sep 2008) $
+# $Revision: 980 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,7 +10,7 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.9.1');
+use version; our $VERSION = qv('0.9.2');
 
 use Carp;
 use Fatal qw( open close );
@@ -64,36 +64,6 @@ use Class::Std;
     my %xentrystretch : ATTR( :name<xentrystretch> :default(0) );
     my %resizebox : ATTR( :name<resizebox> :default(0) );
 
-    sub _compatibility_layer {
-        my ( $self, @args ) = @_;
-        if ($self->get_tablepos ne 'deprecated') {
-            carp('DEPRECATED: Use position instead of tablepos.');
-            $self->set_position($self->get_tablepos);
-        }
-        if ($self->get_table_environment ne 'deprecated') {
-            carp('DEPRECATED: Use environment instead of table_environment.');
-            $self->set_environment($self->get_table_environment);
-        }
-        if ($self->get_tabledef ne 'deprecated') {
-            carp('DEPRECATED: Use coldef instead of tabledef.');
-            $self->set_coldef($self->get_tabledef);
-        }
-        if ($self->get_tabledef_strategy ne 'deprecated') {
-            carp('DEPRECATED: Use coldef_strategy instead of tabledef_strategy.');
-            $self->set_coldef_strategy($self->get_tabledef_strategy);
-        }
-        return if !defined $args[0];
-        if ( reftype $args[0] eq 'ARRAY' ) {
-            carp('DEPRECATED. Use options header and data instead.');
-            $self->set_header( $args[0] );
-            if ( reftype $args[1] eq 'ARRAY' ) {
-                $self->set_data( $args[1] );
-            }
-        }
-        return;
-    }
-
-
     ###########################################################################
     # Usage      : $table->generate_string();
     # Purpose    : generates LaTex data
@@ -139,27 +109,65 @@ use Class::Std;
                 }
 
                 $row_id++;
+                
+                my $row_code = q{};
 
                 # now print the row LaTeX code
                 my $bgcolor = $theme->{'DATA_BG_COLOR_EVEN'};
                 if (($row_id % 2) == 1) {
                     $bgcolor = $theme->{'DATA_BG_COLOR_ODD'};
                 }
-                $code .= $self->_get_row_code( $row, $bgcolor, 0 );
+                $row_code .= $self->_get_row_code( $row, $bgcolor, 0 );
 
                 # do we have to draw a horizontal line?
                 if ( $i == scalar @data ) {
-                    $code .= $self->_get_hline_code($RULE_BOTTOM_ID);
+                    $row_code .= $self->_get_hline_code($RULE_BOTTOM_ID);
                 }
                 else {
-                    $code .= $self->_get_hline_code($RULE_INNER_ID);
+                    $row_code .= $self->_get_hline_code($RULE_INNER_ID);
+                }
+
+                if ($row_code !~ m{\A \s* \z}xms) {
+                    $code .= $row_code;
                 }
             }
         }
 
         # and finally the footer
         $code .= $self->_footer();
+
+#        $code =~ s{^ \s* $}{}xmsg;
+
         return $code;
+    }
+
+    sub _compatibility_layer {
+        my ( $self, @args ) = @_;
+        if ($self->get_tablepos ne 'deprecated') {
+            carp('DEPRECATED: Use position instead of tablepos.');
+            $self->set_position($self->get_tablepos);
+        }
+        if ($self->get_table_environment ne 'deprecated') {
+            carp('DEPRECATED: Use environment instead of table_environment.');
+            $self->set_environment($self->get_table_environment);
+        }
+        if ($self->get_tabledef ne 'deprecated') {
+            carp('DEPRECATED: Use coldef instead of tabledef.');
+            $self->set_coldef($self->get_tabledef);
+        }
+        if ($self->get_tabledef_strategy ne 'deprecated') {
+            carp('DEPRECATED: Use coldef_strategy instead of tabledef_strategy.');
+            $self->set_coldef_strategy($self->get_tabledef_strategy);
+        }
+        return if !defined $args[0];
+        if ( reftype $args[0] eq 'ARRAY' ) {
+            carp('DEPRECATED. Use options header and data instead.');
+            $self->set_header( $args[0] );
+            if ( reftype $args[1] eq 'ARRAY' ) {
+                $self->set_data( $args[1] );
+            }
+        }
+        return;
     }
 
     sub _check_options {
@@ -200,37 +208,6 @@ use Class::Std;
             }
         }
         carp('DEPRECATED: use for example tabularx instead.');
-        return;
-    }
-
-    sub _check_1d_array {
-        my ( $self, $arr_ref_1d, $desc ) = @_;
-        if ( !defined reftype $arr_ref_1d || reftype $arr_ref_1d ne 'ARRAY' )
-        {
-            croak "$desc is not an array reference.";
-        }
-        return;
-    }
-
-    sub _check_2d_array {
-        my ( $self, $arr_ref_2d, $desc ) = @_;
-        $self->_check_1d_array($arr_ref_2d, $desc);
-        my $i = 0;
-        for my $arr_ref ( @{$arr_ref_2d} ) {
-            $self->_check_1d_array($arr_ref, "$desc\[$i\]");
-            my $j = 0;
-            for my $scalar ( @{$arr_ref} ) {
-                my $rt_scalar = reftype $scalar;
-                if ( defined $rt_scalar ) {
-                    croak "$desc\[$i\]\[$j\] is not a scalar.";
-                }
-                if (!defined $scalar) {
-                    croak "Undefined value in $desc\[$i\]\[$j\]";
-                }
-                $j++;
-            }
-            $i++;
-        }
         return;
     }
 
@@ -630,8 +607,8 @@ EOST
 
             my $j = 0;
 
-            foreach my $col (@cols) {
-                next if $col =~ m{\A \\ }xms;
+            for my $col (@cols) {
+                #next if $col =~ m{\A \\ }xms;
                 if ( $self->get_callback ) {
                     $col = $self->_apply_callback($i, $j, $col, 1);
                 }
@@ -795,13 +772,11 @@ EOST
     }
 
     ###############################################################################
-    # Usage      : $self->_add_font_family($col_def, 'bf');
-    # Purpose    : add font family to value of column definition
-    # Returns    : new column definition
-    # Parameters : column definition and family (tt, bf, it, sc)
+    # Usage      : $self->_add_font_family($col, 'bf');
+    # Purpose    : add font family to column value
+    # Returns    : new column value
+    # Parameters : column value and family (tt, bf, it, sc)
     # Throws     : exception when family is not known
-    # Comments   : n/a
-    # See also   :
 
     sub _add_font_family {
         my ( $self, $col, $family ) = @_;
@@ -817,6 +792,12 @@ EOST
         return $self->_get_mc_value($col_def);
     }
 
+    ###############################################################################
+    # Usage      : $self->_add_font_color($col, $color);
+    # Purpose    : add font color to column value
+    # Returns    : new column value
+    # Parameters : column value and color
+
     sub _add_font_color {
         my ( $self, $col, $color ) = @_;
         my $col_def = $self->_get_mc_def($col);
@@ -826,13 +807,11 @@ EOST
 
     ###########################################################################
     # Usage      : $self->_get_coldef_code(\@data);
-    # Purpose    : generate the LaTeX code of the table definition (e.g.
+    # Purpose    : generate the LaTeX code of the column definitions (e.g.
     #              |l|r|r|r|)
     # Returns    : LaTeX code
     # Parameters : the data columns
-    # Throws     :
     # Comments   : Tries to be intelligent. Hope it is ;)
-    # See also   :
 
     sub _get_coldef_code {
         my ( $self, $data ) = @_;
@@ -883,9 +862,6 @@ EOST
     # Returns    : LaTeX code
     # Parameters : the data columns and a flag indicating whether it is the
     #              code for the final tail (1).
-    # Throws     :
-    # Comments   : n/a
-    # See also   :
 
     sub _get_tabletail_code {
         my ( $self, $data, $final_tabletail ) = @_;
@@ -915,15 +891,13 @@ EOST
     }
 
     ###########################################################################
-    # Usage      : $self->_get_caption_code();
+    # Usage      : $self->_get_caption_code($header);
     # Purpose    : generates the LaTeX code of the caption
     # Returns    : LaTeX code
-    # Parameters : header (1)
-    # Throws     :
+    # Parameters : called from _header? 
     # Comments   : header specifies whether this function has been called in
     #              the header or footer. ignored for xtab, because there it  
     #              is always placed on top
-    # See also   :
 
     sub _get_caption_code {
         my ($self, $header)  = @_;
@@ -985,8 +959,6 @@ EOST
     # Returns    : LaTeX code
     # Parameters : none
     # Throws     : exception if size is not valid
-    # Comments   : n/a
-    # See also   :
 
     sub _get_size_code {
         my ($self) = @_;
@@ -1015,8 +987,8 @@ EOST
     ###########################################################################
     # Usage      : $self->_get_label_code();
     # Purpose    : create the LaTeX label
-    # Returns    : LaTeX code
     # Parameters : none
+    # Returns    : LaTeX code
 
     sub _get_label_code {
         my ($self) = @_;
@@ -1051,7 +1023,6 @@ EOST
     # Returns    : see purpose
     # Parameters : none
     # Throws     : exception if theme is unknown
-    # Comments   : n/a
     # See also   : get_available_themes();
 
     sub _get_theme_settings {
@@ -1063,6 +1034,37 @@ EOST
         else {
             croak( 'Theme not known: ' . $self->get_theme );
         }
+    }
+
+    sub _check_1d_array {
+        my ( $self, $arr_ref_1d, $desc ) = @_;
+        if ( !defined reftype $arr_ref_1d || reftype $arr_ref_1d ne 'ARRAY' )
+        {
+            croak "$desc is not an array reference.";
+        }
+        return;
+    }
+
+    sub _check_2d_array {
+        my ( $self, $arr_ref_2d, $desc ) = @_;
+        $self->_check_1d_array($arr_ref_2d, $desc);
+        my $i = 0;
+        for my $arr_ref ( @{$arr_ref_2d} ) {
+            $self->_check_1d_array($arr_ref, "$desc\[$i\]");
+            my $j = 0;
+            for my $scalar ( @{$arr_ref} ) {
+                my $rt_scalar = reftype $scalar;
+                if ( defined $rt_scalar ) {
+                    croak "$desc\[$i\]\[$j\] is not a scalar.";
+                }
+                if (!defined $scalar) {
+                    croak "Undefined value in $desc\[$i\]\[$j\]";
+                }
+                $j++;
+            }
+            $i++;
+        }
+        return;
     }
 
     ###########################################################################
@@ -1196,7 +1198,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.1
+This document describes LaTeX::Table version 0.9.2
 
 =head1 SYNOPSIS
 
@@ -1206,7 +1208,7 @@ This document describes LaTeX::Table version 0.9.1
   my $header = [
       [ 'Item:2c', '' ],
       [ '\cmidrule(r){1-2}' ],
-      [ 'Animal', 'Description', 'Price' ]
+      [ 'Animal', 'Description', 'Price' ],
   ];
   
   my $data = [
@@ -1217,7 +1219,6 @@ This document describes LaTeX::Table version 0.9.1
       [ 'Armadillo', 'frozen',    '8.99'   ],
   ];
 
-  
   my $table = LaTeX::Table->new(
   	{   
         filename    => 'prices.tex',
@@ -1257,9 +1258,13 @@ Now in your LaTeX document:
 
   % for multipage tables
   \usepackage{xtab}
-  % for publication quality tables
+  % for publication quality tables (Zurich theme, the default)
   \usepackage{booktabs}
-
+  % for colored tables (NYC theme)
+  \usepackage{colortbl}
+  \usepackage{color}
+  \usepackage{xcolor}
+  
   \begin{document}
   \input{prices}
   \end{document}
@@ -1268,8 +1273,8 @@ Now in your LaTeX document:
 
 LaTeX::Table provides functionality for an intuitive and easy generation of
 LaTeX tables. It ships with some predefined good looking
-table styles. This module supports multipage tables via the C<xtab> package and 
-publication quality tables with the C<booktabs> package. It also supports the
+table styles. This module supports multipage tables via the C<xtab> package.
+For publication quality tables it utilizes the C<booktabs> package. It also supports the
 C<tabularx> package for nicer fixed-width tables. Furthermore, it supports 
 the C<colortbl> package for colored tables optimized for presentations.
 
@@ -1317,7 +1322,7 @@ See L<"THEMES"> for details.
 =head1 OPTIONS
 
 Options can be defined in the constructor hash reference or with the setter
-set_<optionname>. Additionally, getters of the form get_<optionname> are
+C<set_optionname>. Additionally, getters of the form C<get_optionname> are
 created.
 
 =head2 BASIC OPTIONS
@@ -1330,10 +1335,9 @@ The name of the LaTeX output file. Default is 'latextable.tex'.
 
 =item C<type>
 
-Can be either I<std> for the standard LaTeX table or I<xtab> for
-a xtabular table for multipage tables (in appendices for example). The latter 
-requires the C<xtab> LaTeX package (C<\usepackage{xtab}> in your LaTeX document). 
-Default is I<std>.
+Can be either 'std' for standard LaTeX tables or 'xtab' for multipage tables 
+(in appendices for example). The latter requires the C<xtab> LaTeX package 
+(C<\usepackage{xtab}> in your LaTeX document). Default is 'std'.
 
 =item C<header>
 
@@ -1374,7 +1378,7 @@ will produce following LaTeX code in the default Zurich theme:
   \cline{1-2}
   \multicolumn{1}{c}{\textbf{Animal}} & \multicolumn{1}{c}{\textbf{Description}} & \multicolumn{1}{c}{\textbf{Price}}\\ 
 
-Note that there is no multicolum, textbf or \\ added to the second row.
+Note that there is no C<\multicolum>, C<\textbf> or C<\\> added to the second row.
 
 =item C<data>
 
@@ -1420,7 +1424,8 @@ command is used, i.e. C<\midrule> vs. C<\hline>).
 
 If get_environment() returns a true value, then a floating environment will be 
 generated. Default is 'table'. You can use 'sidewaystable' for rotated tables
-(requires the C<rotating> package). This option only affects tables of C<type> I<std>.
+(requires the C<rotating> package). In two-column documents, 'table*' will
+place the table across the columns. This option only affects tables of C<type> I<std>.
 
   \begin{table}[htb]
       \centering
@@ -1467,7 +1472,6 @@ C<environment>.
 =item C<label>
 
 The label of the table. Only generated if get_label() returns a true value.
-In LaTeX you can create a reference to the table with C<\ref{label}>.
 Default is 0. Requires C<environment>.
 
 =item C<maincaption>
@@ -1484,7 +1488,7 @@ not define a font size). Requires C<environment>.
 
 =item C<position>
 
-The position of the environment, e.g. C<htb>. Only generated if get_position()
+The position of the environment, e.g. 'htb'. Only generated if get_position()
 returns a true value. Requires C<environment>.
 
 =back
@@ -1527,7 +1531,7 @@ C<$is_header>.
 
 =item C<coldef>
 
-The table column definition, e.g. C<lrcr> which would result in:
+The table column definition, e.g. 'lrcr' which would result in:
 
   \begin{tabular}{lrcr}
   ..
@@ -1535,8 +1539,9 @@ The table column definition, e.g. C<lrcr> which would result in:
 If unset, C<LaTeX::Table> tries to 
 guess a good definition. Columns containing only numbers are right-justified,
 others left-justified. Columns with cells longer than 30 characters are
-I<paragraph> columns of size 5 cm. These rules can be changed with
-set_coldef_strategy(). Default is 0 (guess good definition).
+I<p> (paragraph) columns of size '5cm' or I<X> columns when the C<tabularx> package
+is selected. These rules can be changed with set_coldef_strategy(). Default is 
+0 (guess good definition).
 
 =item C<coldef_strategy>
 
@@ -1563,7 +1568,7 @@ The C<coldef> attribute for I<NUMBER> columns. Default 'r' (right-justified).
 =item C<LONG_COL =E<gt> $attribute>, C<LONG_COL_X =E<gt> $attribute>
 
 The C<coldef> attribute for I<LONG> columns. Default 'p{5cm}' (paragraph
-column with text vertically aligned at the top, width 5cm) and 'X' when the
+column with text vertically aligned at the top, width '5cm') and 'X' when the
 C<tabularx> package is used.
 
 =item C<DEFAULT =E<gt> $attribute>, C<DEFAULT_X =E<gt> $attribute>
@@ -1578,7 +1583,7 @@ Example:
   $table->set_coldef_strategy({
     IS_A_NUMBER => qr{\A \d+ \z}xms, # integers only
     IS_LONG     => 60, # min. 60 characters
-    LONG_COL    => 'm{7cm}', # vertically aligned at the middle, 7cm
+    LONG_COL    => '>{\raggedright\arraybackslash}p{7cm}', # non-justified
   });
 
 =item C<resizebox>
@@ -1595,10 +1600,10 @@ LaTeX package. Default 0.
 
 =item C<width>
 
-If get_width() returns a true value, then
-C<{tabular*}{width}{@{\extracolsep{\fill}} ... }> (or
-C<{xtabular*}{width}{ ... }>, respectively) is used.
-For tables of type 'std', you can also use the C<tabularx> LaTeX package (see below).
+If get_width() returns a true value, then C<LaTeX::Table> will use the C<tabular*> (or
+C<xtabular*> for I<xtab> tables) environment instead of C<tabular> (or
+C<xtabular>, respectively). For tables of C<type> I<std>, it supports also the 
+C<tabularx> LaTeX package (see below).
 
   # use 75% of textwidth 
   $table->set_width('0.75\textwidth');
@@ -1608,10 +1613,10 @@ For tables of type 'std', you can also use the C<tabularx> LaTeX package (see be
 
 =item C<width_environment>
 
-If get_width() (see above) returns a true value and table is of type std, then
-this option specifies whether C<tabular*> or the C<tabularx> package should be
-used. The latter is great when you have long columns because C<tabularx> tries
-to optimize the column widths. Default is 'tabular*'.
+If get_width() (see above) returns a true value and table is of C<type> I<std>,
+then this option specifies whether C<tabular*> or the C<tabularx> package 
+should be used. The latter is great when you have long columns because 
+C<tabularx> tries to optimize the column widths. Default is 'tabular*'.
 
 =back
 
@@ -1621,13 +1626,12 @@ to optimize the column widths. Default is 'tabular*'.
 
 =item C<tabletailmsg>
 
-Message at the end of a multipage table. 
-Default is I<Continued on next page>. 
+Message at the end of a multipage table. Default is 'Continued on next page'. 
 
 =item C<tabletail>
 
-Custom table tail. 
-Default is multicolumn with the tabletailmsg (see above) right-justified. 
+Custom table tail. Default is multicolumn with the tabletailmsg (see above) 
+right-justified. 
 
 =item C<xentrystretch>
 
@@ -1662,8 +1666,8 @@ with 0). These columns are formatted like header columns.
    # a "transposed" table ...
    my $table = LaTeX::Table->new(
        {   data     => $data,
-           columns_like_header => [ 0 ],
-       };
+           columns_like_header => [ 0 ], }
+   );
 
 =back
 
@@ -1687,8 +1691,8 @@ See L<"TABULAR ENVIRONMENT">.
 
 The theme can be selected with C<$table-E<gt>set_theme($themename)>. 
 Currently, following predefined themes are available: I<Zurich>, I<plain> (no
-formatting), I<NYC> (for presentations), I<Dresden>, I<Berlin>, I<Miami> and 
-I<Houston>. The script F<generate_examples.pl> in the I<examples> directory of
+formatting), I<NYC> (for presentations), I<Berlin>, I<Dresden>, I<Houston>, 
+I<Miami> and I<Paris>. The script F<generate_examples.pl> in the I<examples> directory of
 this distributions generates some examples for all available themes.
 
 The default theme, Zurich, is highly recommended. It requires 
@@ -1703,7 +1707,7 @@ Custom themes can be defined with an array reference containing all options
 
     # a very ugly theme...
     my $themes = { 
-                'Leipzig' => {
+                'Duisburg' => {
                     'HEADER_FONT_STYLE'  => 'sc',
                     'HEADER_FONT_COLOR'  => 'white',
                     'HEADER_BG_COLOR'    => 'blue',
@@ -1770,7 +1774,7 @@ Valid values are 0 (not centered) or 1 (centered).
 
 =item C<BOOKTABS>
 
-Use the Booktabs package for "Publication quality tables". Instead of
+Use the C<booktabs> LaTeX package for "Publication quality tables". Instead of
 C<\hline>, C<LaTeX::Table> then uses C<\toprule>, C<\midrule> and C<\bottomrule>. 
 0 (don't use this package) or 1 (use it).
 
@@ -1780,9 +1784,8 @@ C<\hline>, C<LaTeX::Table> then uses C<\toprule>, C<\midrule> and C<\bottomrule>
 
 =head1 EXAMPLES
 
-See I<examples/examples.pdf> in this distribution for examples for most of the
-features of this module. This document was generated with
-I<examples/generate_examples.pl>.
+See I<examples/examples.pdf> in this distribution for a short tutorial that
+covers the main features of this module. 
 
 =head1 DIAGNOSTICS
 
@@ -1797,6 +1800,11 @@ C<LaTeX::Table> may throw one of these errors:
 =item C<callback> is not a code reference 
 
 The return value of get_callback() is not a code reference. See 
+the L<"SYNOPSIS"> and L<"TABULAR ENVIRONMENT"> for examples how to use this option.
+
+=item C<coldef_strategy> not a hash reference.
+
+The return value of get_coldef_strategy() is not a hash reference. See 
 L<"TABULAR ENVIRONMENT">.
 
 =item C<columns_like_header> is not an array reference 
@@ -1804,65 +1812,43 @@ L<"TABULAR ENVIRONMENT">.
 The return value of get_columns_like_header() is not an array reference.
 See L<"THEMES">.
 
-=item C<data/header> is not an array reference 
-
-get_data() (or get_header(), respectively) does not return a 
-reference to an array. See L<"BASIC OPTIONS">.
-
-=item C<data[$i]/header[$i]> is not an array reference
-
-The ith element of get_data() (or get_header()) is not an array reference. See
-L<"BASIC OPTIONS">.
+=item C<data>, C<header>, C<data[$i]>,C<header[$i]> is not an array reference
 
 =item C<data[$i][$j]/header[$i][$j]> is not a scalar
 
-The jth column in the ith row is not a scalar. See L<"BASIC OPTIONS">.
+=item Undefined value in C<data[$i][$j]/header[$i][$j]>
+
+See L<"BASIC OPTIONS"> for the correct usage of the options C<data> and
+C<header>.
 
 =item DEPRECATED. ...  
 
-There were some minor API changes in C<LaTeX::Table> 0.1.0 and 0.8.0.  Just
-apply the changes to the script and/or contact its author.
+There were some minor API changes in C<LaTeX::Table> 0.1.0, 0.8.0 and 0.9.0.  Just
+apply the changes to the script or contact its author.
 
 =item Family not known: ... . Valid families are: ...
 
-You have set a font family to an invalid value. See L<"CUSTOM THEMES">.
-
 =item Size not known: ... . Valid sizes are: ...
 
-You have set a font size to an invalid value. See L<"CUSTOM THEMES">.
-
-=item C<coldef_strategy> not a hash reference.
-
-The return value of get_coldef_strategy() is not a hash reference. See 
-L<"TABULAR ENVIRONMENT">.
-
-=item C<resizebox> is not an array reference
-
-The return value of get_resizebox() is not a reference to an array. See 
-L<"TABULAR ENVIRONMENT">.
+You have set a font family or size to an invalid value. See L<"CUSTOM THEMES">.
 
 =item Theme not known: ...
 
-You have set the option C<theme> to an invalid value. See L<"THEMES">.
+You have set the option C<theme> to an invalid value. See L<"THEMES"> and
+the I<examples/examples.pdf> document in this distribution.
 
-=item Undefined value in C<data[$i][$j]/header[$i][$j]>
+=item Width environment not known: ...
 
-The value in this cell is C<undef>. See L<"BASIC OPTIONS">.
-
-=item Width not known: ...
+=item C<width_environment> is C<tabularx> and C<width> is unset.
 
 You have set option C<width_environment> to an invalid value. See 
-L<"TABULAR ENVIRONMENT">.
-
-=item width_environment is C<tabularx> and C<width> is unset.
-
-You have to specify a width when using the tabularx package. See
 L<"TABULAR ENVIRONMENT">.
 
 =item C<xentrystretch> not a number
 
 You have set the option C<xentrystretch> to an invalid value. This option
-requires a number. See L<"MULTIPAGE TABLES">.
+requires a number. See L<"MULTIPAGE TABLES"> and the documentation of the
+C<booktabs> LaTeX package.
 
 =back
 
@@ -1874,10 +1860,6 @@ C<LaTeX::Table> requires no configuration files or environment variables.
 
 L<Carp>, L<Class::Std>, L<English>,
 L<Fatal>, L<Readonly>, L<Scalar::Util>, L<Text::Wrap>
-
-=head1 INCOMPATIBILITIES
-
-None reported.
 
 =head1 BUGS AND LIMITATIONS
 

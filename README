@@ -1,4 +1,4 @@
-LaTeX-Table version 0.9.1
+LaTeX-Table version 0.9.2
 
 LaTeX::Table provides functionality for an intuitive and easy generation of
 LaTeX tables. It ships with some predefined good looking table styles. This module s
@@ -45,8 +45,11 @@ Now please compile these examples with LaTeX and check if all tables look ok:
 
 DEPENDENCIES
 
+Carp
 Class::Std
-Regexp::Common
+English
+Fatal
+Readonly
 Scalar::Util
 Text::Wrap
 

@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-08-18 11:06:13 +0200 (Mon, 18 Aug 2008) $
-# $Revision: 816 $
+#     $Date: 2008-09-18 13:55:10 +0200 (Thu, 18 Sep 2008) $
+# $Revision: 1007 $
 #############################################################################
 
 use strict;
@@ -14,6 +14,7 @@ use utf8;
 use Fatal qw(open close);
 use Getopt::Long;
 use Pod::Usage;
+use Carp;
 
 use Text::CSV;
 use File::Basename;

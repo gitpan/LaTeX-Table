@@ -7,6 +7,7 @@ Makefile.PL
 README
 TODO
 bin/csv2pdf
+bin/ltpretty
 examples/generate_examples.pl
 examples/examples.pdf
 lib/LaTeX/Table.pm

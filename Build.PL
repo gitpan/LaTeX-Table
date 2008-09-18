@@ -30,7 +30,7 @@ my $builder = Module::Build->new(
         'Getopt::Long'   => 0,
         'Number::Format' => 0,
     },    
-    script_files        => [ 'bin/csv2pdf' ], 
+    script_files        => [ 'bin/csv2pdf', 'bin/ltpretty' ], 
     add_to_cleanup      => [ 'LaTeX-Table-*' ],
 );
 
