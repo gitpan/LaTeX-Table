@@ -1,8 +1,9 @@
 BEGIN { our $WARNMSG; $SIG{'__WARN__'} = sub { $WARNMSG = $_[0]; } };
 
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use LaTeX::Table;
+
 
 my $test_header = [ [ 'A', 'B', 'C' ], ];
 my $test_data = [ [ '1', 'w', 'x' ], [], [ '2', 'y', 'z' ], ];
@@ -40,5 +41,42 @@ is_deeply(
     [ split( "\n", $output ) ],
     \@expected_output,
     'with < 0.1.0 API'
+);
+
+$table = LaTeX::Table->new({ tablepos => 'ht',
+                            header => $test_header, 
+                            data => [ [ '1', 'w', 'x' ], [], [ '2.1',
+                            'y12345', 'z' ], ],
+                            });
+
+$table->set_tabledef_strategy({
+        IS_A_NUMBER => qr{\A \d+ \z}xms,
+        IS_LONG => 5,
+        LONG_COL => 'p{5cm}',
+    });
+
+$expected_output = <<'EOT'
+\begin{table}[ht]
+\centering
+\begin{tabular}{lp{5cm}l}
+    \toprule
+\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
+\midrule
+
+1 & w & x\\ 
+\midrule
+2.1 & y12345 & z\\ 
+\bottomrule
+\end{tabular}
+\end{table}
+EOT
+    ;
+
+$output = $table->generate_string();
+
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'three number columns'
 );
 

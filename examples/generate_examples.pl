@@ -254,7 +254,7 @@ print ${OUT} $code . $table->generate_string;
 $code = << 'EOC'
 \subsection{Callback functions}
 Callback functions are an easy way of formatting the cells. Note that the
-prices for Gnat are rounded:
+prices for Gnat are rounded in the following tables.
 
 {
 \small
@@ -415,11 +415,11 @@ $nyc_theme->{'DEFINE_COLORS'}       =
 $nyc_theme->{'HEADER_BG_COLOR'}     = 'latextablegreen';
 $nyc_theme->{'DATA_BG_COLOR_ODD'}   = 'latextablegreen!25';
 $nyc_theme->{'DATA_BG_COLOR_EVEN'}  = 'latextablegreen!10';
+$nyc_theme->{'EXTRA_ROW_HEIGHT'}    = '1pt';
 
 $table->set_custom_themes({ CENTRALPARK => $nyc_theme });
 $table->set_theme('CENTRALPARK');
 $table->set_label('table:customtheme2');
-
 
 print $OUT  $table->generate_string() ;
 
@@ -482,6 +482,8 @@ If you don't need headers, just leave them undefined (see
 Table~\ref{table:noheader}). If you want that the first column looks like a
 header, you can define this with the \texttt{columns\_like\_header} Option
 (Table~\ref{table:collikeheader} and Table~\ref{table:collikeheader2}).
+You can also rotate the header columns by 90 degrees
+(Table~\ref{table:headersideways}) with \texttt{header\_sideways}. If you do not want to rotate all header cells, use a callback function instead (Table~\ref{table:headersideways2}).
 {
 \small
 \begin{lstlisting}
@@ -510,6 +512,48 @@ $table->set_header($header);
 
 print $OUT $table->generate_string();
 
+$header = [ [ 'Time', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ] ];
+
+$data = [ 
+[ '9.00', '','', '', '', '', ],
+[ '10.00', '','', '', '', '', ],
+[ '11.00', '','', '', '', '', ],
+[ '12.00', '','', '', '', '', ],
+];
+
+$table = LaTeX::Table->new(
+    {   
+        header            => $header,
+        data              => $data,
+        label             => 'table:headersideways',
+        caption           => 'Header sideways',
+        header_sideways   => 1,
+        theme             => 'NYC',
+    }
+);
+
+print $OUT $table->generate_string();
+
+$table = LaTeX::Table->new(
+    {   
+        header            => $header,
+        data              => $data,
+        label             => 'table:headersideways2',
+        caption           => 'Header sideways',
+        header_sideways => 0,
+        callback => sub {
+            my ( $row, $col, $value, $is_header ) = @_;
+            if ( $col != 0 && $is_header ) {
+                $value = '\begin{sideways}' . $value . '\end{sideways}';
+            }
+            return $value;
+        },
+        theme             => 'NYC',
+    }
+);
+
+print $OUT $table->generate_string();
+
 print ${OUT}
     "\\section{Version}\\small{Generated with LaTeX::Table Version $LaTeX::Table::VERSION}\n";
 
@@ -535,7 +579,7 @@ print $OUT '\end{appendix}\end{document}' . "\n";
 close $OUT;
 
 __DATA__
-\documentclass{article}
+\documentclass{ltxdoc}
 \usepackage{url}
 \usepackage{graphics, graphicx}
 \usepackage{xtab}
@@ -547,6 +591,7 @@ __DATA__
 \usepackage{colortbl}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{array}% in the preamble
 %\usepackage[tableposition=top]{caption}
 \begin{document}
 \title{LaTeX::Table}

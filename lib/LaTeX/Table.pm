@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-09-05 12:43:30 +0200 (Fri, 05 Sep 2008) $
-# $Revision: 980 $
+#     $Date: 2008-09-26 18:08:43 +0200 (Fri, 26 Sep 2008) $
+# $Revision: 1036 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,7 +10,7 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.9.2');
+use version; our $VERSION = qv('0.9.3');
 
 use Carp;
 use Fatal qw( open close );
@@ -25,7 +25,7 @@ Readonly my $RULE_MID_ID    => 1;
 Readonly my $RULE_INNER_ID  => 2;
 Readonly my $RULE_BOTTOM_ID => 3;
 
-Readonly my $DEFAULT_IS_LONG    => 30;
+Readonly my $DEFAULT_LONG    => 30;
 Readonly my $DEFAULT_LONG_COL   => 'p{5cm}';
 Readonly my $DEFAULT_LONG_COL_X => 'X';
 
@@ -51,6 +51,7 @@ use Class::Std;
     my %custom_themes : ATTR( :name<custom_themes> :default(0) );
     my %text_wrap : ATTR( :name<text_wrap> :default(0) );
     my %columns_like_header : ATTR( :name<columns_like_header> :default(0) );
+    my %header_sideways : ATTR( :name<header_sideways> :default(0) );
     my %width : ATTR( :name<width> :default(0) );
     my %width_environment : ATTR( :name<width_environment> :default('tabular*') );
     my %tablepos : ATTR( :name<tablepos> :default('deprecated') );
@@ -158,6 +159,35 @@ use Class::Std;
         if ($self->get_tabledef_strategy ne 'deprecated') {
             carp('DEPRECATED: Use coldef_strategy instead of tabledef_strategy.');
             $self->set_coldef_strategy($self->get_tabledef_strategy);
+        }
+        my $cs = $self->get_coldef_strategy();
+        
+        if ($cs && defined reftype $cs  && reftype $cs eq 'HASH') {
+            if (defined $cs->{'DEFAULT'} ) {
+                carp('DEPRECATED: DEFAULT in coldef_strategy was renamed to ' .
+                    'DEFAULT_COL.');
+                $cs->{'DEFAULT_COL'} = $cs->{'DEFAULT'};
+                delete $cs->{'DEFAULT'};
+            }
+            if (defined $cs->{'DEFAULT_X'} ) {
+                carp('DEPRECATED: DEFAULT_X in coldef_strategy was renamed to ' .
+                    'DEFAULT_COL_X.');
+                $cs->{'DEFAULT_COL_X'} = $cs->{'DEFAULT_X'};
+                delete $cs->{'DEFAULT_X'};
+            }
+            if (defined $cs->{'IS_A_NUMBER'} ) {
+                carp('DEPRECATED: IS_A_NUMBER in coldef_strategy was renamed to ' .
+                    'NUMBER.');
+                $cs->{'NUMBER'} = $cs->{'IS_A_NUMBER'};
+                delete $cs->{'IS_A_NUMBER'};
+            }
+            if (defined $cs->{'IS_LONG'} ) {
+                carp('DEPRECATED: IS_LONG in coldef_strategy was renamed to ' .
+                    'LONG and is now a regex. Converting it.');
+                $cs->{'LONG'} = qr{\A \s* .{$cs->{'IS_LONG'},}? \s* \z}xms;
+                delete $cs->{'IS_LONG'};
+            }
+            $self->set_coldef_strategy($cs);
         }
         return if !defined $args[0];
         if ( reftype $args[0] eq 'ARRAY' ) {
@@ -348,15 +378,16 @@ use Class::Std;
         elsif( $self->get_width_environment eq 'tabularx') {
             croak('width_environment is tabularx and width is unset.');
         }
-        my $colordef = q{};
 
+        my $colordef = q{};
         if (defined $self->_get_theme_settings->{DEFINE_COLORS}) {
             $colordef = $self->_get_theme_settings->{DEFINE_COLORS} . "\n";
         }
 
-        my $size    = $self->_get_size_code();
-        my $caption = $self->_get_caption_code(0);
-        my $label   = $self->_get_label_code;
+        my $extra_row_height = $self->_get_extra_row_height_code();
+        my $size             = $self->_get_size_code();
+        my $caption          = $self->_get_caption_code(0);
+        my $label            = $self->_get_label_code;
 
         my $tabletail     = $self->_get_tabletail_code( $data, 0 );
         my $tabletaillast = $self->_get_tabletail_code( $data, 1 );
@@ -382,7 +413,7 @@ use Class::Std;
         if ( $self->get_type eq 'xtab' ) {
             return <<"EOXT"
 {
-$colordef$size$caption$xentrystretch$label
+$colordef$extra_row_height$size$caption$xentrystretch$label
 \\tablehead{$code}
 $tabletail
 $tabletaillast
@@ -398,11 +429,21 @@ EOXT
                     $begin_center, $caption;
             }
             return <<"EOST"
-$colordef$environment$begin_resizebox\\begin{tabular$asterisk}${width}{$table_def}
+$colordef$environment$extra_row_height$begin_resizebox\\begin{tabular$asterisk}${width}{$table_def}
     $code
 EOST
                 ;
         }
+    }
+
+    sub _get_extra_row_height_code {
+        my ( $self ) = @_;
+        my $extra_row_height = q{};
+        if (defined $self->_get_theme_settings->{EXTRA_ROW_HEIGHT}) {
+            $extra_row_height = '\setlength{\extrarowheight}{' .
+                $self->_get_theme_settings->{EXTRA_ROW_HEIGHT} . "}\n";
+        }
+        return $extra_row_height;
     }
 
     ###########################################################################
@@ -458,16 +499,17 @@ EOST
     sub _default_coldef_strategy {
         my ($self) = @_;
         my $STRATEGY = {
-            #IS_A_NUMBER => $RE{num}{real},
-            IS_A_NUMBER =>
-                qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xms,
-            IS_LONG       => $DEFAULT_IS_LONG,
+            NUMBER =>
+                qr{\A\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*\z}xms,
+            NUMBER_MUST_MATCH_ALL => 1,
+            LONG          => qr{\A\s*.{30,}?\s*\z}xms,
+            LONG_MUST_MATCH_ALL => 0,
             NUMBER_COL    => 'r',
             NUMBER_COL_X  => 'r',
             LONG_COL      => $DEFAULT_LONG_COL,
             LONG_COL_X    => $DEFAULT_LONG_COL_X,
-            DEFAULT       => 'l',
-            DEFAULT_X     => 'l',
+            DEFAULT_COL   => 'l',
+            DEFAULT_COL_X => 'l',
         };
         $self->set_coldef_strategy($STRATEGY);
         return $STRATEGY;
@@ -523,31 +565,36 @@ EOST
         my %is_a_number;
         my %not_a_number;
         my %is_long;
+        my %matches;
+        my %cells;
         for my $row ( @{$data} ) {
             if ( scalar @{$row} > scalar @max_row ) {
                 @max_row = @{$row};
             }
             my $i = 0;
             for my $col ( @{$row} ) {
-                if ( $col =~ $strategy->{IS_A_NUMBER} ) {
-                    $is_a_number{$i}++;
+                if ( $col =~ $strategy->{NUMBER} ) {
+                    $matches{$i}{NUMBER}++;
                 }
-                elsif ( length $col >= $strategy->{IS_LONG} ) {
-                    $is_long{$i}++;
+                elsif ( $col =~ $strategy->{LONG} ) {
+                    $matches{$i}{LONG}++;
                 }
-                else {
-                    $not_a_number{$i}++;
-                }
+                $cells{$i}++;
                 $i += $self->_extract_number_columns($col);
             }
         }
         my @summary;
         for my $i ( 0 .. $#max_row ) {
             my $number = 0;
-            if ( defined $is_a_number{$i} && !defined $not_a_number{$i} ) {
+            if ( defined $matches{$i}{NUMBER} &&
+                ( !$strategy->{NUMBER_MUST_MATCH_ALL} || $cells{$i} ==
+                    $matches{$i}{NUMBER} )) {
                 $number = 1;
             }
-            if ( defined $is_long{$i} && !$self->get_text_wrap ) {
+            if ( defined $matches{$i}{LONG} && !$self->get_text_wrap &&
+                ( !$strategy->{LONG_MUST_MATCH_ALL} || $cells{$i} ==
+                    $matches{$i}{LONG} )
+            ) {
                 $number = 2;
             }
             push @summary, $number;
@@ -621,7 +668,7 @@ EOST
             $i++;
         }
 
-        # without header, just draw the topline
+        # without header, just draw the topline, not this midline
         if ($i) {
             $code .= $self->_get_hline_code($RULE_MID_ID);
         }
@@ -681,6 +728,11 @@ EOST
         my $v1 = q{|} x $vlines->[1];
         my $v2 = q{|} x $vlines->[2];
         my $j = 0; my $col_id = 0;
+        if ($is_header && $self->get_header_sideways()) {
+            for my $col_def (@cols_defs) {
+                $col_def->{value} = '\begin{sideways}' . $col_def->{value} . '\end{sideways}';
+            }
+        }
         for my $col_def (@cols_defs) {
             if (!$is_header && $self->get_columns_like_header) {
                 HEADER_COLUMN:
@@ -834,7 +886,7 @@ EOST
         for my $col (@cols) {
 
             # align text right, numbers left, first col always left
-            my $align = $strategy->{"DEFAULT$tabularx"};
+            my $align = $strategy->{"DEFAULT_COL$tabularx"};
             if ( $col == 1 ) {
                 $align = $strategy->{"NUMBER_COL$tabularx"};
             }
@@ -843,7 +895,7 @@ EOST
             }
 
             if ( $i == 0 ) {
-                $table_def .= $v0 . 'l' . $v1;
+                $table_def .= $v0 . $align . $v1;
             }
             elsif ( $i == ( scalar(@cols) - 1 ) ) {
                 $table_def .= $align . $v0;
@@ -1116,6 +1168,7 @@ EOST
                 'CAPTION_FONT_STYLE' => 'bf',
                 'VERTICAL_LINES'     => [ 1, 2, 1 ],
                 'HORIZONTAL_LINES'   => [ 1, 2, 1 ],
+                'EXTRA_ROW_HEIGHT'   => '1pt',
                 'BOOKTABS'           => 0,
             },
             'Miami' => {
@@ -1138,6 +1191,7 @@ EOST
                 'VERTICAL_LINES'     => [ 1, 0, 0 ],
                 'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
                 'BOOKTABS'           => 0,
+                'EXTRA_ROW_HEIGHT'   => '1pt',
             },
             'plain' => {
                 'VERTICAL_LINES'     => [ 0, 0, 0 ],
@@ -1198,7 +1252,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.2
+This document describes LaTeX::Table version 0.9.3
 
 =head1 SYNOPSIS
 
@@ -1260,7 +1314,8 @@ Now in your LaTeX document:
   \usepackage{xtab}
   % for publication quality tables (Zurich theme, the default)
   \usepackage{booktabs}
-  % for colored tables (NYC theme)
+  % for the NYC theme 
+  \usepackage{array}
   \usepackage{colortbl}
   \usepackage{color}
   \usepackage{xcolor}
@@ -1271,17 +1326,19 @@ Now in your LaTeX document:
   
 =head1 DESCRIPTION
 
-LaTeX::Table provides functionality for an intuitive and easy generation of
-LaTeX tables. It ships with some predefined good looking
-table styles. This module supports multipage tables via the C<xtab> package.
-For publication quality tables it utilizes the C<booktabs> package. It also supports the
-C<tabularx> package for nicer fixed-width tables. Furthermore, it supports 
-the C<colortbl> package for colored tables optimized for presentations.
-
 LaTeX makes professional typesetting easy. Unfortunately,
-this is not entirely true for tables. Many additional, highly specialized packages are 
-therefore available on CTAN. This module supports the best packages and
-visualizes your in Perl generated or summarized results with high quality. 
+this is not entirely true for tables and the standard LaTeX table macros have
+a rather limited functionality. This module supports many packages that are 
+available on CTAN and hides the complexity of using them behind an easy and
+intuitive API.
+
+=head1 FEATURES 
+
+This module supports multipage tables via the C<xtab> package. 
+For publication quality tables it utilizes the C<booktabs> package. It also 
+supports the C<tabularx> package for nicer fixed-width tables. Furthermore, 
+it supports the C<colortbl> package for colored tables optimized for presentations.
+It ships with some predefined, good looking L<"THEMES">.
 
 =head1 INTERFACE 
 
@@ -1378,7 +1435,7 @@ will produce following LaTeX code in the default Zurich theme:
   \cline{1-2}
   \multicolumn{1}{c}{\textbf{Animal}} & \multicolumn{1}{c}{\textbf{Description}} & \multicolumn{1}{c}{\textbf{Price}}\\ 
 
-Note that there is no C<\multicolum>, C<\textbf> or C<\\> added to the second row.
+Note that there is no C<\multicolumn>, C<\textbf> or C<\\> added to the second row.
 
 =item C<data>
 
@@ -1398,7 +1455,7 @@ An empty column array will produce a horizontal line:
 
   $table->set_data([ [ 'Gnu', '92.59' ], [], [ 'Emu', '33.33' ] ]);
 
-And you will get a table like this:
+Now you will get such a table:
 
   +-------+---------+
   | Gnu   |   92.59 |
@@ -1550,16 +1607,26 @@ does not return a true value. Is a reference to a hash with following keys:
 
 =over
 
-=item C<IS_A_NUMBER =E<gt> $regex>
+=item C<NUMBER =E<gt> $regex>
 
-Defines a column as I<NUMBER> when B<all> cells in this column match the
+Defines a cell as I<NUMBER> when its value matches the
 specified regular expression. Default is
-C<qr{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\z}xms>.
+C<qr{\A\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*\z}xms>.
 
-=item C<IS_LONG =E<gt> $n>
+=item C<NUMBER_MUST_MATCH_ALL =E<gt> 1>
 
-Defines a column as I<LONG> when B<one> cell is equal or larger than C<$n> 
-characters (default 30).
+Defines a column as I<NUMBER> when all cells in this column are of type
+I<NUMBER>.
+
+=item C<LONG =E<gt> $regex>
+
+Defines a cell as I<LONG> when its value matches the specified regular
+expression. Default is C<qr{\A \s* .{30,}? \s* \z}xms>.
+
+=item C<LONG_MUST_MATCH_ALL =E<gt> 0>
+
+Defines a column as I<LONG> when at least one cell in this column is of type
+I<LONG>.
 
 =item C<NUMBER_COL =E<gt> $attribute>, C<NUMBER_COL_X =E<gt> $attribute>
 
@@ -1571,9 +1638,9 @@ The C<coldef> attribute for I<LONG> columns. Default 'p{5cm}' (paragraph
 column with text vertically aligned at the top, width '5cm') and 'X' when the
 C<tabularx> package is used.
 
-=item C<DEFAULT =E<gt> $attribute>, C<DEFAULT_X =E<gt> $attribute>
+=item C<DEFAULT_COL =E<gt> $attribute>, C<DEFAULT_COL_X =E<gt> $attribute>
 
-The C<coldef> attribute for columns that are neither I<NUMBER> nor I<LONG>.
+The C<coldef> attribute for columns that do not match any specified type.
 Default 'l' (left-justified).
 
 =back
@@ -1581,9 +1648,9 @@ Default 'l' (left-justified).
 Example:
 
   $table->set_coldef_strategy({
-    IS_A_NUMBER => qr{\A \d+ \z}xms, # integers only
-    IS_LONG     => 60, # min. 60 characters
-    LONG_COL    => '>{\raggedright\arraybackslash}p{7cm}', # non-justified
+    NUMBER   => qr{\A \s* \d+ \s* \z}xms, # integers only
+    LONG     => qr{\A .{60,}\z}xms, # min. 60 characters
+    LONG_COL => '>{\raggedright\arraybackslash}p{7cm}', # non-justified
   });
 
 =item C<resizebox>
@@ -1669,6 +1736,24 @@ with 0). These columns are formatted like header columns.
            columns_like_header => [ 0 ], }
    );
 
+=item C<header_sideways>
+
+If get_header_sideways() returns a true value, then the header columns will
+be rotated by 90 degrees. Requires the C<rotating> LaTeX package. Does not
+affect data columns specified in columns_like_header(). If you do not want to
+rotate all headers, use a callback function B<instead>:
+
+           ...
+           header_sideways => 0,
+           callback => sub {  
+               my ( $row, $col, $value, $is_header ) = @_;
+               if ( $col != 0 && $is_header ) {
+                   $value = '\begin{sideways}' . $value . '\end{sideways}';
+               }
+               return $value;
+           }
+           ...
+
 =back
 
 =head1 MULTICOLUMNS 
@@ -1697,8 +1782,7 @@ this distributions generates some examples for all available themes.
 
 The default theme, Zurich, is highly recommended. It requires 
 C<\usepackage{booktabs}> in your LaTeX document. The top and bottom lines are 
-slightly heavier (ie thicker, or darker) than the other lines. No vertical 
-lines. You want this. Believe it.
+slightly heavier (ie thicker, or darker) than the other lines. 
 
 =head2 CUSTOM THEMES
 
@@ -1717,6 +1801,7 @@ Custom themes can be defined with an array reference containing all options
                     'CAPTION_FONT_STYLE' => 'sc',
                     'VERTICAL_LINES'     => [ 1, 2, 1 ],
                     'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+                    'EXTRA_ROW_HEIGHT'   => '2pt',
                     'BOOKTABS'           => 0,
                 },
             };
@@ -1749,7 +1834,7 @@ You can define colors with C<DEFINE_COLORS>, for example:
 C<VERTICAL_LINES>, C<HORIZONTAL_LINES>. A reference to an array with three
 integers, e.g. C<[ 1, 2, 0 ]>. The first integer defines the number of outer
 lines. The second the number of lines after the header and after the first
-column. The third is the number of inner lines. For example L<"DRESDEN"> is
+column. The third is the number of inner lines. For example I<Dresden> is
 defined as:
 
             'Dresden' => {
@@ -1767,6 +1852,11 @@ whereas rows are not separated by horizontal lines.
 =item Misc
 
 =over 
+
+=item C<EXTRA_ROW_HEIGHT>
+
+Will set C<\extrarowheight> in the floating environment. Requires the C<array>
+LaTeX package.
 
 =item C<HEADER_CENTERED>
 
@@ -1790,8 +1880,8 @@ covers the main features of this module.
 =head1 DIAGNOSTICS
 
 If you get a LaTeX error message, please check whether you have included all
-required packages. The packages we use are C<booktabs>, C<color>, C<colortbl>,
-C<graphicx>, C<rotating>, C<tabularx>, C<xcolor> and C<xtab>. 
+required packages. The packages we use are C<array>, C<booktabs>, C<color>, 
+C<colortbl>, C<graphicx>, C<rotating>, C<tabularx>, C<xcolor> and C<xtab>. 
 
 C<LaTeX::Table> may throw one of these errors:
 
@@ -1884,7 +1974,6 @@ Markus Riester  C<< <mriester@gmx.de> >>
 =head1 LICENSE AND COPYRIGHT
 
 Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
-All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

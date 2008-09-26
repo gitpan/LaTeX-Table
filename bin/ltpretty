@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-09-18 13:55:10 +0200 (Thu, 18 Sep 2008) $
-# $Revision: 1007 $
+#     $Date: 2008-09-26 15:13:03 +0200 (Fri, 26 Sep 2008) $
+# $Revision: 1030 $
 #############################################################################
 
 use strict;
@@ -73,19 +73,50 @@ ltpretty
 
 =head1 SYNOPSIS
 
-  ltpretty < data.tex
+  ltpretty < lazytable
 
 =head1 DESCRIPTION
 
-Formats the input nicely. The first line must contain the parameters, the
-second the header, the following lines the data. Columns seperated by C<&>.
-You can use this to pipe selected code in your editor to this script.
+This program takes a I<lazy formatted> LaTeX table from STDIN (typically piped
+from Vim or emacs) and outputs a completely formatted table.
 
-=head1 EXAMPLE
+=head1 LAZY FORMAT
+
+The first line must contain the L<LaTeX::Table> options (seperated by 
+semicolons C<;>) in the format C<optionname=value>. The
+second line must contain the header, the following lines the data. 
+Columns are seperated by C<&>. 
+
+=head1 EXAMPLE 
+
 
   theme=NYC;label=test;position=htb
   Header Col1 & Header Col2
   Data Col1 & Data Col2
+
+=head1 VIM
+
+=over 
+
+=item 1. Select the text in C<VISUAL LINE> mode (C<shift+v>). 
+
+=item 2. Press C<:>
+
+=item 3. Type C<!ltpretty>
+
+=back
+
+=head1 EMACS
+
+=over 
+
+=item 1. Select the text
+
+=item 2. Press C<alt+|> 
+
+=item 3. Now "Shell command on region" should appear. Type C<ltpretty>
+
+=back
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -97,7 +128,10 @@ L<LaTeX::Table>
 
 =head1 BUGS AND LIMITATIONS
 
-No bugs have been reported. 
+Our I<lazy format> does not support multi-line headers. Just add the other
+header lines afterwards. More importantly, it currently does not support 
+non-scalar L<LaTeX::Table> options like for example C<columns_like_header>.
+Future version may add this functionality. 
 
 Please report any bugs or feature requests to
 C<bug-latex-table@rt.cpan.org>, or through the web interface at
@@ -110,9 +144,8 @@ Markus Riester  C<< <mriester@gmx.de> >>
 =head1 LICENSE AND COPYRIGHT
 
 Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
-All rights reserved.
 
-This module is free software; you can redistribute it and/or
+This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.
 
 =head1 DISCLAIMER OF WARRANTY

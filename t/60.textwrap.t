@@ -22,7 +22,7 @@ my $table = LaTeX::Table->new(
 my $expected_output = <<'EOT'
 \begin{table}
 \centering
-\begin{tabular}{|l||r|r|}
+\begin{tabular}{|r||r|r|}
     \hline
 \multicolumn{1}{|c||}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}}\\ 
 \hline

@@ -1,4 +1,4 @@
-use Test::More tests => 17;
+use Test::More tests => 18;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -414,7 +414,7 @@ $table = LaTeX::Table->new(
 $output = $table->generate_string();
 
 $expected_output = <<'EOT'
-\begin{tabular}{|l||l|l|}
+\begin{tabular}{|r||l|l|}
     \hline
 \multicolumn{3}{|c|}{\textbf{A}}\\ 
 \multicolumn{2}{|c|}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}}\\ 
@@ -442,7 +442,8 @@ $table->set_theme('NYC');
 
 $expected_output = <<'EOT'
 \definecolor{latextbl}{RGB}{78,130,190}
-\begin{tabular}{|lll|}
+\setlength{\extrarowheight}{1pt}
+\begin{tabular}{|rll|}
     \hline
 \rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}}\\ 
 \rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}}\\ 
@@ -468,8 +469,9 @@ $table->set_resizebox(['0.6\textwidth']);
 
 $expected_output = <<'EOT'
 \definecolor{latextbl}{RGB}{78,130,190}
+\setlength{\extrarowheight}{1pt}
 \resizebox{0.6\textwidth}{!}{
-\begin{tabular}{|lll|}
+\begin{tabular}{|rll|}
     \hline
 \rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}}\\ 
 \rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}}\\ 
@@ -494,8 +496,9 @@ is_deeply(
 $table->set_resizebox(['300pt', '200pt']);
 $expected_output = <<'EOT'
 \definecolor{latextbl}{RGB}{78,130,190}
+\setlength{\extrarowheight}{1pt}
 \resizebox{300pt}{200pt}{
-\begin{tabular}{|lll|}
+\begin{tabular}{|rll|}
     \hline
 \rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}}\\ 
 \rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}}\\ 
@@ -531,6 +534,7 @@ $expected_output = <<'EOT'
 \definecolor{latextbl}{RGB}{78,130,190}
 \begin{table}
 \centering
+\setlength{\extrarowheight}{1pt}
 \begin{tabular}{|lll|}
     \hline
 
@@ -551,4 +555,48 @@ is_deeply(
     [ split( "\n", $expected_output ) ],
     'theme with colordef and resizebox'
 ) || diag $output;
+
+$header = [ [ '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ] ];
+
+$data = [ 
+[ '9.00', '','', '', '', '', ],
+[ '12.00', '','', '', '', '', ],
+];
+
+$table = LaTeX::Table->new(
+    {   
+        header            => $header,
+        data              => $data,
+        header_sideways   => 1,
+        theme             => 'NYC',
+    }
+);
+
+$expected_output = <<'EOT'
+\definecolor{latextbl}{RGB}{78,130,190}
+\begin{table}
+\centering
+\setlength{\extrarowheight}{1pt}
+\begin{tabular}{|rlllll|}
+    \hline
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Monday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Tuesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Wednesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Thursday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\begin{sideways}\color{white}\textbf{Friday}\end{sideways}}\\ 
+\hline
+
+\rowcolor{latextbl!25}9.00 &  &  &  &  & \\ 
+\rowcolor{latextbl!10}12.00 &  &  &  &  & \\ 
+\hline
+\end{tabular}
+\end{table}
+EOT
+    ;
+
+
+$output = $table->generate_string();
+
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'NYC header sideways'
+) || diag $output;
+
 

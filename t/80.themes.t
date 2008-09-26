@@ -1,4 +1,4 @@
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -23,11 +23,12 @@ my $themes = {
         'HEADER_CENTERED'   => 0,
         'VERTICAL_LINES'    => [ 1, 2, 1 ],
         'HORIZONTAL_LINES'  => [ 1, 2, 0 ],
+        'BOOKTABS'          => 0,
     },
 };
 
 my $test_header = [ [ 'A', 'B', 'C' ], ];
-my $test_data = [ [ '1', 'w', 'x' ], [ '2', 'y', 'z' ], ];
+my $test_data = [ [ '1', 'w', 'x' ], [], [ '2', 'y', 'z' ], ];
 
 my $table = LaTeX::Table->new(
     {   environment       => 'sidewaystable',
@@ -43,13 +44,14 @@ my $table = LaTeX::Table->new(
 my $expected_output = <<'EOT'
 \begin{sidewaystable}
 \centering
-\begin{tabular}{|l||l|l|}
+\begin{tabular}{|r||l|l|}
     \hline
 \multicolumn{1}{|c||}{\textsc{A}} & \multicolumn{1}{c|}{\textsc{B}} & \multicolumn{1}{c|}{\textsc{C}}\\ 
 \hline
 \hline
 
 1 & w & x\\ 
+\hline
 2 & y & z\\ 
 \hline
 \end{tabular}
@@ -74,13 +76,14 @@ $output = $table->generate_string();
 $expected_output = <<'EOT'
 \begin{table}
 \centering
-\begin{tabular}{|l||l|l|}
+\begin{tabular}{|r||l|l|}
     \hline
 \multicolumn{1}{|c||}{A} & \multicolumn{1}{c|}{B} & \multicolumn{1}{c|}{C}\\ 
 \hline
 \hline
 
 1 & w & x\\ 
+\hline
 2 & y & z\\ 
 \hline
 \end{tabular}
@@ -103,13 +106,14 @@ $output = $table->generate_string();
 $expected_output = <<'EOT'
 \begin{table}
 \centering
-\begin{tabular}{|l||l|l|}
+\begin{tabular}{|r||l|l|}
     \hline
 A & B & C\\ 
 \hline
 \hline
 
 1 & w & x\\ 
+\hline
 2 & y & z\\ 
 \hline
 \end{tabular}
@@ -131,5 +135,33 @@ is_deeply(
     [ split( "\n", $output ) ],
     \@expected_output,
     'theme, without header centered'
+);
+
+$table->set_theme('Zurich');
+$output = $table->generate_string();
+
+$expected_output = <<'EOT'
+\begin{table}
+\centering
+\begin{tabular}{rll}
+    \toprule
+\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
+\midrule
+
+1 & w & x\\ 
+\midrule
+2 & y & z\\ 
+\bottomrule
+\end{tabular}
+\caption[Test]{Test. Test Caption}
+\end{table}
+EOT
+    ;
+@expected_output = split "\n", $expected_output;
+
+is_deeply(
+    [ split( "\n", $output ) ],
+    \@expected_output,
+    'standard theme'
 );
 
