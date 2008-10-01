@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-09-26 18:08:43 +0200 (Fri, 26 Sep 2008) $
-# $Revision: 1036 $
+#     $Date: 2008-10-01 18:09:40 +0200 (Wed, 01 Oct 2008) $
+# $Revision: 1061 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,7 +10,7 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.9.3');
+use version; our $VERSION = qv('0.9.4');
 
 use Carp;
 use Fatal qw( open close );
@@ -24,10 +24,6 @@ Readonly my $RULE_TOP_ID    => 0;
 Readonly my $RULE_MID_ID    => 1;
 Readonly my $RULE_INNER_ID  => 2;
 Readonly my $RULE_BOTTOM_ID => 3;
-
-Readonly my $DEFAULT_LONG    => 30;
-Readonly my $DEFAULT_LONG_COL   => 'p{5cm}';
-Readonly my $DEFAULT_LONG_COL_X => 'X';
 
 use Class::Std;
 {
@@ -61,9 +57,12 @@ use Class::Std;
     my %callback : ATTR( :name<callback> :default(0) );
     my %tabletailmsg :
         ATTR( :name<tabletailmsg> :default('Continued on next page') );
+    my %tableheadmsg :
+        ATTR( :name<tableheadmsg> :default('Continued from previous page') );
     my %tabletail : ATTR( :name<tabletail> :default(0) );
     my %xentrystretch : ATTR( :name<xentrystretch> :default(0) );
     my %resizebox : ATTR( :name<resizebox> :default(0) );
+    my %_data_summary : ATTR( :default(0) );
 
     ###########################################################################
     # Usage      : $table->generate_string();
@@ -82,6 +81,9 @@ use Class::Std;
 
         # are the user provided options ok?
         $self->_check_options();
+
+        # analyze the data
+        $self->_calc_data_summary( $self->get_data );
 
         # generate the table header LaTeX code
         my $code = $self->_header( $self->get_header, $self->get_data );
@@ -104,40 +106,32 @@ use Class::Std;
             else {
                 # single column rows that start with a backslash are just
                 # printed out
-                if (scalar(@{$row}) == 1 && $row->[0] =~ m{\A \s* \\ }xms) {
+                if ($self->_row_is_latex_command($row)) {
                     $code .= $row->[0] . "\n";
                     next ROW;
                 }
 
                 $row_id++;
-                
-                my $row_code = q{};
 
                 # now print the row LaTeX code
                 my $bgcolor = $theme->{'DATA_BG_COLOR_EVEN'};
                 if (($row_id % 2) == 1) {
                     $bgcolor = $theme->{'DATA_BG_COLOR_ODD'};
                 }
-                $row_code .= $self->_get_row_code( $row, $bgcolor, 0 );
+                $code .= $self->_get_row_code( $row, $bgcolor, 0 );
 
                 # do we have to draw a horizontal line?
                 if ( $i == scalar @data ) {
-                    $row_code .= $self->_get_hline_code($RULE_BOTTOM_ID);
+                    $code .= $self->_get_hline_code($RULE_BOTTOM_ID);
                 }
                 else {
-                    $row_code .= $self->_get_hline_code($RULE_INNER_ID);
-                }
-
-                if ($row_code !~ m{\A \s* \z}xms) {
-                    $code .= $row_code;
+                    $code .= $self->_get_hline_code($RULE_INNER_ID);
                 }
             }
         }
 
         # and finally the footer
         $code .= $self->_footer();
-
-#        $code =~ s{^ \s* $}{}xmsg;
 
         return $code;
     }
@@ -198,6 +192,14 @@ use Class::Std;
             }
         }
         return;
+    }
+    
+    sub _row_is_latex_command {
+        my ($self, $row) = @_;
+        if (scalar(@{$row}) == 1 && $row->[0] =~ m{\A \s* \\ }xms) {
+            return 1;
+        }
+        return 0;
     }
 
     sub _check_options {
@@ -387,34 +389,31 @@ use Class::Std;
         my $extra_row_height = $self->_get_extra_row_height_code();
         my $size             = $self->_get_size_code();
         my $caption          = $self->_get_caption_code(0);
-        my $label            = $self->_get_label_code;
-
-        my $tabletail     = $self->_get_tabletail_code( $data, 0 );
-        my $tabletaillast = $self->_get_tabletail_code( $data, 1 );
-
-        my $begin_resizebox = q{};
-        if ($self->get_resizebox) {
-            my $rb_width = $self->get_resizebox->[0];
-            my $rb_height = q{!};
-            if (defined $self->get_resizebox->[1]) {
-                $rb_height =  $self->get_resizebox->[1];
-            }
-            $begin_resizebox = "\\resizebox{$rb_width}{$rb_height}{\n";
-        }
-
-        my $xentrystretch = q{};
-        if ( $self->get_xentrystretch ) {
-            my $xs = $self->get_xentrystretch();
-            croak('xentrystretch not a number') if $xs !~
-                /\A-?(?:\d+(?:\.\d*)?|\.\d+)\z/xms;
-            $xentrystretch = "\\xentrystretch{$xs}\n";
-        }
+        my $label            = $self->_get_label_code();
+        my $tabletail        = $self->_get_tabletail_code( $data, 0 );
+        my $tabletaillast    = $self->_get_tabletail_code( $data, 1 );
+        my $begin_resizebox  = $self->_get_resizebox_begin_code();
+        my $xentrystretch    = $self->_get_xentrystretch_code();
 
         if ( $self->get_type eq 'xtab' ) {
+            my $tablehead = q{};
+            my @summary = $self->_get_data_summary();
+
+            if ($self->get_caption_top && $self->get_tableheadmsg) {
+                my $continued_caption = '\\multicolumn{' . scalar(@summary) .
+                '}{c}{{ \normalsize \tablename\ \thetable: ' .
+                $self->get_tableheadmsg . "}}\\\\[10pt]\n";
+                $tablehead =
+                "\\tablefirsthead{$code}\n\\tablehead{$continued_caption$code}\n";
+#                $tablehead = "\\tablehead{$code}";
+            }
+            else {
+                $tablehead = "\\tablehead{$code}";
+            }
             return <<"EOXT"
 {
 $colordef$extra_row_height$size$caption$xentrystretch$label
-\\tablehead{$code}
+$tablehead
 $tabletail
 $tabletaillast
 $begin_center$begin_resizebox\\begin{xtabular$asterisk}${width}{$table_def}
@@ -435,15 +434,38 @@ EOST
                 ;
         }
     }
+    
+    sub _get_xentrystretch_code {
+        my ( $self ) = @_;
+        if ( $self->get_xentrystretch ) {
+            my $xs = $self->get_xentrystretch();
+            croak('xentrystretch not a number') if $xs !~
+                /\A-?(?:\d+(?:\.\d*)?|\.\d+)\z/xms;
+            return "\\xentrystretch{$xs}\n";
+        }
+        return q{};
+    }
+
+    sub _get_resizebox_begin_code {
+        my ( $self ) = @_;
+        if ($self->get_resizebox) {
+            my $rb_width = $self->get_resizebox->[0];
+            my $rb_height = q{!};
+            if (defined $self->get_resizebox->[1]) {
+                $rb_height =  $self->get_resizebox->[1];
+            }
+            return "\\resizebox{$rb_width}{$rb_height}{\n";
+        }
+        return q{};
+    }
 
     sub _get_extra_row_height_code {
         my ( $self ) = @_;
-        my $extra_row_height = q{};
         if (defined $self->_get_theme_settings->{EXTRA_ROW_HEIGHT}) {
-            $extra_row_height = '\setlength{\extrarowheight}{' .
+            return '\setlength{\extrarowheight}{' .
                 $self->_get_theme_settings->{EXTRA_ROW_HEIGHT} . "}\n";
         }
-        return $extra_row_height;
+        return q{};
     }
 
     ###########################################################################
@@ -506,8 +528,8 @@ EOST
             LONG_MUST_MATCH_ALL => 0,
             NUMBER_COL    => 'r',
             NUMBER_COL_X  => 'r',
-            LONG_COL      => $DEFAULT_LONG_COL,
-            LONG_COL_X    => $DEFAULT_LONG_COL_X,
+            LONG_COL      => 'p{5cm}',
+            LONG_COL_X    => 'X',
             DEFAULT_COL   => 'l',
             DEFAULT_COL_X => 'l',
         };
@@ -527,7 +549,18 @@ EOST
                 $strategy->{$key} = $default->{$key};
             }
         }
+
         $self->set_coldef_strategy($strategy);
+
+        my @coltypes = $self->_get_coldef_types();
+        for my $type (@coltypes) {
+            if (!defined $strategy->{"${type}_COL"}) {
+                croak("Missing column attribute ${type}_COL for $type.");
+            }
+            if (!defined $strategy->{"${type}_MUST_MATCH_ALL"}) {
+                $strategy->{"${type}_MUST_MATCH_ALL"} = 1;
+            }
+        }
         return;
     }
 
@@ -541,6 +574,18 @@ EOST
             return 1;
         }
     }
+    
+    sub _get_coldef_types {
+        my ( $self ) = @_;
+        # everything that does not contain an underscore is a coltype
+        return sort grep { m{ \A [^_]+ \z }xms } keys
+            %{$self->get_coldef_strategy};
+    }
+
+    sub _get_data_summary {
+        my ( $self ) = @_;
+        return @ { $_data_summary{ident($self)} };
+    }
 
     ###########################################################################
     # Usage      : $self->_get_data_summary(\@data);
@@ -553,53 +598,54 @@ EOST
     # Comments   : n/a
     # See also   :
 
-    sub _get_data_summary {
+    sub _calc_data_summary {
         my ( $self, $data ) = @_;
-        my @max_row;
+        my $max_col_number = 0;
         my $strategy = $self->get_coldef_strategy;
         if ( !$strategy ) {
             $strategy = $self->_default_coldef_strategy;
         } else {
             $self->_check_coldef_strategy($strategy);
         }
-        my %is_a_number;
-        my %not_a_number;
-        my %is_long;
         my %matches;
         my %cells;
+
+        my @coltypes = $self->_get_coldef_types();
+        
+        ROW:
         for my $row ( @{$data} ) {
-            if ( scalar @{$row} > scalar @max_row ) {
-                @max_row = @{$row};
+            if (scalar @{$row} == 0 || $self->_row_is_latex_command($row)) {
+                next ROW;
+            }
+            if ( scalar @{$row} > $max_col_number ) {
+                $max_col_number = scalar @{$row};
             }
             my $i = 0;
             for my $col ( @{$row} ) {
-                if ( $col =~ $strategy->{NUMBER} ) {
-                    $matches{$i}{NUMBER}++;
-                }
-                elsif ( $col =~ $strategy->{LONG} ) {
-                    $matches{$i}{LONG}++;
+                for my $coltype (@coltypes) {
+                    if ( $col =~ $strategy->{$coltype} ) {
+                        $matches{$i}{$coltype}++;
+                    }
                 }
                 $cells{$i}++;
                 $i += $self->_extract_number_columns($col);
             }
         }
         my @summary;
-        for my $i ( 0 .. $#max_row ) {
-            my $number = 0;
-            if ( defined $matches{$i}{NUMBER} &&
-                ( !$strategy->{NUMBER_MUST_MATCH_ALL} || $cells{$i} ==
-                    $matches{$i}{NUMBER} )) {
-                $number = 1;
+        for my $i ( 0 .. $max_col_number - 1 ) {
+            my $type_of_this_col = 'DEFAULT';
+            for my $coltype (@coltypes) {
+                if ( defined $matches{$i}{$coltype} &&
+                    ( !$strategy->{"${coltype}_MUST_MATCH_ALL"} || $cells{$i} ==
+                        $matches{$i}{$coltype} )
+                ) {
+                    $type_of_this_col = $coltype;
+                }
             }
-            if ( defined $matches{$i}{LONG} && !$self->get_text_wrap &&
-                ( !$strategy->{LONG_MUST_MATCH_ALL} || $cells{$i} ==
-                    $matches{$i}{LONG} )
-            ) {
-                $number = 2;
-            }
-            push @summary, $number;
+            push @summary, $type_of_this_col;
         }
-        return @summary;
+        $_data_summary{ident($self)} = \@summary;
+        return;
     }
 
     sub _get_hline_code {
@@ -647,7 +693,11 @@ EOST
         CENTER_ROW:
         foreach my $row ( @{$header} ) {
             my @cols = @{$row};
-            if (scalar(@cols) == 1 && $cols[0] =~ m{\A \s* \\ }xms) {
+            if ( scalar @cols == 0 ) {
+                $code .= $self->_get_single_hline_code();
+                next CENTER_ROW;
+            }
+            if ($self->_row_is_latex_command($row)) {
                 $code .= $cols[0] . "\n";
                 next CENTER_ROW;
             }
@@ -739,11 +789,13 @@ EOST
                 for my $i ( @{ $self->get_columns_like_header } ) {
                     next HEADER_COLUMN if $i != $col_id;
                     $col_def = $self->_get_mc_def(
-                        $self->_apply_header_formatting(
-                            $self->_get_mc_value( $col_def ), 0 ) );
+                        $self->_apply_header_formatting($self->_get_mc_value( $col_def ), 0 ) );
                     if (!defined $col_def->{cols}) {
+                        my @summary = $self->_get_data_summary();
                         $col_def->{cols} = 1;
-                        $col_def->{align} = 'l';
+                        $col_def->{align} =
+                            $self->get_coldef_strategy->{$summary[$col_id] .
+                                $self->_get_coldef_type_col_suffix};
                     }
                 }
             }
@@ -786,7 +838,8 @@ EOST
             }
             $j++;
         }
-        if (defined $bgcolor && scalar(@cols) >= 0) {
+        if (defined $bgcolor) {
+            # @cols has always at least one element, otherwise we draw a line
             $cols[0] = "\\rowcolor{$bgcolor}" . $cols[0];
         }
         return join( ' & ', @cols ) . "\\\\ \n";
@@ -856,6 +909,14 @@ EOST
         $col_def->{value} = "\\color{$color}" . $col_def->{value};
         return $self->_get_mc_value($col_def);
     }
+    
+    sub _get_coldef_type_col_suffix {
+        my ( $self ) = @_;
+        if ($self->get_width_environment eq 'tabularx') {
+            return '_COL_X';
+        }
+        return '_COL';
+    }
 
     ###########################################################################
     # Usage      : $self->_get_coldef_code(\@data);
@@ -867,7 +928,7 @@ EOST
 
     sub _get_coldef_code {
         my ( $self, $data ) = @_;
-        my @cols   = $self->_get_data_summary($data);
+        my @cols   = $self->_get_data_summary();
         my $vlines = $self->_get_theme_settings->{'VERTICAL_LINES'};
 
         my $v0 = q{|} x $vlines->[0];
@@ -875,23 +936,21 @@ EOST
         my $v2 = q{|} x $vlines->[2];
 
         my $table_def = q{};
-        my $i         = 0;
-        my $strategy  = $self->get_coldef_strategy();
-        my $tabularx  = q{};
+        my $i          = 0;
+        my $strategy   = $self->get_coldef_strategy();
+        my $typesuffix = $self->_get_coldef_type_col_suffix();
         
-        if ($self->get_width_environment eq 'tabularx') {
-            $tabularx = '_X';
-        }
+        my @attributes = grep { m{ _COL }xms } keys %{$strategy};
 
         for my $col (@cols) {
 
             # align text right, numbers left, first col always left
-            my $align = $strategy->{"DEFAULT_COL$tabularx"};
-            if ( $col == 1 ) {
-                $align = $strategy->{"NUMBER_COL$tabularx"};
-            }
-            elsif ( $col == 2 ) {
-                $align = $strategy->{"LONG_COL$tabularx"};
+            my $align;
+
+            for my $attribute (sort @attributes) {
+                if ( $attribute =~ m{ \A $col $typesuffix \z }xms) {
+                    $align = $strategy->{$attribute};
+                }
             }
 
             if ( $i == 0 ) {
@@ -929,7 +988,7 @@ EOST
             $code = $self->get_tabletail;
         }
         elsif (!$final_tabletail) {
-            my @cols    = $self->_get_data_summary($data);
+            my @cols    = $self->_get_data_summary();
             my $nu_cols = scalar @cols;
 
             my $v0 = q{|} x $vlines->[0];
@@ -961,6 +1020,7 @@ EOST
         if ($self->get_caption_top) {
             if ( $self->get_type eq 'xtab' ) {
                 $c_caption = $self->get_caption_top;
+                $c_caption =~ s{ \A \\ }{}xms;
                 if ($c_caption eq '1') {
                     $c_caption = 'topcaption';
                 }
@@ -1122,7 +1182,6 @@ EOST
     ###########################################################################
     # Usage      : called by Class::Std
     # Purpose    : initializing themes
-    # Parameters : none
     # See also   : perldoc Class::Std
 
     sub BUILD {
@@ -1232,7 +1291,6 @@ EOST
     # Returns    : see purpose
     # Parameters : none
     # Throws     : no exceptions
-    # Comments   : n/a
     # See also   : _get_theme_settings()
 
     sub get_available_themes {
@@ -1252,7 +1310,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.3
+This document describes LaTeX::Table version 0.9.4
 
 =head1 SYNOPSIS
 
@@ -1394,7 +1452,7 @@ The name of the LaTeX output file. Default is 'latextable.tex'.
 
 Can be either 'std' for standard LaTeX tables or 'xtab' for multipage tables 
 (in appendices for example). The latter requires the C<xtab> LaTeX package 
-(C<\usepackage{xtab}> in your LaTeX document). Default is 'std'.
+(C<\usepackage{xtab}> in the preamble of your LaTeX document). Default is 'std'.
 
 =item C<header>
 
@@ -1482,7 +1540,10 @@ command is used, i.e. C<\midrule> vs. C<\hline>).
 If get_environment() returns a true value, then a floating environment will be 
 generated. Default is 'table'. You can use 'sidewaystable' for rotated tables
 (requires the C<rotating> package). In two-column documents, 'table*' will
-place the table across the columns. This option only affects tables of C<type> I<std>.
+place the table across the columns. This option only affects tables of C<type>
+I<std> because I<xtab> tables have their own, non-floating environment. This
+non-floating environment, however, supports all options in this section except
+for C<position>.
 
   \begin{table}[htb]
       \centering
@@ -1519,7 +1580,9 @@ Or even multiple commands:
      '\setlength{\abovecaptionskip}{0pt}\setlength{\belowcaptionskip}{10pt}\caption',
    ...
 
-Default 0 (caption below the table).  
+Default 0 (caption below the table) because standard LaTeX macros are
+optimized for bottom captions. For multi-page tables, however, top captions
+are highly recommended.
 
 =item C<center>
 
@@ -1603,55 +1666,69 @@ is selected. These rules can be changed with set_coldef_strategy(). Default is
 =item C<coldef_strategy>
 
 Controls the behaviour of the C<coldef> calculation when get_coldef()
-does not return a true value. Is a reference to a hash with following keys:
+does not return a true value. It is a reference to a hash that contains
+regular expressions that define the I<types> of the columns. For example, 
+the standard types I<NUMBER> and I<LONG> are defined as:
+
+ {
+    NUMBER                =>
+       qr{\A\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*\z}xms,
+    NUMBER_MUST_MATCH_ALL => 1,
+    NUMBER_COL            => 'r',
+    NUMBER_COL_X          => 'r',
+    LONG                  => qr{\A\s*.{30,}?\s*\z}xms,
+    LONG_MUST_MATCH_ALL   => 0,
+    LONG_COL              => 'p{5cm}',
+    LONG_COL_X            => 'X',
+ };
 
 =over
 
-=item C<NUMBER =E<gt> $regex>
+=item C<TYPE =E<gt> $regex>
 
-Defines a cell as I<NUMBER> when its value matches the
-specified regular expression. Default is
-C<qr{\A\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*\z}xms>.
+New types are defined with the regular expression $regex. All B<cells> that
+match this regular expression have type I<TYPE>. A cell can have multiple
+types. The name of a type is not allowed to contain underscores (C<_>).
 
-=item C<NUMBER_MUST_MATCH_ALL =E<gt> 1>
+=item C<TYPE_MUST_MATCH_ALL>
 
-Defines a column as I<NUMBER> when all cells in this column are of type
-I<NUMBER>.
+This defines if whether a B<column> has type I<TYPE> when all B<cells> 
+are of type C<TYPE> or at least one. Default is C<1> (must match all).
 
-=item C<LONG =E<gt> $regex>
+Note that columns can have only one type. Types are applied alphabetically, 
+so for example a I<LONG> I<NUMBER> column has as final type I<NUMBER>.
 
-Defines a cell as I<LONG> when its value matches the specified regular
-expression. Default is C<qr{\A \s* .{30,}? \s* \z}xms>.
+=item C<TYPE_COL>
 
-=item C<LONG_MUST_MATCH_ALL =E<gt> 0>
+The C<coldef> attribute for I<TYPE> columns. Required (no default value).
 
-Defines a column as I<LONG> when at least one cell in this column is of type
-I<LONG>.
+=item C<TYPE_COL_X>
 
-=item C<NUMBER_COL =E<gt> $attribute>, C<NUMBER_COL_X =E<gt> $attribute>
+Same as C<TYPE_COL> but for C<tabularx> tables. If undefined, the attribute
+defined in C<TYPE_COL> is used for C<tabularx> tables. 
 
-The C<coldef> attribute for I<NUMBER> columns. Default 'r' (right-justified).
-
-=item C<LONG_COL =E<gt> $attribute>, C<LONG_COL_X =E<gt> $attribute>
-
-The C<coldef> attribute for I<LONG> columns. Default 'p{5cm}' (paragraph
-column with text vertically aligned at the top, width '5cm') and 'X' when the
-C<tabularx> package is used.
-
-=item C<DEFAULT_COL =E<gt> $attribute>, C<DEFAULT_COL_X =E<gt> $attribute>
+=item C<DEFAULT_COL>, C<DEFAULT_COL_X>
 
 The C<coldef> attribute for columns that do not match any specified type.
 Default 'l' (left-justified).
 
 =back
 
-Example:
+Examples:
 
+  # change standard types
   $table->set_coldef_strategy({
     NUMBER   => qr{\A \s* \d+ \s* \z}xms, # integers only
-    LONG     => qr{\A .{60,}\z}xms, # min. 60 characters
+    LONG     => qr{\A \s* .{60,} \s* \z}xms, # min. 60 characters
     LONG_COL => '>{\raggedright\arraybackslash}p{7cm}', # non-justified
   });
+
+  # add new types (here: center columns that contain only URLs)
+  $table->set_coldef_strategy({
+    URL     => qr{\A \s* http }xms, 
+    URL_COL => 'c',
+  });
+
 
 =item C<resizebox>
 
@@ -1675,9 +1752,6 @@ C<tabularx> LaTeX package (see below).
   # use 75% of textwidth 
   $table->set_width('0.75\textwidth');
   
-  # or 300 points (1/72 inch)
-  $table->set_width('300pt');
-
 =item C<width_environment>
 
 If get_width() (see above) returns a true value and table is of C<type> I<std>,
@@ -1685,11 +1759,21 @@ then this option specifies whether C<tabular*> or the C<tabularx> package
 should be used. The latter is great when you have long columns because 
 C<tabularx> tries to optimize the column widths. Default is 'tabular*'.
 
+  # use the tabularx package (for a std table)
+  $table->set_width('300pt');
+  $table->set_width_environment('tabularx');
+
 =back
 
 =head2 MULTIPAGE TABLES
 
 =over
+
+=item C<tableheadmsg>
+
+When get_caption_top() and get_tableheadmsg() both return true values, then
+additional captions are printed on the continued pages. Default caption text 
+is C<Continued from previous page>.
 
 =item C<tabletailmsg>
 
@@ -1897,6 +1981,11 @@ the L<"SYNOPSIS"> and L<"TABULAR ENVIRONMENT"> for examples how to use this opti
 The return value of get_coldef_strategy() is not a hash reference. See 
 L<"TABULAR ENVIRONMENT">.
 
+=item Missing column attribute for ...
+
+You have specified a new type in C<coldef_strategy> but forgot to add the
+column  attribute. See L<"TABULAR ENVIRONMENT">.
+
 =item C<columns_like_header> is not an array reference 
 
 The return value of get_columns_like_header() is not an array reference.
@@ -1913,8 +2002,8 @@ C<header>.
 
 =item DEPRECATED. ...  
 
-There were some minor API changes in C<LaTeX::Table> 0.1.0, 0.8.0 and 0.9.0.  Just
-apply the changes to the script or contact its author.
+There were some minor API changes in C<LaTeX::Table> 0.1.0, 0.8.0, 0.9.0 and
+0.9.3.  Just apply the changes to the script or contact its author.
 
 =item Family not known: ... . Valid families are: ...
 

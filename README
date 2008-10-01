@@ -1,4 +1,4 @@
-LaTeX-Table version 0.9.3
+LaTeX-Table version 0.9.4
 
 LaTeX::Table provides functionality for an intuitive and easy generation of
 LaTeX tables. It ships with some predefined good looking table styles. This module s
@@ -8,7 +8,7 @@ package for nicer fixed-width tables. Furthermore, it supports the C<colortbl>
 package for colored tables optimized for presentations.
 
 LaTeX makes professional typesetting easy. Unfortunately,
-this is not entirely true for tables. Many additional, highly specialized packages are 
+this is not entirely true for tables. Many additional, highly specialized packages are
 therefore available on CTAN. This module supports the best packages and
 visualizes your in Perl generated or summarized results with high quality. 
 
@@ -46,13 +46,13 @@ Now please compile these examples with LaTeX and check if all tables look ok:
 PROGRAMS
 
 This module ships with two small utilities. The first, csv2pdf is a CSV to PDF
-converter. It is only about 100 lines of code short and only meant as an example 
-application, but it is already very powerful. It requires Text::CSV,
-LaTeX::Encode and LaTeX::Driver, which are not installed during the installation
-of this module. 
+converter. It is only about 100 lines of code short and only meant as an 
+example application, but it is already very powerful. It requires Getopt::Long,
+Text::CSV, LaTeX::Encode and LaTeX::Driver, which are not installed during the
+installation of this module. 
 
-The second utility is ltpretty. It takes a lazy formatted LaTeX table from STDIN
-(typically piped from Vim or emacs) and outputs a completely formatted
+The second utility is ltpretty. It takes a lazy formatted LaTeX table from 
+STDIN (typically piped from Vim or emacs) and outputs a completely formatted
 table. This makes this module not only useful for automatically generated
 reports, but also saves a lot of typing work in creating custom tables.
 

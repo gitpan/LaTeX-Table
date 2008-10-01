@@ -1,6 +1,6 @@
 BEGIN { our $WARNMSG; $SIG{'__WARN__'} = sub { $WARNMSG = $_[0]; } };
 
-use Test::More tests => 7;
+use Test::More tests => 6;
 
 use LaTeX::Table;
 use English qw( -no_match_vars );
@@ -52,41 +52,6 @@ $data = [
     ],
 ];
 
-$table = LaTeX::Table->new(
-    {   header    => $header,
-        data      => $data,
-        text_wrap => [ 15, 30, 30 ],
-        theme     => 'Dresden',
-    }
-);
-$expected_output = <<'EOT';
-\begin{table}
-\centering
-\begin{tabular}{|l||l|l|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{Character}} & \multicolumn{1}{c|}{\textbf{Fullname}} & \multicolumn{1}{c|}{\textbf{Voice}}\\ 
-\hline
-\hline
-
-Homer & Homer Jay Simpson & Dan Castellaneta\\ 
-Marge & Marjorie Simpson (née & Julie Kavner\\ 
- & Bouvier) & \\ 
-Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
-Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
-Maggie & Margaret Simpson & Elizabeth Taylor, Nancy\\ 
- &  & Cartwright, James Earl\\ 
- &  & Jones,Yeardley Smith, Harry\\ 
- &  & Shearer\\ 
-\hline
-\end{tabular}
-\end{table}
-EOT
-my $output = $table->generate_string;
-is_deeply(
-    [ split( "\n", $output ) ],
-    [ split( "\n", $expected_output ) ],
-    'text wrap works with words'
-);
 $table = LaTeX::Table->new(
     {   header            => $header,
         data              => $data,

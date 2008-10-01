@@ -1,5 +1,15 @@
 Revision history for LaTeX-Table
 
+0.9.4  Wed  Oct 1 18:30:00 2008
+        - coldef_strategy: column types can be defined
+        - empty rows in headers now also produce vertical lines for consistency
+        - now data is only analyzed once (was twice in xtab)
+        - tableheadmsg
+        - Bugfix: latex commands in data counted as line (problem for
+          _MUST_MATCH_ALL)
+        - Bugfix: columns_like_header columns always left-justified  
+        - a few more tests
+
 0.9.3  Fri  Sep 26 14:00:00 2008
         - leading/trailing spaces in default NUMBER regex allowed
         - coldef_strategy: suffix _MUST_MATCH_ALL now defines whether the

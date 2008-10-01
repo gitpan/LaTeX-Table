@@ -63,6 +63,7 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
     }
 
     $table->set_filename("$theme.tex");
+    $table->set_caption_top(0);
     $table->set_theme($theme);
     $table->set_type('std');
     $table->set_header($test_header);
@@ -75,6 +76,7 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
     $table->set_xentrystretch(-0.1);
     $table->set_header($test_header);
     $table->set_data($test_data_large);
+    $table->set_caption_top('\setlength{\abovecaptionskip}{0pt}\setlength{\belowcaptionskip}{10pt}\topcaption');
     $table->generate();
 }
 

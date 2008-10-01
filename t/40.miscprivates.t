@@ -11,13 +11,16 @@ my $table = LaTeX::Table->new({ filename => 'out.tex',
                              });
 
 my $test_data = [ [ 1, 2, 4], [ 2, 3 ] ];
-my @summary = $table->_get_data_summary($test_data);
-is_deeply(\@summary, [1,1,1], 'all integers');
+$table->_calc_data_summary($test_data);
+my @summary = $table->_get_data_summary();
+is_deeply(\@summary, ['NUMBER','NUMBER','NUMBER'], 'all integers');
 
 $test_data = [ [ 'a', 2, 4], [ 'b', 3 ] ];
-@summary = $table->_get_data_summary($test_data);
-is_deeply(\@summary, [0,1,1], 'not all integers');
+$table->_calc_data_summary($test_data);
+@summary = $table->_get_data_summary();
+is_deeply(\@summary, ['DEFAULT','NUMBER','NUMBER'], 'not all integers');
 
 $test_data = [ [ 'a', 2, ], [ '1', 3 ] ];
-@summary = $table->_get_data_summary($test_data);
-is_deeply(\@summary, [0,1], 'not all integers');
+$table->_calc_data_summary($test_data);
+@summary = $table->_get_data_summary();
+is_deeply(\@summary, ['DEFAULT','NUMBER'], 'not all integers');

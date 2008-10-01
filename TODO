@@ -2,6 +2,9 @@ before 1.0
 
 - fine tune default parameters
 - nicer, aligned output
+- remove deprecated code
+
+after 1.0
+
 - themes should define how to handle manually inserted lines with []. 
   (for example thicker lines)
-- coldef strategy must allow the creation of new types.  

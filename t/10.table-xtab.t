@@ -1,4 +1,4 @@
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -103,12 +103,20 @@ $expected_output =<<'EOT'
 \topcaption[Beer Counter]{\textbf{Beer Counter. }Number of beers before and after 4pm.}
 \label{beercounter}
 
-\tablehead{\hline
+\tablefirsthead{\hline
 \multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
 \multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
 \hline
 \hline
 }
+\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[10pt]
+\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
+\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\hline
+\hline
+}
+
 \tabletail{ \hline
 }
 \tablelasttail{}
@@ -132,6 +140,50 @@ is_deeply([ split("\n",$output) ], [split("\n",$expected_output)],
     'without table environment, topcaption custom tabletail');
 
 $table->set_caption_top('topcaption');
+
+$expected_output =<<'EOT'
+{
+\topcaption[Beer Counter]{\textbf{Beer Counter. }Number of beers before and after 4pm.}
+\label{beercounter}
+
+\tablefirsthead{\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
+\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\hline
+\hline
+}
+\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[10pt]
+\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
+\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\hline
+\hline
+}
+
+\tabletail{ \hline
+}
+\tablelasttail{}
+\begin{xtabular}{|l||r|r|}
+Lisa & 0 & 0\\ 
+Marge & 0 & 1\\ 
+Wiggum & 0 & 5\\ 
+Otto & 1 & 3\\ 
+Homer & 2 & 6\\ 
+Barney & 8 & 16\\ 
+\hline
+\end{xtabular}
+
+} 
+EOT
+;
+
+$output = $table->generate_string();
+
+is_deeply([ split("\n",$output) ], [split("\n",$expected_output)], 
+    'without table environment, topcaption custom tabletail');
+
+
+$table->set_tableheadmsg(0);
 
 $expected_output =<<'EOT'
 {
@@ -165,3 +217,4 @@ $output = $table->generate_string();
 
 is_deeply([ split("\n",$output) ], [split("\n",$expected_output)], 
     'without table environment, topcaption custom tabletail');
+

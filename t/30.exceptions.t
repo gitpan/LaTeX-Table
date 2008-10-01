@@ -1,4 +1,4 @@
-use Test::More tests => 28;
+use Test::More tests => 29;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -177,6 +177,17 @@ like(
     'coldef_strategy not a hash'
 ) || diag $EVAL_ERROR;
 
+$table->set_coldef_strategy({
+        URL => qr{ \A \s* http }xms,
+});
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{Missing column attribute URL_COL for URL\.},
+    'Missing column attribute URL_COL for URL.'
+) || diag $EVAL_ERROR;
+
 $table = LaTeX::Table->new(
     {   header  => $header,
         data    => $data,
@@ -304,3 +315,5 @@ ok(
     !$EVAL_ERROR, 
     'resizebox 0 is ok'
 ) || diag $EVAL_ERROR;
+
+

@@ -535,12 +535,12 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \setlength{\extrarowheight}{1pt}
-\begin{tabular}{|lll|}
+\begin{tabular}{|rll|}
     \hline
 
-\rowcolor{latextbl!25}\multicolumn{1}{|>{\columncolor{latextbl}}l}{\color{white}\textbf{1}} & w & x\\ 
+\rowcolor{latextbl!25}\multicolumn{1}{|>{\columncolor{latextbl}}r}{\color{white}\textbf{1}} & w & x\\ 
 \hline
-\rowcolor{latextbl!10}\multicolumn{1}{|>{\columncolor{latextbl}}l}{\color{white}\textbf{2}} & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c}\\ 
+\rowcolor{latextbl!10}\multicolumn{1}{|>{\columncolor{latextbl}}r}{\color{white}\textbf{2}} & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c}\\ 
 \hline
 \end{tabular}
 \end{table}
@@ -556,7 +556,7 @@ is_deeply(
     'theme with colordef and resizebox'
 ) || diag $output;
 
-$header = [ [ '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ] ];
+$header = [ ['Time', 'Weekdays:5c'], [], [ '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ] ];
 
 $data = [ 
 [ '9.00', '','', '', '', '', ],
@@ -579,6 +579,8 @@ $expected_output = <<'EOT'
 \setlength{\extrarowheight}{1pt}
 \begin{tabular}{|rlllll|}
     \hline
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Time}\end{sideways}} & \multicolumn{5}{>{\columncolor{latextbl}}c|}{\begin{sideways}\color{white}\textbf{Weekdays}\end{sideways}}\\ 
+\hline
 \rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Monday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Tuesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Wednesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Thursday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\begin{sideways}\color{white}\textbf{Friday}\end{sideways}}\\ 
 \hline
 
