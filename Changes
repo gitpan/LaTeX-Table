@@ -1,8 +1,15 @@
 Revision history for LaTeX-Table
 
+0.9.5  Thu  Oct 2 18:30:00 2008
+        - POD corrections
+        - new, common exception format for invalid option usage
+        - environment must be true for xtab packages
+        - \belowcaptionskip instead of 10pt in tablehead, caption_top
+        - custom_tabular_environment (e.g. for mpxtabular)
+
 0.9.4  Wed  Oct 1 18:30:00 2008
         - coldef_strategy: column types can be defined
-        - empty rows in headers now also produce vertical lines for consistency
+        - empty rows in headers now also produce horizontal lines for consistency
         - now data is only analyzed once (was twice in xtab)
         - tableheadmsg
         - Bugfix: latex commands in data counted as line (problem for

@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-10-01 18:09:40 +0200 (Wed, 01 Oct 2008) $
-# $Revision: 1061 $
+#     $Date: 2008-10-02 15:05:09 +0200 (Thu, 02 Oct 2008) $
+# $Revision: 1072 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,7 +10,7 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.9.4');
+use version; our $VERSION = qv('0.9.5');
 
 use Carp;
 use Fatal qw( open close );
@@ -35,7 +35,7 @@ use Class::Std;
     my %header : ATTR( :name<header> :default(0));
     my %data : ATTR( :name<data> :default(0) );
     my %table_environment : ATTR( :name<table_environment> :default('deprecated') );
-    my %environment : ATTR( :name<environment> :default('table') );
+    my %environment : ATTR( :name<environment> :default('1') );
     my %caption : ATTR( :name<caption> :default(0) );
     my %caption_top : ATTR( :name<caption_top> :default(0) );
     my %tabledef : ATTR( :name<tabledef> :default('deprecated') );
@@ -49,7 +49,8 @@ use Class::Std;
     my %columns_like_header : ATTR( :name<columns_like_header> :default(0) );
     my %header_sideways : ATTR( :name<header_sideways> :default(0) );
     my %width : ATTR( :name<width> :default(0) );
-    my %width_environment : ATTR( :name<width_environment> :default('tabular*') );
+    my %width_environment : ATTR( :name<width_environment> :default(0) );
+    my %custom_tabular_environment : ATTR( :name<custom_tabular_environment> :default(0) );
     my %tablepos : ATTR( :name<tablepos> :default('deprecated') );
     my %position : ATTR( :name<position> :default(0) );
     my %center : ATTR( :name<center> :default(1) );
@@ -202,6 +203,11 @@ use Class::Std;
         return 0;
     }
 
+    sub _invalid_option_usage {
+        my ( $self, $option, $msg ) = @_;
+        croak "Invalid usage of option $option: $msg.";
+    }
+
     sub _check_options {
         my ( $self ) = @_;
 
@@ -215,28 +221,40 @@ use Class::Std;
         $self->_check_2d_array( $self->get_data,   'data' );
 
         if ( $self->get_callback && reftype $self->get_callback ne 'CODE' ) {
-            croak 'callback is not a code reference.';
+            $self->_invalid_option_usage('callback', 'Not a code reference');
         }
         if ($self->get_columns_like_header) {
             $self->_check_1d_array($self->get_columns_like_header,
-                'columns_like_header');
+                q{}, 'columns_like_header');
         }
         if ($self->get_resizebox) {
             $self->_check_1d_array($self->get_resizebox,
-                'resizebox');
+                q{}, 'resizebox');
         }
-
+        if ($self->get_type eq 'xtab' && !$self->get_environment) {
+            $self->_invalid_option_usage('environment',
+                'xtab requires an environment');
+        }
+        if ($self->get_type eq 'xtab' && $self->get_position) {
+            $self->_invalid_option_usage('position',
+                'xtab does not support position');
+        }
+        # handle default values by ourselves
+        if ($self->get_width_environment eq 'tabular*') {
+            $self->set_width_environment(0);
+        }
         return;
     }
 
     sub _check_text_wrap {
         my ($self) = @_;
         if ( reftype $self->get_text_wrap ne 'ARRAY' ) {
-            croak 'text_wrap is not an array reference.';
+            $self->_invalid_option_usage('text_wrap', 'Not an array reference');
         }
         for my $value ( @{ $self->get_text_wrap } ) {
             if ( defined $value && $value !~ m{\A \d+ \z}xms ) {
-                croak 'Value in text_wrap not an integer: ' . $value;
+                $self->_invalid_option_usage( 'text_wrap', 'Not an integer: '
+                    . $value);
             }
         }
         carp('DEPRECATED: use for example tabularx instead.');
@@ -356,29 +374,25 @@ use Class::Std;
             }
         }
         my $width = q{};
-        my $asterisk = q{};
+        my $tabular_environment = $self->_get_tabular_environment();
+
         if ( $self->get_width ) {
             $width = '{' . $self->get_width . '}';
-            if ($self->get_width_environment eq 'tabular*') {
+            if (!$self->get_width_environment) {
             ## no critic
             $table_def = '@{\extracolsep{\fill}} ' . $table_def;
             ## use critic
-            $asterisk = q{*};
             }
-            elsif ($self->get_width_environment eq 'tabularx' &&
-                $self->get_type eq 'std' ) {
-                $asterisk = q{x};
-            }
-            else {
-                croak(
-                    'Width environment not known: ',
-                    $self->get_width_environment ,
-                 '. Valid environments are: tabular*, tabularx (not for xtab).'
+            elsif (!($self->get_width_environment eq 'tabularx' &&
+                $self->get_type eq 'std' )) {
+                $self->_invalid_option_usage('width_environment',
+                    'Not known: ' . $self->get_width_environment .
+                 '. Valid environments are: 0, tabularx (not for xtab)'
                 );
             }
         }
         elsif( $self->get_width_environment eq 'tabularx') {
-            croak('width_environment is tabularx and width is unset.');
+            $self->_invalid_option_usage('width_environment', 'Is tabularx and width is unset');
         }
 
         my $colordef = q{};
@@ -386,14 +400,14 @@ use Class::Std;
             $colordef = $self->_get_theme_settings->{DEFINE_COLORS} . "\n";
         }
 
-        my $extra_row_height = $self->_get_extra_row_height_code();
-        my $size             = $self->_get_size_code();
-        my $caption          = $self->_get_caption_code(0);
-        my $label            = $self->_get_label_code();
-        my $tabletail        = $self->_get_tabletail_code( $data, 0 );
-        my $tabletaillast    = $self->_get_tabletail_code( $data, 1 );
-        my $begin_resizebox  = $self->_get_resizebox_begin_code();
-        my $xentrystretch    = $self->_get_xentrystretch_code();
+        my $extra_row_height    = $self->_get_extra_row_height_code();
+        my $size                = $self->_get_size_code();
+        my $caption             = $self->_get_caption_code(0);
+        my $label               = $self->_get_label_code();
+        my $tabletail           = $self->_get_tabletail_code( $data, 0 );
+        my $tabletaillast       = $self->_get_tabletail_code( $data, 1 );
+        my $begin_resizebox     = $self->_get_resizebox_begin_code();
+        my $xentrystretch       = $self->_get_xentrystretch_code();
 
         if ( $self->get_type eq 'xtab' ) {
             my $tablehead = q{};
@@ -402,7 +416,7 @@ use Class::Std;
             if ($self->get_caption_top && $self->get_tableheadmsg) {
                 my $continued_caption = '\\multicolumn{' . scalar(@summary) .
                 '}{c}{{ \normalsize \tablename\ \thetable: ' .
-                $self->get_tableheadmsg . "}}\\\\[10pt]\n";
+                $self->get_tableheadmsg . "}}\\\\[\\belowcaptionskip]\n";
                 $tablehead =
                 "\\tablefirsthead{$code}\n\\tablehead{$continued_caption$code}\n";
 #                $tablehead = "\\tablehead{$code}";
@@ -416,7 +430,7 @@ $colordef$extra_row_height$size$caption$xentrystretch$label
 $tablehead
 $tabletail
 $tabletaillast
-$begin_center$begin_resizebox\\begin{xtabular$asterisk}${width}{$table_def}
+$begin_center$begin_resizebox\\begin{$tabular_environment}${width}{$table_def}
 EOXT
         }
         else {
@@ -428,19 +442,44 @@ EOXT
                     $begin_center, $caption;
             }
             return <<"EOST"
-$colordef$environment$extra_row_height$begin_resizebox\\begin{tabular$asterisk}${width}{$table_def}
+$colordef$environment$extra_row_height$begin_resizebox\\begin{$tabular_environment}${width}{$table_def}
     $code
 EOST
                 ;
         }
     }
-    
+   
+    sub _get_tabular_environment {
+        my ( $self ) = @_;
+        my $res;
+        if ( $self->get_custom_tabular_environment ) {
+            $res = $self->get_custom_tabular_environment;
+        }
+        elsif ($self->get_type eq 'xtab') {
+            $res = 'xtabular';
+        }
+        else {
+            $res = 'tabular';
+        }
+        if ($self->get_width) {
+            if (!$self->get_width_environment) {
+                $res .= q{*};
+            }
+            else {
+                $res = $self->get_width_environment;
+            }
+        }
+        return $res;
+    }
+
     sub _get_xentrystretch_code {
         my ( $self ) = @_;
         if ( $self->get_xentrystretch ) {
             my $xs = $self->get_xentrystretch();
-            croak('xentrystretch not a number') if $xs !~
-                /\A-?(?:\d+(?:\.\d*)?|\.\d+)\z/xms;
+            if ($xs !~ /\A-?(?:\d+(?:\.\d*)?|\.\d+)\z/xms) {
+                $self->_invalid_option_usage('xentrystretch', 'Not a number: '
+                . $self->get_xentrystretch);
+            }
             return "\\xentrystretch{$xs}\n";
         }
         return q{};
@@ -479,15 +518,7 @@ EOST
         my ($self)  = @_;
         my $label   = $self->_get_label_code();
         my $caption = $self->_get_caption_code(0);
-        my $asterisk = q{};
-        if ( $self->get_width ) {
-            if ($self->get_width_environment eq 'tabular*') {
-                $asterisk = q{*};
-            }
-            else {
-                $asterisk = q{x};
-            }
-        }
+        my $tabular_environment = $self->_get_tabular_environment();
         my $end_resizebox = q{};
         if ($self->get_resizebox) {
             $end_resizebox = "}\n";
@@ -498,7 +529,7 @@ EOST
                 $end_center = "\\end{center}";
             }
             return <<"EOXT"
-\\end{xtabular$asterisk}
+\\end{$tabular_environment}
 $end_resizebox$end_center
 } 
 EOXT
@@ -511,7 +542,7 @@ EOXT
 
             }
             return <<"EOST"
-\\end{tabular$asterisk}
+\\end{$tabular_environment}
 $end_resizebox$environment
 EOST
                 ;
@@ -541,7 +572,8 @@ EOST
         my ( $self , $strategy ) = @_;
         my $rt_strategy = reftype $strategy;
         if (!defined $rt_strategy || $rt_strategy ne 'HASH') {
-            croak 'coldef_strategy not a hash reference.';
+            $self->_invalid_option_usage('coldef_strategy',
+                'Not a hash reference');
         }
         my $default = $self->_default_coldef_strategy;
         for my $key (keys %{$default}) {
@@ -555,7 +587,7 @@ EOST
         my @coltypes = $self->_get_coldef_types();
         for my $type (@coltypes) {
             if (!defined $strategy->{"${type}_COL"}) {
-                croak("Missing column attribute ${type}_COL for $type.");
+                $self->_invalid_option_usage('coldef_strategy', "Missing column attribute ${type}_COL for $type");
             }
             if (!defined $strategy->{"${type}_MUST_MATCH_ALL"}) {
                 $strategy->{"${type}_MUST_MATCH_ALL"} = 1;
@@ -887,7 +919,7 @@ EOST
         my ( $self, $col, $family ) = @_;
         my %know_families = ( tt => 1, bf => 1, it => 1, sc => 1 );
         if ( !defined $know_families{$family} ) {
-            croak(
+            $self->_invalid_option_usage('custom_themes',
                 "Family not known: $family. Valid families are: " . join ', ',
                 sort keys %know_families
             );
@@ -1090,7 +1122,7 @@ EOST
         return q{} if !$size;
 
         if ( !defined $valid{$size} ) {
-            croak( "Size not known: $size. Valid sizes are: " . join ', ',
+            $self->_invalid_option_usage('custom_themes', "Size not known: $size. Valid sizes are: " . join ', ',
                 sort keys %valid );
         }
         return "\\$size\n";
@@ -1143,34 +1175,36 @@ EOST
         if ( defined $themes->{ $self->get_theme } ) {
             return $themes->{ $self->get_theme };
         }
-        else {
-            croak( 'Theme not known: ' . $self->get_theme );
-        }
+        $self->_invalid_option_usage('theme', 'Not known: ' . $self->get_theme );
+        return;
     }
 
     sub _check_1d_array {
-        my ( $self, $arr_ref_1d, $desc ) = @_;
+        my ( $self, $arr_ref_1d, $desc, $option ) = @_;
         if ( !defined reftype $arr_ref_1d || reftype $arr_ref_1d ne 'ARRAY' )
         {
-            croak "$desc is not an array reference.";
+            $self->_invalid_option_usage($option,
+                "${desc}Not an array reference");
         }
         return;
     }
 
     sub _check_2d_array {
         my ( $self, $arr_ref_2d, $desc ) = @_;
-        $self->_check_1d_array($arr_ref_2d, $desc);
+        $self->_check_1d_array($arr_ref_2d, q{}, $desc);
         my $i = 0;
         for my $arr_ref ( @{$arr_ref_2d} ) {
-            $self->_check_1d_array($arr_ref, "$desc\[$i\]");
+            $self->_check_1d_array($arr_ref, "$desc\[$i\] ", $desc);
             my $j = 0;
             for my $scalar ( @{$arr_ref} ) {
                 my $rt_scalar = reftype $scalar;
                 if ( defined $rt_scalar ) {
-                    croak "$desc\[$i\]\[$j\] is not a scalar.";
+                    $self->_invalid_option_usage($desc,
+                        "$desc\[$i\]\[$j\] not a scalar");
                 }
                 if (!defined $scalar) {
-                    croak "Undefined value in $desc\[$i\]\[$j\]";
+                    $self->_invalid_option_usage($desc,
+                        "Undefined value in $desc\[$i\]\[$j\]");
                 }
                 $j++;
             }
@@ -1310,7 +1344,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.4
+This document describes LaTeX::Table version 0.9.5
 
 =head1 SYNOPSIS
 
@@ -1521,6 +1555,8 @@ Now you will get such a table:
   | Emu   |   33.33 |
   +-------+---------+
 
+This works also in C<header>. 
+
 Single column rows starting with a backslash are again printed without any
 formatting. So,
 
@@ -1538,11 +1574,12 @@ command is used, i.e. C<\midrule> vs. C<\hline>).
 =item C<environment>
 
 If get_environment() returns a true value, then a floating environment will be 
-generated. Default is 'table'. You can use 'sidewaystable' for rotated tables
-(requires the C<rotating> package). In two-column documents, 'table*' will
-place the table across the columns. This option only affects tables of C<type>
-I<std> because I<xtab> tables have their own, non-floating environment. This
-non-floating environment, however, supports all options in this section except
+generated. For I<std> tables, the default is 'table'. You can also use 
+'sidewaystable' for rotated tables (requires the C<rotating> package). In 
+two-column documents, 'table*' will place the table across the columns. 
+
+The non-floating I<xtab> environment is mandatory (get_environment() must
+return a true value here) and supports all options in this section except
 for C<position>.
 
   \begin{table}[htb]
@@ -1565,23 +1602,23 @@ If get_caption_top() returns a true value, then the caption is placed above the
 table. To use the standard caption command (C<\caption> in I<std>,
 C<\topcaption> in I<xtab>) , use 
 
-   ...
-   caption_top => 1, 
-   ...
+  ...
+  caption_top => 1, 
+  ...
 
 You can specify an alternative command here:
 
-   ...
-   caption_top => 'topcaption', # would require the topcapt package
+  ...
+  caption_top => 'topcaption', # would require the topcapt package
 
 Or even multiple commands: 
 
-   caption_top =>
+  caption_top =>
      '\setlength{\abovecaptionskip}{0pt}\setlength{\belowcaptionskip}{10pt}\caption',
-   ...
+  ...
 
 Default 0 (caption below the table) because standard LaTeX macros are
-optimized for bottom captions. For multi-page tables, however, top captions
+optimized for bottom captions. For multipage tables, however, top captions
 are highly recommended.
 
 =item C<center>
@@ -1600,16 +1637,16 @@ If get_maincaption() returns a true value, then this value will be displayed
 in the Table Listing (C<\listoftables>) and before the C<caption>. Default
 0. Requires C<environment>.
 
+=item C<position>
+
+The position of the environment, e.g. 'htb'. Only generated if get_position()
+returns a true value. Requires C<environment> and tables of C<type> I<std>.
+
 =item C<size>
 
 Font size. Valid values are 'tiny', 'scriptsize', 'footnotesize', 'small',
 'normal', 'large', 'Large', 'LARGE', 'huge', 'Huge' and 0. Default is 0 (does 
 not define a font size). Requires C<environment>.
-
-=item C<position>
-
-The position of the environment, e.g. 'htb'. Only generated if get_position()
-returns a true value. Requires C<environment>.
 
 =back
 
@@ -1617,37 +1654,15 @@ returns a true value. Requires C<environment>.
 
 =over 
 
-=item C<callback>
+=item C<custom_tabular_environment>
 
-If get_callback() returns a true value and the return value is a code reference,
-then this callback function will be called for every column in C<header>
-and C<data>. The return value of this function is then printed instead of the 
-column value. 
+If get_custom_tabular_environment() returns a true value, then this specified
+environment is used instead of the standard environments 'tabular' (I<std>) or
+'xtabular' (I<xtab>). For I<xtab> tables, you can also use the
+'mpxtabular' environment here. See the documentation of the C<xtab> package.
 
-The passed arguments are C<$row>, C<$col> (both starting with 0), C<$value> and 
-C<$is_header>.
-
-   use LaTeX::Encode;
-   use Number::Format qw(:subs);  
-   ...
-   
-   # use LaTeX::Encode to encode LaTeX special characters,
-   # format the third column with Format::Number (only the data)
-   my $table = LaTeX::Table->new(
-       {   header   => $header,
-           data     => $data,
-           callback => sub {
-               my ( $row, $col, $value, $is_header ) = @_;
-               if ( $col == 2 && !$is_header ) {
-                   $value = format_price($value, 2, '');
-               }
-               else {
-                   $value = latex_encode($value);
-               }
-               return $value;
-           },
-       }
-   );
+See also the documentation of get_width() below for cases when a width
+is specified.
 
 =item C<coldef>
 
@@ -1670,7 +1685,7 @@ does not return a true value. It is a reference to a hash that contains
 regular expressions that define the I<types> of the columns. For example, 
 the standard types I<NUMBER> and I<LONG> are defined as:
 
- {
+  {
     NUMBER                =>
        qr{\A\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*\z}xms,
     NUMBER_MUST_MATCH_ALL => 1,
@@ -1680,7 +1695,7 @@ the standard types I<NUMBER> and I<LONG> are defined as:
     LONG_MUST_MATCH_ALL   => 0,
     LONG_COL              => 'p{5cm}',
     LONG_COL_X            => 'X',
- };
+  };
 
 =over
 
@@ -1693,7 +1708,8 @@ types. The name of a type is not allowed to contain underscores (C<_>).
 =item C<TYPE_MUST_MATCH_ALL>
 
 This defines if whether a B<column> has type I<TYPE> when all B<cells> 
-are of type C<TYPE> or at least one. Default is C<1> (must match all).
+are of type I<TYPE> or at least one. Default is C<1> (C<$regex> must match
+all).
 
 Note that columns can have only one type. Types are applied alphabetically, 
 so for example a I<LONG> I<NUMBER> column has as final type I<NUMBER>.
@@ -1705,7 +1721,7 @@ The C<coldef> attribute for I<TYPE> columns. Required (no default value).
 =item C<TYPE_COL_X>
 
 Same as C<TYPE_COL> but for C<tabularx> tables. If undefined, the attribute
-defined in C<TYPE_COL> is used for C<tabularx> tables. 
+defined in C<TYPE_COL> is used for C<tabularx> tables as well. 
 
 =item C<DEFAULT_COL>, C<DEFAULT_COL_X>
 
@@ -1723,12 +1739,79 @@ Examples:
     LONG_COL => '>{\raggedright\arraybackslash}p{7cm}', # non-justified
   });
 
-  # add new types (here: center columns that contain only URLs)
+  # add new types (here: columns that contain only URLs)
   $table->set_coldef_strategy({
     URL     => qr{\A \s* http }xms, 
-    URL_COL => 'c',
+    URL_COL => '>{\ttfamily}l',
   });
 
+  
+
+=item C<width>
+
+If get_width() returns a true value, then C<LaTeX::Table> will append a C<*> 
+to the tabular environment name (e.g. C<tabular*> or C<xtabular*>) and will
+add the specified width. It will also add C<@{\extracolsep{\fill}}> to the 
+table column definition:
+
+  # use 75% of textwidth 
+  $table->set_width('0.75\textwidth');
+
+This will produce following LaTeX code:
+
+  \begin{tabular*}{0.75\textwidth}{@{\extracolsep{\fill} ... }
+
+For tables of C<type> I<std>, it is also possible to use the C<tabularx> LaTeX 
+package (see C<width_environment> below).
+
+=item C<width_environment>
+
+If get_width() (see above) returns a true value and table is of C<type> I<std>,
+then this option provides the possibility to add a custom tabular environment
+that supports a table width:
+
+  \begin{environment}{width}{def}
+
+To use for example the one provided by the C<tabularx> LaTeX package, write:
+
+  # use the tabularx package (for a std table)
+  $table->set_width('300pt');
+  $table->set_width_environment('tabularx');
+
+Note this will not add C<@{\extracolsep{\fill}}> and that this overwrites
+a C<custom_tabular_environment>. Default is 0 (see C<width>).
+
+=item C<callback>
+
+If get_callback() returns a true value and the return value is a code reference,
+then this callback function will be called for every column in C<header>
+and C<data>. The return value of this function is then printed instead of the 
+column value. 
+
+The passed arguments are C<$row>, C<$col> (both starting with 0), C<$value> and 
+C<$is_header>.
+
+  use LaTeX::Encode;
+  use Number::Format qw(:subs);  
+  ...
+  
+  # use LaTeX::Encode to encode LaTeX special characters,
+  # format the third column with Format::Number (only the data)
+  my $table = LaTeX::Table->new(
+      {   header   => $header,
+          data     => $data,
+          callback => sub {
+              my ( $row, $col, $value, $is_header ) = @_;
+              if ( $col == 2 && !$is_header ) {
+                  $value = format_price($value, 2, '');
+              }
+              else {
+                  $value = latex_encode($value);
+              }
+              return $value;
+          },
+      }
+  );
 
 =item C<resizebox>
 
@@ -1742,26 +1825,6 @@ LaTeX package. Default 0.
 
   $table->set_resizebox([ '300pt', '200pt' ]);
 
-=item C<width>
-
-If get_width() returns a true value, then C<LaTeX::Table> will use the C<tabular*> (or
-C<xtabular*> for I<xtab> tables) environment instead of C<tabular> (or
-C<xtabular>, respectively). For tables of C<type> I<std>, it supports also the 
-C<tabularx> LaTeX package (see below).
-
-  # use 75% of textwidth 
-  $table->set_width('0.75\textwidth');
-  
-=item C<width_environment>
-
-If get_width() (see above) returns a true value and table is of C<type> I<std>,
-then this option specifies whether C<tabular*> or the C<tabularx> package 
-should be used. The latter is great when you have long columns because 
-C<tabularx> tries to optimize the column widths. Default is 'tabular*'.
-
-  # use the tabularx package (for a std table)
-  $table->set_width('300pt');
-  $table->set_width_environment('tabularx');
 
 =back
 
@@ -1773,7 +1836,7 @@ C<tabularx> tries to optimize the column widths. Default is 'tabular*'.
 
 When get_caption_top() and get_tableheadmsg() both return true values, then
 additional captions are printed on the continued pages. Default caption text 
-is C<Continued from previous page>.
+is 'Continued from previous page'.
 
 =item C<tabletailmsg>
 
@@ -1789,7 +1852,7 @@ right-justified.
 Option for xtab. Play with this option if the number of rows per page is not 
 optimal. Requires a number as parameter. Default is 0 (does not use this option).
 
-    $table->set_xentrystretch(-0.1);
+  $table->set_xentrystretch(-0.1);
 
 =back
 
@@ -1814,11 +1877,11 @@ All custom themes. See L<"CUSTOM THEMES">.
 Takes as argument a reference to an array with column ids (again, starting
 with 0). These columns are formatted like header columns.
 
-   # a "transposed" table ...
-   my $table = LaTeX::Table->new(
-       {   data     => $data,
-           columns_like_header => [ 0 ], }
-   );
+  # a "transposed" table ...
+  my $table = LaTeX::Table->new(
+      {   data     => $data,
+          columns_like_header => [ 0 ], }
+  );
 
 =item C<header_sideways>
 
@@ -1827,17 +1890,17 @@ be rotated by 90 degrees. Requires the C<rotating> LaTeX package. Does not
 affect data columns specified in columns_like_header(). If you do not want to
 rotate all headers, use a callback function B<instead>:
 
-           ...
-           header_sideways => 0,
-           callback => sub {  
-               my ( $row, $col, $value, $is_header ) = @_;
-               if ( $col != 0 && $is_header ) {
-                   $value = '\begin{sideways}' . $value . '\end{sideways}';
-               }
-               return $value;
-           }
-           ...
-
+  ...
+  header_sideways => 0,
+  callback => sub {  
+      my ( $row, $col, $value, $is_header ) = @_;
+      if ( $col != 0 && $is_header ) {
+          $value = '\begin{sideways}' . $value . '\end{sideways}';
+      }
+      return $value;
+  }
+  ...
+  
 =back
 
 =head1 MULTICOLUMNS 
@@ -1850,7 +1913,7 @@ automatically added here according the LINES settings in the theme.
 See L<"CUSTOM THEMES">. C<LaTeX::Table> also uses this shortcut to determine
 the column ids. So in this example,
 
- my $data = [ [' \multicolumn{2}{c}{A}', 'B' ], [ 'C:2c', 'D' ] ];
+  my $data = [ [' \multicolumn{2}{c}{A}', 'B' ], [ 'C:2c', 'D' ] ];
 
 'B' would have an column id of 1 and 'D' 2 ('A' and 'C' both 0). This is important 
 for callback functions and for the coldef calculation. 
@@ -1873,24 +1936,24 @@ slightly heavier (ie thicker, or darker) than the other lines.
 Custom themes can be defined with an array reference containing all options
 (explained later):
 
-    # a very ugly theme...
-    my $themes = { 
-                'Duisburg' => {
-                    'HEADER_FONT_STYLE'  => 'sc',
-                    'HEADER_FONT_COLOR'  => 'white',
-                    'HEADER_BG_COLOR'    => 'blue',
-                    'HEADER_CENTERED'    => 1,
-                    'DATA_BG_COLOR_ODD'  => 'blue!30',
-                    'DATA_BG_COLOR_EVEN' => 'blue!10',
-                    'CAPTION_FONT_STYLE' => 'sc',
-                    'VERTICAL_LINES'     => [ 1, 2, 1 ],
-                    'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
-                    'EXTRA_ROW_HEIGHT'   => '2pt',
-                    'BOOKTABS'           => 0,
-                },
-            };
+  # a very ugly theme...
+  my $themes = { 
+              'Duisburg' => {
+                  'HEADER_FONT_STYLE'  => 'sc',
+                  'HEADER_FONT_COLOR'  => 'white',
+                  'HEADER_BG_COLOR'    => 'blue',
+                  'HEADER_CENTERED'    => 1,
+                  'DATA_BG_COLOR_ODD'  => 'blue!30',
+                  'DATA_BG_COLOR_EVEN' => 'blue!10',
+                  'CAPTION_FONT_STYLE' => 'sc',
+                  'VERTICAL_LINES'     => [ 1, 2, 1 ],
+                  'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+                  'EXTRA_ROW_HEIGHT'   => '2pt',
+                  'BOOKTABS'           => 0,
+              },
+          };
 
-    $table->set_custom_themes($themes);
+  $table->set_custom_themes($themes);
 
 =over 
 
@@ -1911,7 +1974,7 @@ Requires the C<colortbl> and the C<xcolor> LaTeX package.
 
 You can define colors with C<DEFINE_COLORS>, for example:
 
- 'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
+  'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
 
 =item Lines
 
@@ -1921,11 +1984,11 @@ lines. The second the number of lines after the header and after the first
 column. The third is the number of inner lines. For example I<Dresden> is
 defined as:
 
-            'Dresden' => {
-                ...  
-                'VERTICAL_LINES'     => [ 1, 2, 1 ],
-                'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
-            }
+  'Dresden' => {
+      ...  
+      'VERTICAL_LINES'     => [ 1, 2, 1 ],
+      'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+  }
 
 The first integers define one outer line - vertical and horizontal. So a box 
 is drawn around the table. The second integers define two lines between header
@@ -1967,67 +2030,19 @@ If you get a LaTeX error message, please check whether you have included all
 required packages. The packages we use are C<array>, C<booktabs>, C<color>, 
 C<colortbl>, C<graphicx>, C<rotating>, C<tabularx>, C<xcolor> and C<xtab>. 
 
-C<LaTeX::Table> may throw one of these errors:
+C<LaTeX::Table> may throw one of these errors and warnings:
 
 =over
 
-=item C<callback> is not a code reference 
+=item C<Invalid usage of option ...> 
 
-The return value of get_callback() is not a code reference. See 
-the L<"SYNOPSIS"> and L<"TABULAR ENVIRONMENT"> for examples how to use this option.
-
-=item C<coldef_strategy> not a hash reference.
-
-The return value of get_coldef_strategy() is not a hash reference. See 
-L<"TABULAR ENVIRONMENT">.
-
-=item Missing column attribute for ...
-
-You have specified a new type in C<coldef_strategy> but forgot to add the
-column  attribute. See L<"TABULAR ENVIRONMENT">.
-
-=item C<columns_like_header> is not an array reference 
-
-The return value of get_columns_like_header() is not an array reference.
-See L<"THEMES">.
-
-=item C<data>, C<header>, C<data[$i]>,C<header[$i]> is not an array reference
-
-=item C<data[$i][$j]/header[$i][$j]> is not a scalar
-
-=item Undefined value in C<data[$i][$j]/header[$i][$j]>
-
-See L<"BASIC OPTIONS"> for the correct usage of the options C<data> and
-C<header>.
+See the examples in this document and in I<examples/examples.pdf> for the correct 
+usage of this option.
 
 =item DEPRECATED. ...  
 
 There were some minor API changes in C<LaTeX::Table> 0.1.0, 0.8.0, 0.9.0 and
 0.9.3.  Just apply the changes to the script or contact its author.
-
-=item Family not known: ... . Valid families are: ...
-
-=item Size not known: ... . Valid sizes are: ...
-
-You have set a font family or size to an invalid value. See L<"CUSTOM THEMES">.
-
-=item Theme not known: ...
-
-You have set the option C<theme> to an invalid value. See L<"THEMES"> and
-the I<examples/examples.pdf> document in this distribution.
-
-=item Width environment not known: ...
-
-=item C<width_environment> is C<tabularx> and C<width> is unset.
-
-You have set option C<width_environment> to an invalid value. See 
-L<"TABULAR ENVIRONMENT">.
-
-=item C<xentrystretch> not a number
-
-You have set the option C<xentrystretch> to an invalid value. This option
-requires a number. See L<"MULTIPAGE TABLES"> and the documentation of the
-C<booktabs> LaTeX package.
 
 =back
 
@@ -2054,7 +2069,31 @@ L<Data::Table>, L<LaTeX::Encode>
 
 =head1 CREDITS
 
-Andrew Ford (ANDREWF): many great suggestions.
+=over
+
+=item Andrew Ford (ANDREWF)
+
+For many great suggestions. He also wrote L<LaTeX::Driver> and
+L<LaTeX::Encode> which are used by I<csv2pdf>.
+
+=item Lapo Filippo Mori
+
+For the excellent tutorial I<Tables in LaTeX2e: Packages and Methods>.
+
+=item Simon Fear
+
+For the C<booktabs> LaTeX package. The L<"SYNOPSIS"> table is the example
+in his documentation.
+
+=item Peter Wilson
+
+For the C<xtab> LaTeX package.
+
+=item David Carlisle
+
+For the C<colortbl> and the C<tabularx> LaTeX packages.
+
+=back
 
 =head1 AUTHOR
 

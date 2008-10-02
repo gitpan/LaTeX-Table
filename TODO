@@ -2,7 +2,8 @@ before 1.0
 
 - fine tune default parameters
 - nicer, aligned output
-- remove deprecated code
+- nicer examples.pdf
+- remove deprecated code (release candidate 1)
 
 after 1.0
 

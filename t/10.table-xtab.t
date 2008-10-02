@@ -109,7 +109,7 @@ $expected_output =<<'EOT'
 \hline
 \hline
 }
-\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[10pt]
+\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[\belowcaptionskip]
 \hline
 \multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
 \multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
@@ -152,7 +152,7 @@ $expected_output =<<'EOT'
 \hline
 \hline
 }
-\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[10pt]
+\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[\belowcaptionskip]
 \hline
 \multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
 \multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
@@ -184,6 +184,7 @@ is_deeply([ split("\n",$output) ], [split("\n",$expected_output)],
 
 
 $table->set_tableheadmsg(0);
+$table->set_custom_tabular_environment('mpxtabular');
 
 $expected_output =<<'EOT'
 {
@@ -199,7 +200,7 @@ $expected_output =<<'EOT'
 \tabletail{ \hline
 }
 \tablelasttail{}
-\begin{xtabular}{|l||r|r|}
+\begin{mpxtabular}{|l||r|r|}
 Lisa & 0 & 0\\ 
 Marge & 0 & 1\\ 
 Wiggum & 0 & 5\\ 
@@ -207,7 +208,7 @@ Otto & 1 & 3\\
 Homer & 2 & 6\\ 
 Barney & 8 & 16\\ 
 \hline
-\end{xtabular}
+\end{mpxtabular}
 
 } 
 EOT

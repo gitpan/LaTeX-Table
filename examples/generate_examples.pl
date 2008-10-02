@@ -23,7 +23,7 @@ for my $i ( 1 .. 6 ) {
 }
 
 my $table = LaTeX::Table->new(
-    {   position    => 'htb',
+    {   
         maincaption => 'Price List',
         caption     => 'Try our special offer today!',
         size        => 'large',
@@ -342,18 +342,22 @@ $code = << 'EOT';
 Tables can be placed on top of the tables with \texttt{caption\_top => 1}. See
 Table \ref{table:pricestop}. Note that the standard \LaTeX~macros are
 optimized for bottom captions. Use something like 
+{
+\small    
 \begin{lstlisting}
 \usepackage[tableposition=top]{caption} 
 \end{lstlisting}
-
+}
 to fix the spacing. Alternatively, you could fix the
 spacing by yourself by providing your own command(s) (Table
 \ref{table:pricestop2}):
 {
-\tiny
+\small
 \begin{lstlisting}
 $table->set_caption_top(
-'\setlength{\abovecaptionskip}{0pt}\setlength{\belowcaptionskip}{10pt}\caption'
+  '\setlength{\abovecaptionskip}{0pt}' .
+  '\setlength{\belowcaptionskip}{10pt}' . 
+  \caption'
 );
 \end{lstlisting}
 }
@@ -555,6 +559,49 @@ $table = LaTeX::Table->new(
 );
 
 print $OUT $table->generate_string();
+
+$header = [ [ 'Website', 'URL' ] ];
+
+$data = [
+    [ 'Slashdot',    'http://www.slashdot.org'  ],
+    [ 'Perlmonks', '  http://www.perlmonks.org' ],
+    [ 'Google',      'http://www.google.com'    ],
+];
+
+$table = LaTeX::Table->new(
+    {
+    caption     => 'Some websites',
+    label       => 'table:website',
+    data        => $data,
+    header      => $header,
+    coldef_strategy => { 
+        URL     => qr{ \A \s* http }xms,
+        URL_COL => '>{\ttfamily}l',
+    }    
+});
+
+
+$code = << 'EOT';
+\subsection{Automatic column definitions}
+Table~\ref{table:website}.
+\newcolumntype{U}{>{\ttfamily}{l}}
+\small
+\begin{lstlisting}
+$table = LaTeX::Table->new(
+    {
+    data        => $data,
+    header      => $header,
+    coldef_strategy => { 
+        URL     => qr{ \A \s* http }xms,
+        URL_COL => '>{\ttfamily}l',
+    }    
+});
+\end{lstlisting}
+
+EOT
+;
+
+print $OUT $code . $table->generate_string();
 
 print ${OUT}
     "\\section{Version}\\small{Generated with LaTeX::Table Version $LaTeX::Table::VERSION}\n";

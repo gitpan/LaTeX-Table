@@ -100,7 +100,7 @@ $table = LaTeX::Table->new(
 eval { $table->generate_string; };
 like(
     $EVAL_ERROR, 
-    qr{text_wrap is not an array reference},
+    qr{Invalid usage of option text_wrap: Not an array reference\.},
     'text_wrap is not an array reference'
 ) || diag $EVAL_ERROR;
 
@@ -110,7 +110,7 @@ $table->set_text_wrap(['1', 'b']);
 eval { $table->generate_string; };
 like(
     $EVAL_ERROR, 
-    qr{Value in text_wrap not an integer: b},
+    qr{Invalid usage of option text_wrap: Not an integer: b\.},
     'text_wrap: b not integer'
 ) || diag $EVAL_ERROR;
 
