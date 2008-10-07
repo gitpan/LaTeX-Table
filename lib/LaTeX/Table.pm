@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-10-02 15:05:09 +0200 (Thu, 02 Oct 2008) $
-# $Revision: 1072 $
+#     $Date: 2008-10-07 08:49:13 +0200 (Tue, 07 Oct 2008) $
+# $Revision: 1079 $
 #############################################################################
 
 package LaTeX::Table;
@@ -10,10 +10,9 @@ use 5.008;
 use warnings;
 use strict;
 
-use version; our $VERSION = qv('0.9.5');
+use version; our $VERSION = qv('0.9.6');
 
 use Carp;
-use Fatal qw( open close );
 use Scalar::Util qw(reftype);
 use English qw( -no_match_vars );
 use Readonly;
@@ -330,13 +329,20 @@ use Class::Std;
         return @data_wrapped;
     }
 
+    sub _ioerror {
+        my ( $self, $function, $error ) = @_;
+        croak "IO error: Can't $function '" . $self->get_filename . "': $error";
+    }
+
     sub generate {
         my ( $self, $header, $data ) = @_;
         my $code = $self->generate_string( $header, $data );
-        open my $LATEX, '>', $self->get_filename;
-        print {$LATEX} $code    or croak q{Couldn't write '}. $self->get_name .
-            "': $OS_ERROR";
-        close $LATEX;
+        open my $LATEX, '>', $self->get_filename or
+            $self->_ioerror('open',  $OS_ERROR);
+        print {$LATEX} $code    or
+            $self->_ioerror('write', $OS_ERROR);
+        close $LATEX or
+            $self->_ioerror('close', $OS_ERROR);
         return 1;
     }
 
@@ -378,12 +384,7 @@ use Class::Std;
 
         if ( $self->get_width ) {
             $width = '{' . $self->get_width . '}';
-            if (!$self->get_width_environment) {
-            ## no critic
-            $table_def = '@{\extracolsep{\fill}} ' . $table_def;
-            ## use critic
-            }
-            elsif (!($self->get_width_environment eq 'tabularx' &&
+            if ($self->get_width_environment && !($self->get_width_environment eq 'tabularx' &&
                 $self->get_type eq 'std' )) {
                 $self->_invalid_option_usage('width_environment',
                     'Not known: ' . $self->get_width_environment .
@@ -555,7 +556,7 @@ EOST
             NUMBER =>
                 qr{\A\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*\z}xms,
             NUMBER_MUST_MATCH_ALL => 1,
-            LONG          => qr{\A\s*.{30,}?\s*\z}xms,
+            LONG          => qr{\A \s* (?=\w+\s+\w+).{29,}? \S}xms,
             LONG_MUST_MATCH_ALL => 0,
             NUMBER_COL    => 'r',
             NUMBER_COL_X  => 'r',
@@ -995,6 +996,11 @@ EOST
                 $table_def .= $align . $v2;
             }
             $i++;
+            if ( $i == 1 && $self->get_width  && !$self->get_width_environment) {
+                ## no critic
+                $table_def .= '@{\extracolsep{\fill}}'
+                ## use critic
+            }
         }
         return $table_def;
     }
@@ -1344,7 +1350,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.5
+This document describes LaTeX::Table version 0.9.6
 
 =head1 SYNOPSIS
 
@@ -1409,7 +1415,6 @@ Now in your LaTeX document:
   % for the NYC theme 
   \usepackage{array}
   \usepackage{colortbl}
-  \usepackage{color}
   \usepackage{xcolor}
   
   \begin{document}
@@ -1617,9 +1622,12 @@ Or even multiple commands:
      '\setlength{\abovecaptionskip}{0pt}\setlength{\belowcaptionskip}{10pt}\caption',
   ...
 
-Default 0 (caption below the table) because standard LaTeX macros are
-optimized for bottom captions. For multipage tables, however, top captions
-are highly recommended.
+Default 0 (caption below the table) because the spacing in the standard LaTeX 
+macros are optimized for bottom captions. At least for multipage tables, 
+however, top captions are highly recommended. You can use the C<caption> 
+LaTeX package to fix the spacing:
+
+  \usepackage[tableposition=top]{caption} 
 
 =item C<center>
 
@@ -1691,7 +1699,7 @@ the standard types I<NUMBER> and I<LONG> are defined as:
     NUMBER_MUST_MATCH_ALL => 1,
     NUMBER_COL            => 'r',
     NUMBER_COL_X          => 'r',
-    LONG                  => qr{\A\s*.{30,}?\s*\z}xms,
+    LONG                  => qr{\A\s*(?=\w+\s+\w+).{29,}?\S}xms,
     LONG_MUST_MATCH_ALL   => 0,
     LONG_COL              => 'p{5cm}',
     LONG_COL_X            => 'X',
@@ -1735,7 +1743,6 @@ Examples:
   # change standard types
   $table->set_coldef_strategy({
     NUMBER   => qr{\A \s* \d+ \s* \z}xms, # integers only
-    LONG     => qr{\A \s* .{60,} \s* \z}xms, # min. 60 characters
     LONG_COL => '>{\raggedright\arraybackslash}p{7cm}', # non-justified
   });
 
@@ -1759,7 +1766,7 @@ table column definition:
 
 This will produce following LaTeX code:
 
-  \begin{tabular*}{0.75\textwidth}{@{\extracolsep{\fill} ... }
+  \begin{tabular*}{0.75\textwidth}{l@{\extracolsep{\fill} ... }
 
 For tables of C<type> I<std>, it is also possible to use the C<tabularx> LaTeX 
 package (see C<width_environment> below).
@@ -1817,7 +1824,7 @@ C<$is_header>.
 
 If get_resizebox() returns a true value, then the resizebox command is used to
 resize the table. Takes as argument a reference to an array. The first element
-is the desired witdth. If a second element is not given, then the hight is set to
+is the desired width. If a second element is not given, then the hight is set to
 a value so that the aspect ratio is still the same. Requires the C<graphicx>
 LaTeX package. Default 0.
 
@@ -1862,7 +1869,7 @@ optimal. Requires a number as parameter. Default is 0 (does not use this option)
 
 =item C<theme>
 
-The name of the theme. Default is I<Zurich>.
+The name of the theme. Default is I<Zurich>. See L<"THEMES">.
 
 =item C<predef_themes>
 
@@ -1966,7 +1973,7 @@ undef, then header (or caption, respectively) is written in normal font.
 =item Colors
 
 C<HEADER_FONT_COLOR> can be used to specify a different font color for the
-header. Requires the C<color> LaTeX package.
+header. Requires the C<xcolor> LaTeX package.
 
 Set C<HEADER_BG_COLOR> to use a background color in the header,
 C<DATA_BG_COLOR_EVEN> and C<DATA_BG_COLOR_ODD> for even and odd data rows. 
@@ -2027,12 +2034,17 @@ covers the main features of this module.
 =head1 DIAGNOSTICS
 
 If you get a LaTeX error message, please check whether you have included all
-required packages. The packages we use are C<array>, C<booktabs>, C<color>, 
+required packages. The packages we use are C<array>, C<booktabs>, 
 C<colortbl>, C<graphicx>, C<rotating>, C<tabularx>, C<xcolor> and C<xtab>. 
 
 C<LaTeX::Table> may throw one of these errors and warnings:
 
 =over
+
+=item C<IO error: Can't ...>
+
+In method generate(), it was not possible to write the LaTeX code to
+C<filename>. 
 
 =item C<Invalid usage of option ...> 
 
@@ -2053,7 +2065,7 @@ C<LaTeX::Table> requires no configuration files or environment variables.
 =head1 DEPENDENCIES
 
 L<Carp>, L<Class::Std>, L<English>,
-L<Fatal>, L<Readonly>, L<Scalar::Util>, L<Text::Wrap>
+L<Readonly>, L<Scalar::Util>, L<Text::Wrap>
 
 =head1 BUGS AND LIMITATIONS
 
@@ -2071,27 +2083,17 @@ L<Data::Table>, L<LaTeX::Encode>
 
 =over
 
-=item Andrew Ford (ANDREWF)
-
-For many great suggestions. He also wrote L<LaTeX::Driver> and
+=item Andrew Ford (ANDREWF) for many great suggestions. He also wrote L<LaTeX::Driver> and
 L<LaTeX::Encode> which are used by I<csv2pdf>.
 
-=item Lapo Filippo Mori
+=item Lapo Filippo Mori for the excellent tutorial I<Tables in LaTeX2e: Packages and Methods>.
 
-For the excellent tutorial I<Tables in LaTeX2e: Packages and Methods>.
-
-=item Simon Fear
-
-For the C<booktabs> LaTeX package. The L<"SYNOPSIS"> table is the example
+=item Simon Fear for the C<booktabs> LaTeX package. The L<"SYNOPSIS"> table is the example
 in his documentation.
 
-=item Peter Wilson
+=item Peter Wilson for the C<xtab> LaTeX package.
 
-For the C<xtab> LaTeX package.
-
-=item David Carlisle
-
-For the C<colortbl> and the C<tabularx> LaTeX packages.
+=item David Carlisle for the C<colortbl> and the C<tabularx> LaTeX packages.
 
 =back
 

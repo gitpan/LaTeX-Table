@@ -23,7 +23,6 @@ t/61.coldef.t
 t/70.callback.t
 t/80.themes.t
 t/90.combat.t
-t/kwalitee.t
 t/perlcritic.t
 t/perlcriticrc
 t/pod-coverage.t

@@ -1,10 +1,10 @@
-LaTeX-Table version 0.9.5
+LaTeX-Table version 0.9.6
 
 LaTeX::Table provides functionality for an intuitive and easy generation of
 LaTeX tables. It ships with some predefined good looking table styles. This module s
-upports multipage tables via the C<xtab> package and publication
-quality tables with the C<booktabs> package. It also supports the C<tabularx>
-package for nicer fixed-width tables. Furthermore, it supports the C<colortbl>
+upports multipage tables via the xtab package and publication
+quality tables with thebooktabs package. It also supports the tabularx
+package for nicer fixed-width tables. Furthermore, it supports the colortbl
 package for colored tables optimized for presentations.
 
 LaTeX makes professional typesetting easy. Unfortunately,
@@ -39,9 +39,9 @@ distibution.
 This script generates some LaTeX files with some example tables.
 Now please compile these examples with LaTeX and check if all tables look ok:
 
-    latex examples.tex
-    xdvi examples.dvi
-     
+    latex examples.tex 
+    xdvi examples.dvi 
+    
 
 PROGRAMS
 
@@ -62,7 +62,6 @@ DEPENDENCIES
 Carp
 Class::Std
 English
-Fatal
 Readonly
 Scalar::Util
 Text::Wrap

@@ -375,7 +375,7 @@ $table->set_width_environment('tabular*');
 $expected_output = <<'EOT'
 \begin{table}[ht]
 \centering
-\begin{tabular*}{0.9\textwidth}{@{\extracolsep{\fill}} lp{5cm}p{5cm}}
+\begin{tabular*}{0.9\textwidth}{l@{\extracolsep{\fill}}p{5cm}p{5cm}}
     \toprule
 \multicolumn{1}{c}{\textbf{Character}} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}}\\ 
 \midrule

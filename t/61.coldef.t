@@ -44,7 +44,6 @@ is_deeply(
 
   $table->set_coldef_strategy({
     NUMBER   => qr{\A \s* \d+ \s* \z}xms, # integers only
-    LONG     => qr{\A .{60,}\z}xms, # min. 60 characters
     LONG_COL => '>{\raggedright\arraybackslash}p{7cm}', # non-justified
   });
 
@@ -74,7 +73,6 @@ is_deeply(
   $table->set_coldef_strategy({
     NUMBER   => qr{\A \s* \d+ \s* \z}xms, # integers only
     NUMBER_MUST_MATCH_ALL => 0,
-    LONG     => qr{\A .{60,}\z}xms, # min. 60 characters
     LONG_COL => '>{\raggedright\arraybackslash}p{7cm}', # non-justified
   });
 
@@ -103,7 +101,7 @@ is_deeply(
 );
 
 $data = [
-    [ '123.45678', '   12345678901234567890', '12345', ],
+    [ '123.45678', '   12345678901123456789011234567890  ', '12345', ],
     [ '123.45',    ' 1234567898 ',           '12345', ],
 ];
 $table = LaTeX::Table->new(
@@ -114,7 +112,6 @@ $table = LaTeX::Table->new(
 
 $table->set_coldef_strategy({
 NUMBER   => qr{\A \s* \d+ \s* \z}xms, # integers only
-LONG     => qr{\A .{10,}\z}xms, # min. 60 characters
 LONG_COL => '>{\raggedright\arraybackslash}p{7cm}', # non-justified
 });
 
@@ -129,7 +126,7 @@ $expected_output = <<'EOT';
 \multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
 \midrule
 
-123.45678 &    12345678901234567890 & 12345\\ 
+123.45678 &    12345678901123456789011234567890   & 12345\\ 
 123.45 &  1234567898  & 12345\\ 
 \bottomrule
 \end{tabular}
@@ -144,7 +141,7 @@ is_deeply(
 
 # not a number anymore
 $table->set_data([
-    [ '123.45678', '   12345678901234567890', '12345', ],
+    [ '123.45678', '   1234567890 1234567890 1234567890', '12345', ],
     [ '123.45',    ' 1234567898.122 ',           '12345', ],
 ]);
 
@@ -158,7 +155,7 @@ $expected_output = <<'EOT';
 \multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
 \midrule
 
-123.45678 &    12345678901234567890 & 12345\\ 
+123.45678 &    1234567890 1234567890 1234567890 & 12345\\ 
 123.45 &  1234567898.122  & 12345\\ 
 \bottomrule
 \end{tabular}

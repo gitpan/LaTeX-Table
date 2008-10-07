@@ -1,5 +1,12 @@
 Revision history for LaTeX-Table
 
+0.9.6  Thu  Oct 7  8:44:00 2008
+        - Bugfix: extracolsep after first column
+        - removed Fatal dependency (which is deprecated)
+        - Standard LONG regex now requires at least two words (thanks to salva on
+          perlmonks)
+        - removed color LaTeX package dependency. xcolor is enough
+
 0.9.5  Thu  Oct 2 18:30:00 2008
         - POD corrections
         - new, common exception format for invalid option usage
