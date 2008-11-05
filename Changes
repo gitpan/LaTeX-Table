@@ -1,5 +1,10 @@
 Revision history for LaTeX-Table
 
+0.9.7  Wed  Nov 5  11:01:00 2008 (Obama wins :))
+        - Switched to Moose
+        - themes now definable as modules. 
+        - csv2pdf. Lots of new features.
+
 0.9.6  Thu  Oct 7  8:44:00 2008
         - Bugfix: extracolsep after first column
         - removed Fatal dependency (which is deprecated)

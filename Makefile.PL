@@ -15,7 +15,9 @@ WriteMakefile(
     PREREQ_PM => {
         'Test::More'     => 0,
         'Test::NoWarnings' => 0,
-        'Class::Std'     => 0,
+        'Moose'     => 0,
+        'Moose::Policy::FollowPBP'    => 0,
+        'Module::Pluggable'    => 0,
         'Scalar::Util'   => 0,
         'Text::Wrap'     => 0,
         'version'        => 0,

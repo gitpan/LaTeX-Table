@@ -1,6 +1,7 @@
-use Test::More tests => 6;
+use Test::More tests => 7;
 use Test::NoWarnings;
 
+use lib 't/lib';
 use LaTeX::Table;
 
 my $themes = {
@@ -163,5 +164,35 @@ is_deeply(
     [ split( "\n", $output ) ],
     \@expected_output,
     'standard theme'
+);
+
+$table->search_path( add => 'MyThemes' );
+$table->set_theme('Erfurt');
+
+$output = $table->generate_string();
+
+$expected_output = <<'EOT'
+\begin{table}
+\centering
+\begin{tabular}{rll}
+    \toprule
+\multicolumn{1}{c}{\textsc{A}} & \multicolumn{1}{c}{\textsc{B}} & \multicolumn{1}{c}{\textsc{C}}\\ 
+\midrule
+
+1 & w & x\\ 
+\midrule
+2 & y & z\\ 
+\bottomrule
+\end{tabular}
+\caption[Test]{Test. Test Caption}
+\end{table}
+EOT
+    ;
+@expected_output = split "\n", $expected_output;
+
+is_deeply(
+    [ split( "\n", $output ) ],
+    \@expected_output,
+    'custom search path'
 );
 

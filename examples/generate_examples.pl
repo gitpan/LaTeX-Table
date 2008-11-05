@@ -378,6 +378,8 @@ Table \ref{table:customtheme1} displays our example table with the
 \textit{NYC} theme, which is meant for presentations (with LaTeX Beamer for
 example). You can change the theme by copying it, changing it and
 then storing it in \texttt{custom\_themes}. Admire the resulting Table \ref{table:customtheme2}. 
+You can also add the theme to the predfined themes by creating a themes
+module. See \texttt{LaTeX::Table::Themes::ThemeI} how to do that.
 {
 \small
 \begin{lstlisting}

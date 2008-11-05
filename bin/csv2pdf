@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-09-18 20:04:11 +0200 (Thu, 18 Sep 2008) $
-# $Revision: 1012 $
+#     $Date: 2008-11-04 01:05:50 +0100 (Tue, 04 Nov 2008) $
+# $Revision: 1147 $
 #############################################################################
 
 use strict;
@@ -34,7 +34,11 @@ my ( $infile, $outfile, $help, $man, $version );
 my $sep_char     = q{,};
 my $latex_encode = 0;
 my $landscape    = 0;
+my $outputlatex  = 0;
 my $theme        = $DEFAULT_THEME;
+my $title        = 0;
+my $coldef       = 0;
+my $header       = 0;
 
 my $options_ok = GetOptions(
     'in=s'         => \$infile,
@@ -42,7 +46,11 @@ my $options_ok = GetOptions(
     'sep_char=s'   => \$sep_char,
     'latex_encode' => \$latex_encode,
     'landscape'    => \$landscape,
+    'outputlatex'  => \$outputlatex,
     'theme=s'      => \$theme,
+    'title=s'      => \$title,
+    'coldef=s'     => \$coldef,
+    'header=s'     => \$header,
     'help|?'       => \$help,
     'version|v'    => \$version,
     'man'          => \$man,
@@ -60,7 +68,7 @@ if ( $help || !defined $infile ) {
     pod2usage(1);
 }
 if ( !defined $outfile ) {
-    $outfile = q{./} . fileparse( $infile, qw(csv txt dat) ) . 'pdf';
+    $outfile = q{./} . fileparse( $infile, qw(csv txt dat) ) . '.pdf';
 }
 
 my $csv = Text::CSV->new(
@@ -73,13 +81,18 @@ my $csv = Text::CSV->new(
 my @header;
 my @data;
 
+if ($header) {
+    my $status = $csv->parse($header);
+    @header = [ $csv->fields() ];
+}
+
 my $line_number = 0;
 
 open my $IN, '<', $infile;
 while ( my $line = <$IN> ) {
     chomp $line;
     my $status = $csv->parse($line);
-    if ( $line_number == 0 ) {
+    if ( !$header && $line_number == 0 ) {
         @header = [ $csv->fields() ];
     }
     else {
@@ -90,13 +103,15 @@ while ( my $line = <$IN> ) {
 close $IN;
 
 my $table = LaTeX::Table->new(
-    {   header   => \@header,
-        data     => \@data,
-        type     => 'xtab',
+    {   header        => \@header,
+        data          => \@data,
+        type          => 'xtab',
         xentrystretch => $DEFAULT_XENTRYSTRETCH,
-        tabletail => q{ },
-        theme     => $theme,
+        tabletail     => q{ },
+        theme         => $theme,
+
         #    width     => '\textwidth',
+        coldef   => $coldef,
         callback => sub {
             my ( $row, $col, $value, $is_header ) = @_;
             if ($latex_encode) {
@@ -113,20 +128,37 @@ if ($landscape) {
     $ls = '[landscape]';
     $lg = '\usepackage[landscape]{geometry}';
 }
+my $tc  = q{};
+my $mtc = q{};
+
+if ($title) {
+    $tc  = '\title{' . $title . '}';
+    $mtc = '\maketitle';
+}
 my $code = '\documentclass' . $ls
     . '{article}\usepackage{xtab}'
     . $lg
     . '\usepackage{booktabs}'
+    . '\usepackage{xcolor}'
+    . '\usepackage{colortbl}'
+    . '\usepackage{array}'
+    . '\usepackage{helvet}'
+    . $tc
     . '\begin{document}'
+    . $mtc . "\n"
     . $table->generate_string
     . '\end{document}';
-#print $code;
+
 my $drv = LaTeX::Driver->new(
     source => \$code,
     output => $outfile,
     format => 'pdf',
 );
 my $ok = $drv->run;
+
+if ($outputlatex) {
+    print "$code" or croak q{Can't print to stdout.};
+}
 
 __END__
 
@@ -158,6 +190,27 @@ Output the PDF in landscape orientation.
 
 The table theme. See L<LaTeX::Table>. Default I<Zurich>.
 
+=item C<--coldef>
+
+The column definition, eg 'llp{5cm}'. If unset, guessed by L<LaTeX::Table>.
+
+=item C<--title>
+
+If set, then uses the specified string as title.
+
+=item C<--header>
+
+Instead of the first line, use the specified string as header.
+
+  --header "Header A, Header B, Header C"
+
+The separator character must be the same as in the file. If unset, then the
+first line is used as header.
+
+=item C<--outputlatex>
+
+Prints the LaTeX code to STDOUT.
+
 =item C<--man>
 
 Display manpage.
@@ -170,7 +223,7 @@ Print version number of this software.
 
 =head1 DESCRIPTION
 
-Converts a CSV file to PDF. Requires LaTeX. Uses first line as table header.
+Converts a CSV file to PDF. Requires LaTeX. 
 
 =head1 CONFIGURATION AND ENVIRONMENT
 

@@ -3,9 +3,12 @@ before 1.0
 - fine tune default parameters
 - nicer, aligned output
 - nicer examples.pdf
+- shortcut for multirows
 - remove deprecated code (release candidate 1)
 
 after 1.0
 
 - themes should define how to handle manually inserted lines with []. 
   (for example thicker lines)
+- make it possible to add more table types, maybe with a simple template
+  system. especially the ctable package should be supported.  
