@@ -21,7 +21,7 @@ WriteMakefile(
         'Scalar::Util'   => 0,
         'Text::Wrap'     => 0,
         'version'        => 0,
-        'Readonly'       => 0,
+        'Template'       => 0,
     },
     EXE_FILES         => [ 'bin/csv2pdf', 'bin/ltpretty' ], 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

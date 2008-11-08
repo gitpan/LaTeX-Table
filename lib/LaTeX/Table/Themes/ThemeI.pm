@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-05 17:04:09 +0100 (Wed, 05 Nov 2008) $
-# $Revision: 1159 $
+#     $Date: 2008-11-07 01:06:00 +0100 (Fri, 07 Nov 2008) $
+# $Revision: 1165 $
 #############################################################################
 
 package LaTeX::Table::Themes::ThemeI;
@@ -9,7 +9,7 @@ package LaTeX::Table::Themes::ThemeI;
 use Moose::Role;
 
 use version;
-our ($VERSION) = '$Revision: 1159 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1165 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 requires '_definition';
 
@@ -56,8 +56,7 @@ This is the theme interface (or L<Moose> role), that all theme objects must use.
 
 =head1 CREATING THEMES
 
-A themes is defined as an hash reference containing all options
-(explained later):
+A theme is defined as an hash reference containing all options:
 
   # a very ugly theme...
   my $theme = { 
@@ -76,11 +75,6 @@ A themes is defined as an hash reference containing all options
               },
           };
 
-You can either quickly add a theme after initiation of an L<LaTeX::Table>:
-          
-  $table->set_custom_themes($themes);
-
-Or, you can build a L<"THEME MODULE"> and extend the list of predefined themes. 
 
 =over 
 
@@ -145,6 +139,12 @@ C<\bottomrule>.  0 (don't use this package) or 1 (use it).
 =back
 
 =back
+
+You can either quickly add themes after initiation of an L<LaTeX::Table>:
+          
+  $table->set_custom_themes($theme);
+
+Or, you can build a L<"THEME MODULE"> and extend the list of predefined themes. 
 
 =head1 THEME MODULE 
 

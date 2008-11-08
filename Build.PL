@@ -18,7 +18,7 @@ my $builder = Module::Build->new(
         'Text::Wrap'     => 0,
         'Carp'           => 0,
         'version'        => 0,
-        'Readonly'       => 0,
+        'Template'       => 0,
     },
     build_requires => {
         'Test::More'       => 0,

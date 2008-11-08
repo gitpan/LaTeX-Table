@@ -568,13 +568,14 @@ $table = LaTeX::Table->new(
         header            => $header,
         data              => $data,
         header_sideways   => 1,
+        sideways          => 1,
         theme             => 'NYC',
     }
 );
 
 $expected_output = <<'EOT'
 \definecolor{latextbl}{RGB}{78,130,190}
-\begin{table}
+\begin{sidewaystable}
 \centering
 \setlength{\extrarowheight}{1pt}
 \begin{tabular}{|rlllll|}
@@ -588,7 +589,7 @@ $expected_output = <<'EOT'
 \rowcolor{latextbl!10}12.00 &  &  &  &  & \\ 
 \hline
 \end{tabular}
-\end{table}
+\end{sidewaystable}
 EOT
     ;
 

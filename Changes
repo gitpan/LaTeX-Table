@@ -1,5 +1,10 @@
 Revision history for LaTeX-Table
 
+0.9.8  Sat  Nov 8  11:01:00 2008
+        - support for the ctable package
+        - sideways option
+        - star option
+
 0.9.7  Wed  Nov 5  11:01:00 2008 (Obama wins :))
         - Switched to Moose
         - themes now definable as modules. 

@@ -8,6 +8,8 @@ use LaTeX::Encode;
 use Number::Format qw(:subs);
 use Data::Dumper;
 
+system('rm *.tex');
+
 my $test_data = [
     [ 'Gnat',      'per gram', '13.651' ],
     [ '',          'each',     '0.012' ],
@@ -175,7 +177,7 @@ $table = LaTeX::Table->new(
         label             => 'rotate',
         width             => '0.9\textwidth',
         width_environment => 'tabularx',
-        environment       => 'sidewaystable',
+        sideways          => 1,
         caption           => 'tabularx X column attribute.',
     }
 );
@@ -184,7 +186,7 @@ $table = LaTeX::Table->new(
 EOC
     ;
 
-$table->set_environment('sidewaystable');
+$table->set_sideways(1);
 $table->set_label('rotate');
 
 print ${OUT} $code . $table->generate_string;
@@ -212,7 +214,7 @@ $table->set_resizebox([ '300pt', '120pt' ]);
 EOC
     ;
 
-$table->set_environment('table');
+$table->set_sideways(0);
 $table->set_label('resize');
 $table->set_resizebox( ['0.6\textwidth'] );
 $table->set_caption('scaled to 60\% of the text width');
@@ -432,8 +434,9 @@ print $OUT $table->generate_string();
 $code = << 'EOT';
 \subsection{Multicolumns}
 If you want tables with vertical lines (are you sure?) you should use our
-shortcut to generate them. They are not only much less typing work, but they
-also automatically add the vertical lines, see Table \ref{table:mc}.
+shortcut to generate multicolumns. These shortcuts are not only much less
+typing work, but they also automatically add the vertical lines, see Table
+\ref{table:mc}.
 {
 \small
 \begin{lstlisting}
@@ -583,7 +586,7 @@ $table = LaTeX::Table->new(
         label   => 'table:website',
         header  => [ [ 'Website', 'URL' ] ],
         data    => [
-            [ 'Slashdot',  'http://www.slashdot.org' ],
+            [ 'Slashdot\tmark',  'http://www.slashdot.org' ],
             [ 'Perlmonks', 'http://www.perlmonks.org' ],
             [ 'Google',    'http://www.google.com' ],
         ],
@@ -598,6 +601,124 @@ $table = LaTeX::Table->new(
 EOT
 
 print $OUT $code . $table->generate_string();
+
+$table->set_label('table:websitectable');
+$table->set_caption('We can do this with the ctable package as well and can even add some footnotes\dots');
+$table->set_type('ctable');
+$table->set_foottable('\tnote{footnotes are placed under the table}');
+
+$code = << 'EOT';
+\subsection{Ctable Package}
+The \texttt{ctable} package makes it easy to add footnotes. See
+Table~\ref{table:websitectable}. 
+\small
+\begin{lstlisting}
+$table->set_type('ctable');
+\end{lstlisting}
+
+EOT
+
+$table->set_data(
+         [
+            [ 'Slashdot\tmark',  'http://www.slashdot.org' ],
+            [ 'Perlmonks', 'http://www.perlmonks.org' ],
+            [ 'Google',    'http://www.google.com' ],
+        ]);
+
+print $OUT $code . $table->generate_string();
+
+
+$code = << 'EOT';
+\subsection{Multicols}
+In a twocolumn or multicols document, we use this starred version for
+Table~\ref{table:websitectablestar}:
+
+\begin{multicols}{2}
+\small
+\begin{lstlisting}
+$table->set_star(1);
+\end{lstlisting}
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+EOT
+
+$table->set_star(1);
+$table->set_position('htbp');
+$table->set_label('table:websitectablestar');
+print $OUT $code . $table->generate_string();
+
+$code = << 'EOT';
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla
+bla bla bla bla bla bla
+EOT
+
+print $OUT $code .  "\n\\end{multicols}\n";
 
 print ${OUT}
     "\\section{Version}\\small{Generated with LaTeX::Table Version $LaTeX::Table::VERSION}\n";
@@ -625,6 +746,7 @@ close $OUT;
 __DATA__
 \documentclass{ltxdoc}
 \usepackage{url}
+\usepackage{ctable}
 \usepackage{graphics, graphicx}
 \usepackage{xtab}
 \usepackage{booktabs}
@@ -635,6 +757,7 @@ __DATA__
 \usepackage{colortbl}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{multicol}
 \usepackage{array}% in the preamble
 %\usepackage[tableposition=top]{caption}
 \begin{document}
