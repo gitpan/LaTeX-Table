@@ -13,45 +13,45 @@ use version;
 our ($VERSION) = '$Revision: 1151 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
-    my $themes = { 'Dresden' =>
-     {
-        'HEADER_FONT_STYLE'  => 'bf',
-        'HEADER_CENTERED'    => 1,
-        'CAPTION_FONT_STYLE' => 'bf',
-        'VERTICAL_LINES'     => [ 1, 2, 1 ],
-        'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
-        'BOOKTABS'           => 0,
-    },
-    'Houston' => {
-        'HEADER_FONT_STYLE'  => 'bf',
-        'HEADER_CENTERED'    => 1,
-        'CAPTION_FONT_STYLE' => 'bf',
-        'VERTICAL_LINES'     => [ 1, 2, 1 ],
-        'HORIZONTAL_LINES'   => [ 1, 2, 1 ],
-        'EXTRA_ROW_HEIGHT'   => '1pt',
-        'BOOKTABS'           => 0,
-    },
-    'Berlin' => {
-        'HEADER_FONT_STYLE'  => 'bf',
-        'HEADER_CENTERED'    => 1,
-        'CAPTION_FONT_STYLE' => 'bf',
-        'VERTICAL_LINES'     => [ 1, 1, 1 ],
-        'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
-        'BOOKTABS'           => 0,
-    },
-    'Miami' => {
-        'HEADER_FONT_STYLE'  => 'bf',
-        'HEADER_CENTERED'    => 1,
-        'CAPTION_FONT_STYLE' => 'bf',
-        'VERTICAL_LINES'     => [ 0, 0, 0 ],
-        'HORIZONTAL_LINES'   => [ 0, 1, 0 ],
-        'BOOKTABS'           => 0,
-    },
-    'plain' => {
-        'VERTICAL_LINES'     => [ 0, 0, 0 ],
-        'HORIZONTAL_LINES'   => [ 0, 0, 0 ],
-        'BOOKTABS'           => 0,
-    },
+    my $themes = {
+        'Dresden' => {
+            'HEADER_FONT_STYLE'  => 'bf',
+            'HEADER_CENTERED'    => 1,
+            'CAPTION_FONT_STYLE' => 'bf',
+            'VERTICAL_LINES'     => [ 1, 2, 1 ],
+            'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+            'BOOKTABS'           => 0,
+        },
+        'Houston' => {
+            'HEADER_FONT_STYLE'  => 'bf',
+            'HEADER_CENTERED'    => 1,
+            'CAPTION_FONT_STYLE' => 'bf',
+            'VERTICAL_LINES'     => [ 1, 2, 1 ],
+            'HORIZONTAL_LINES'   => [ 1, 2, 1 ],
+            'EXTRA_ROW_HEIGHT'   => '1pt',
+            'BOOKTABS'           => 0,
+        },
+        'Berlin' => {
+            'HEADER_FONT_STYLE'  => 'bf',
+            'HEADER_CENTERED'    => 1,
+            'CAPTION_FONT_STYLE' => 'bf',
+            'VERTICAL_LINES'     => [ 1, 1, 1 ],
+            'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+            'BOOKTABS'           => 0,
+        },
+        'Miami' => {
+            'HEADER_FONT_STYLE'  => 'bf',
+            'HEADER_CENTERED'    => 1,
+            'CAPTION_FONT_STYLE' => 'bf',
+            'VERTICAL_LINES'     => [ 0, 0, 0 ],
+            'HORIZONTAL_LINES'   => [ 0, 1, 0 ],
+            'BOOKTABS'           => 0,
+        },
+        'plain' => {
+            'VERTICAL_LINES'   => [ 0, 0, 0 ],
+            'HORIZONTAL_LINES' => [ 0, 0, 0 ],
+            'BOOKTABS'         => 0,
+        },
     };
     return $themes;
 }

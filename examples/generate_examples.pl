@@ -506,7 +506,7 @@ EOT
 
 print $OUT $code . $table->generate_string();
 
-$table->set_theme('NYC');
+$table->set_theme('NYC2');
 $table->set_columns_like_header( [0] );
 $table->set_label('table:collikeheader');
 $table->set_caption('We can format columns with the theme header definition');
@@ -518,6 +518,7 @@ $table->set_header($header);
 
 print $OUT $table->generate_string();
 
+$table->set_theme('NYC');
 $header
     = [ [ 'Time', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ] ];
 
@@ -532,8 +533,9 @@ $table = LaTeX::Table->new(
     {   header          => $header,
         data            => $data,
         label           => 'table:headersideways',
-        caption         => 'Header sideways',
+        caption         => 'Header sideways, left aligned',
         header_sideways => 1,
+        left            => 1,
         theme           => 'NYC',
     }
 );
@@ -544,8 +546,9 @@ $table = LaTeX::Table->new(
     {   header          => $header,
         data            => $data,
         label           => 'table:headersideways2',
-        caption         => 'Header sideways',
+        caption         => 'Header sideways, right aligned',
         header_sideways => 0,
+        right           => 1,
         callback        => sub {
             my ( $row, $col, $value, $is_header ) = @_;
             if ( $col != 0 && $is_header ) {

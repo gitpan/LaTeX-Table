@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-08 01:43:44 +0100 (Sat, 08 Nov 2008) $
-# $Revision: 1197 $
+#     $Date: 2008-11-11 23:56:16 +0100 (Tue, 11 Nov 2008) $
+# $Revision: 1230 $
 #############################################################################
 
 package LaTeX::Table::Types::Xtab;
@@ -10,41 +10,29 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1197 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1230 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
 {
-[% COLORDEF %][% EXTRA_ROW_HEIGHT %][% SIZE %][% CAPTION %][% XENTRYSTRETCH %][% LABEL %]
+[% COLORDEF %][% EXTRA_ROW_HEIGHT %][% SIZE %][% IF CAPTION %][%IF CAPTION_TOP
+%]\topcaption[% ELSE %]\bottomcaption[% END %][%IF CAPTION_SHORT %][[% CAPTION_SHORT %]][% END %]{[% CAPTION %]}
+[% END %][% XENTRYSTRETCH %][% IF LABEL %]\label{[% LABEL %]}
+[% END %]
 [% TABLEHEAD %]
 [% TABLETAIL %]
 [% TABLETAIL_LAST %]
-[% BEGIN_CENTER %][% BEGIN_RESIZEBOX %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[%WIDTH %]{[% COL_DEF %]}
+[% IF CENTER %]\begin{center}
+[% END %][% IF LEFT %]\begin{flushleft}
+[% END %][% IF RIGHT %]\begin{flushright}
+[% END %][% BEGIN_RESIZEBOX %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF WIDTH %]{[%WIDTH %]}[% END %]{[% COL_DEF %]}
 [% BODY %]\end{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}
-[% END_RESIZEBOX %][% END_CENTER %]
+[% END_RESIZEBOX %][% IF CENTER %]\end{center}[% END %][% IF LEFT %]\end{flushleft}[% END %][% IF RIGHT %]\end{flushright}[% END %]
 } 
 EOT
 ;
 
 has '+_tabular_environment' => (default => 'xtabular');
 has '+_template'    => (default => $template);
-
-# xtab wants begin{center} not centering
-sub _get_begin_center_code {
-    my ($self) =@_;
-    if ( $self->_table_obj->get_center ) {
-        return "\\begin{center}\n";
-    }
-    return q{};
-}
-
-sub _get_end_center_code {
-    my ($self) =@_;
-    if ( $self->_table_obj->get_center ) {
-        return "\\end{center}";
-    }
-    return q{};
-}
-
 
 sub _get_tablehead_code {
     my ($self, $code) =@_;
@@ -58,7 +46,7 @@ sub _get_tablehead_code {
             . scalar(@summary)
             . '}{c}{{ \normalsize \tablename\ \thetable: '
             . $tbl->get_tableheadmsg
-            . "}}\\\\[\\belowcaptionskip]\n";
+            . "}}\\\\[\\abovecaptionskip]\n";
         $tablehead
             = "\\tablefirsthead{$code}\n\\tablehead{$continued_caption$code}\n";
 
@@ -104,23 +92,6 @@ sub _get_tabletail_code {
         return "\\tablelasttail{}";
     }
     return "\\tabletail{$code$linecode2}";
-}
-
-sub _get_caption_command_code {
-    my ($self, $header) =@_;
-    my $tbl = $self->_table_obj;
-    my $c_caption;
-    if ( $tbl->get_caption_top ) {
-            $c_caption = $tbl->get_caption_top;
-            $c_caption =~ s{ \A \\ }{}xms;
-            if ( $c_caption eq '1' ) {
-                $c_caption = 'topcaption';
-            }
-    }
-    else {
-            $c_caption = 'bottomcaption';
-    }
-    return $c_caption;
 }
 
 sub _get_xentrystretch_code {

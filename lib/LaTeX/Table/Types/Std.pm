@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-08 01:43:44 +0100 (Sat, 08 Nov 2008) $
-# $Revision: 1197 $
+#     $Date: 2008-11-11 23:56:16 +0100 (Tue, 11 Nov 2008) $
+# $Revision: 1230 $
 #############################################################################
 
 package LaTeX::Table::Types::Std;
@@ -10,14 +10,20 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1197 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1230 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
-[% COLORDEF %][% IF ENVIRONMENT %]\begin{[% IF SIDEWAYS %]sidewaystable[% ELSE
-%][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% POS %][% SIZE %][% BEGIN_CENTER %][% HEADER_CAPTION %][% END %][% EXTRA_ROW_HEIGHT %][% BEGIN_RESIZEBOX%]\begin{[% TABULAR_ENVIRONMENT %]}[% WIDTH %]{[% COL_DEF %]}
+[% COLORDEF %][% IF ENVIRONMENT %]\begin{[% IF SIDEWAYS %]sidewaystable[% ELSE%][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% IF POS %][[% POS %]][% END %]
+[% SIZE %][% IF CENTER %]\centering
+[% END %][% IF LEFT %]\raggedright
+[% END %][% IF RIGHT %]\raggedleft
+[% END %][% IF CAPTION_TOP %][% IF CAPTION %]\[% CAPTION_CMD %][% IF CAPTION_SHORT %][[% CAPTION_SHORT %]][% END %]{[% CAPTION %]}
+[% END %][% END %][% END %][% EXTRA_ROW_HEIGHT %][% BEGIN_RESIZEBOX%]\begin{[% TABULAR_ENVIRONMENT %]}[% IF WIDTH %]{[% WIDTH %]}[% END %]{[% COL_DEF %]}
     [% HEADER_CODE %]
 [% BODY %]\end{[% TABULAR_ENVIRONMENT %]}
-[% END_RESIZEBOX %][% IF ENVIRONMENT %][% CAPTION %][% LABEL %]\end{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% END %]
+[% END_RESIZEBOX %][% IF ENVIRONMENT %][% UNLESS CAPTION_TOP %][% IF CAPTION %]\[% CAPTION_CMD %][% IF CAPTION_SHORT %][[% CAPTION_SHORT %]][% END %]{[% CAPTION %]}
+[% END %][% END %][%IF LABEL %]\label{[% LABEL %]}
+[% END %]\end{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% END %]
 EOT
 ;
 

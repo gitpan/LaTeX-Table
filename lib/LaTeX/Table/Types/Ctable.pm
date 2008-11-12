@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-08 03:31:37 +0100 (Sat, 08 Nov 2008) $
-# $Revision: 1199 $
+#     $Date: 2008-11-11 23:56:16 +0100 (Tue, 11 Nov 2008) $
+# $Revision: 1230 $
 #############################################################################
 
 package LaTeX::Table::Types::Ctable;
@@ -10,89 +10,30 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1199 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1230 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
 {[% COLORDEF %][% SIZE %][% EXTRA_ROW_HEIGHT %][% BEGIN_RESIZEBOX%]
-\ctable[[% CAPTION %][% POS %][% LABEL %][% WIDTH %][% BEGIN_CENTER %][% IF SIDEWAYS %]sideways,
+\ctable[[% IF CAPTION %]caption = {[% CAPTION %]},
+[% IF CAPTION_SHORT %]cap = {[% CAPTION_SHORT %]},
+[% END %][% UNLESS CAPTION_TOP %]botcap,
+[% END %][% END %][% IF POS %]pos = [% POS %],
+[% END %][% IF LABEL %]label = {[% LABEL %]},
+[% END %][% IF MAXWIDTH %]maxwidth = {[% MAXWIDTH %]},
+[% END %][% IF WIDTH %]width = {[% WIDTH %]},
+[% END %][% IF CENTER %]center,
+[% END %][% IF LEFT %]left,
+[% END %][% IF RIGHT %]right,
+[% END %][% IF SIDEWAYS %]sideways,
 [% END %][% IF STAR %]star,
 [% END %]]{[% COL_DEF %]}{[% FOOTTABLE %]}{
 [% HEADER_CODE %][% BODY %]}
-[% END_RESIZEBOX %]
-}
+[% END_RESIZEBOX %]}
 EOT
 ;
 
 has '+_tabular_environment' => (default => 'tabular');
 has '+_template'    => (default => $template);
-
-sub _get_caption_code {
-    my ( $self, $header ) = @_;
-    my $f_caption = q{};
-    my $s_caption = q{};
-    my $tbl       = $self->_table_obj;
-    my $theme     = $tbl->get_theme_settings;
-    my $tmp = q{};
-    if ( $tbl->get_maincaption ) {
-        $f_caption = 'cap = {' . $tbl->get_maincaption . "},\n";
-        $tmp       = $tbl->get_maincaption . '. ';
-        if ( defined $theme->{CAPTION_FONT_STYLE} ) {
-            $tmp = $tbl->_add_font_family( $tmp,
-                $theme->{CAPTION_FONT_STYLE} );
-        }
-    }
-    else {
-        return q{} if !$tbl->get_caption;
-    }
-    
-    my $b_caption = q{};
-
-    if (!$tbl->get_caption_top) {
-        $b_caption = "botcap,\n";
-    }
-
-    $s_caption = 'caption = {' . $tmp . $tbl->get_caption . "},\n";
-
-    return $f_caption . $s_caption . $b_caption;
-}
-
-sub _get_pos_code {
-    my ($self) = @_;
-    if ( $self->_table_obj->get_position ) {
-        return 'pos = ' . $self->_table_obj->get_position . ",\n";
-    }
-    else {
-        return q{};
-    }
-
-}
-
-sub _get_label_code {
-    my ($self) = @_;
-    my $label = $self->_table_obj->get_label;
-    if ($label) {
-        return "label = {$label},\n";
-    }
-    return q{};
-}
-
-sub _get_width_code {
-    my ($self) =@_;
-    my $tbl = $self->_table_obj;
-
-    if ( $tbl->get_width ) {
-        return 'width = {' . $tbl->get_width . "},\n";
-    }
-    return q{};
-}
-
-sub _get_begin_center_code {
-    my ($self) =@_;
-    if ( $self->_table_obj->get_center ) {
-        return "center,\n";
-    }
-    return q{};
-}
 
 1;
 

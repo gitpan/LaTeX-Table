@@ -109,7 +109,7 @@ $expected_output =<<'EOT'
 \hline
 \hline
 }
-\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[\belowcaptionskip]
+\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[\abovecaptionskip]
 \hline
 \multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
 \multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
@@ -152,7 +152,7 @@ $expected_output =<<'EOT'
 \hline
 \hline
 }
-\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[\belowcaptionskip]
+\tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[\abovecaptionskip]
 \hline
 \multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
 \multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 

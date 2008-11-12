@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-04 23:58:40 +0100 (Tue, 04 Nov 2008) $
-# $Revision: 1154 $
+#     $Date: 2008-11-11 04:38:01 +0100 (Tue, 11 Nov 2008) $
+# $Revision: 1226 $
 #############################################################################
 
 package LaTeX::Table::Themes::Beamer;
@@ -10,23 +10,38 @@ use Moose;
 with 'LaTeX::Table::Themes::ThemeI';
 
 use version;
-our ($VERSION) = '$Revision: 1154 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1226 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
-    return { NYC =>
-     {
-        'HEADER_FONT_STYLE'  => 'bf',
-        'HEADER_FONT_COLOR'  => 'white',
-        'HEADER_BG_COLOR'    => 'latextbl',
-        'DATA_BG_COLOR_ODD'  => 'latextbl!25',
-        'DATA_BG_COLOR_EVEN' => 'latextbl!10',
-        'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
-        'HEADER_CENTERED'    => 1,
-        'VERTICAL_LINES'     => [ 1, 0, 0 ],
-        'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
-        'BOOKTABS'           => 0,
-        'EXTRA_ROW_HEIGHT'   => '1pt',
-    }};
+    my $themes = {
+        NYC => {
+            'HEADER_FONT_STYLE'  => 'bf',
+            'HEADER_FONT_COLOR'  => 'white',
+            'HEADER_BG_COLOR'    => 'latextbl',
+            'DATA_BG_COLOR_ODD'  => 'latextbl!25',
+            'DATA_BG_COLOR_EVEN' => 'latextbl!10',
+            'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
+            'HEADER_CENTERED'    => 1,
+            'VERTICAL_LINES'     => [ 1, 0, 0 ],
+            'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
+            'BOOKTABS'           => 0,
+            'EXTRA_ROW_HEIGHT'   => '1pt',
+        },
+        NYC2 => {
+            'HEADER_FONT_STYLE'  => 'bf',
+            'HEADER_FONT_COLOR'  => 'white',
+            'HEADER_BG_COLOR'    => 'latextbl',
+            'DATA_BG_COLOR_ODD'  => 'latextbl!25',
+            'DATA_BG_COLOR_EVEN' => 'latextbl!10',
+            'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
+            'HEADER_CENTERED'    => 1,
+            'VERTICAL_LINES'     => [ 1, 0, 0 ],
+            'HORIZONTAL_LINES'   => [ 1, 0, 0 ],
+            'BOOKTABS'           => 0,
+            'EXTRA_ROW_HEIGHT'   => '1pt',
+        },
+    };
+    return $themes;
 }
 
 1;
@@ -41,6 +56,7 @@ LaTeX::Table::Themes::Beamer - Colorful themes optimized for presentations.
 This module provides following themes:
 
   NYC
+  NYC2  # same, but without midline after header
 
 =head1 REQUIRES
 

@@ -191,21 +191,6 @@ like(
 $table = LaTeX::Table->new(
     {   header  => $header,
         data    => $data,
-        width   => '100pt',
-        width_environment => 'tabulary',
-    }
-);
-
-eval { $table->generate_string; };
-like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option width_environment: Not known: tabulary\. Valid environments are},
-    'unknown width environment'
-) || diag $EVAL_ERROR;
-
-$table = LaTeX::Table->new(
-    {   header  => $header,
-        data    => $data,
         width_environment => 'tabularx',
     }
 );
@@ -215,22 +200,6 @@ like(
     $EVAL_ERROR, 
     qr{Invalid usage of option width_environment: Is tabularx and width is unset\. },
     'unknown width environment'
-) || diag $EVAL_ERROR;
-
-$table = LaTeX::Table->new(
-    {   header  => $header,
-        data    => $data,
-        type    => 'xtab',
-        width   => '100pt',
-        width_environment => 'tabularx',
-    }
-);
-
-eval { $table->generate_string; };
-like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option width_environment: Not known: tabularx\. Valid environments are},
-    'unknown width environment with xtab'
 ) || diag $EVAL_ERROR;
 
 $table = LaTeX::Table->new(
@@ -348,4 +317,36 @@ like(
     $EVAL_ERROR, 
     qr{Invalid usage of option position: xtab does not support position\.},
     'xtab does not support position'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header       => $header,
+        data         => $data,
+        left => 1,
+        center => 1,
+    }
+);
+
+eval { $table->generate_string; };
+
+like(
+    $EVAL_ERROR, 
+    qr{Invalid usage of option center, left, right},
+    'only one allowed'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header       => $header,
+        data         => $data,
+        shortcaption => 'short',
+        maincaption   => 'main',
+    }
+);
+
+eval { $table->generate_string; };
+
+like(
+    $EVAL_ERROR, 
+    qr{Invalid usage of option maincaption, shortcaption},
+    'only one allowed'
 ) || diag $EVAL_ERROR;

@@ -1,15 +1,18 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-07 01:06:00 +0100 (Fri, 07 Nov 2008) $
-# $Revision: 1165 $
+#     $Date: 2008-11-09 22:19:07 +0100 (Sun, 09 Nov 2008) $
+# $Revision: 1206 $
 #############################################################################
 
 package LaTeX::Table::Themes::ThemeI;
 
+use strict;
+use warnings;
+
 use Moose::Role;
 
 use version;
-our ($VERSION) = '$Revision: 1165 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1206 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 requires '_definition';
 

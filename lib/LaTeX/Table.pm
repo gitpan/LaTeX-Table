@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-08 04:05:04 +0100 (Sat, 08 Nov 2008) $
-# $Revision: 1202 $
+#     $Date: 2008-11-11 23:44:28 +0100 (Tue, 11 Nov 2008) $
+# $Revision: 1228 $
 #############################################################################
 
 package LaTeX::Table;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 
-use version; our $VERSION = qv('0.9.8');
+use version; our $VERSION = qv('0.9.9');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -30,8 +30,8 @@ use Module::Pluggable
 
 use Text::Wrap qw(wrap);
 
-for my $attr (qw(label maincaption caption caption_top coldef coldef_strategy
-    columns_like_header text_wrap header_sideways width width_environment
+for my $attr (qw(label maincaption shortcaption caption caption_top coldef coldef_strategy
+    columns_like_header text_wrap header_sideways width maxwidth width_environment
     custom_tabular_environment position size callback tabletail xentrystretch
     resizebox sideways star _data_summary)) {
     has $attr => (is => 'rw', default => 0);
@@ -47,7 +47,11 @@ has 'environment'   => ( is => 'rw', default => 1 );
 has 'theme'         => ( is => 'rw', default => 'Zurich' );
 has 'predef_themes' => ( is => 'rw', default => sub { {} } );
 has 'custom_themes' => ( is => 'rw', default => sub { {} } );
-has 'center'        => ( is => 'rw', isa => 'Bool', default => 1 );
+
+for my $attr (qw(center left right _default_align)) {
+    has $attr   => ( is => 'rw', isa => 'Bool', predicate => "has_$attr" );
+}
+
 has 'tabletailmsg'  => ( is => 'rw', default => 'Continued on next page' );
 has 'tableheadmsg'  => ( is => 'rw', default => 'Continued from previous page' );
 
@@ -215,6 +219,53 @@ sub _check_options {
     # handle default values by ourselves
     if ( $self->get_width_environment eq 'tabular*' ) {
         $self->set_width_environment(0);
+    }
+    
+    $self->_check_align;
+
+    if ($self->get_maincaption && $self->get_shortcaption) {
+        $self->invalid_option_usage('maincaption, shortcaption',
+            'only one allowed.');
+    }
+    if ( !$self->get_width && $self->get_width_environment eq 'tabularx' ) {
+        $self->invalid_option_usage( 'width_environment',
+            'Is tabularx and width is unset' );
+    }
+    return;
+}
+
+sub _check_align {
+    my ($self) = @_;
+    my $cnt_def_alignments = 0;
+    my $cnt_true_alignments = 0;
+
+    if ($self->has_center) {
+        $cnt_def_alignments++;
+    }
+    if ($self->has_right) {
+        $cnt_def_alignments++;
+    }
+    if ($self->has_left) {
+        $cnt_def_alignments++;
+    }
+    if ($self->get_center) {
+        $cnt_true_alignments++;
+    }
+    if ($self->get_right) {
+        $cnt_true_alignments++;
+    }
+    if ($self->get_left) {
+        $cnt_true_alignments++;
+    }
+
+    if ($cnt_true_alignments > 1) {
+        $self->invalid_option_usage('center, left, right',
+            'only one allowed.');
+    }
+    if ($cnt_def_alignments == 0) {
+        $self->set__default_align(1);
+    } else {
+        $self->set__default_align(0);
     }
     return;
 }
@@ -654,7 +705,8 @@ sub _add_font_color {
 
 sub _get_coldef_type_col_suffix {
     my ($self) = @_;
-    if ( $self->get_width_environment eq 'tabularx' ) {
+    if ( $self->get_width_environment eq 'tabularx' || $self->get_type eq
+        'ctable') {
         return '_COL_X';
     }
     return '_COL';
@@ -692,6 +744,8 @@ sub _get_coldef_code {
         for my $attribute ( sort @attributes ) {
             if ( $attribute =~ m{ \A $col $typesuffix \z }xms ) {
                 $align = $strategy->{$attribute};
+            } elsif ( $typesuffix eq '_COL_X' && $attribute =~ m{ \A $col _COL \z }xms ) {
+                $align = $strategy->{$attribute};
             }
         }
 
@@ -705,7 +759,7 @@ sub _get_coldef_code {
             $table_def .= $align . $v2;
         }
         $i++;
-        if ( $i == 1 && $self->get_width && !$self->get_width_environment ) {
+        if ( $i == 1 && $self->get_width && !$self->get_width_environment && $self->get_type ne 'ctable' ) {
             ## no critic
             $table_def .= '@{\extracolsep{\fill}}'
                 ## use critic
@@ -792,7 +846,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.8
+This document describes LaTeX::Table version 0.9.9
 
 =head1 SYNOPSIS
 
@@ -1077,10 +1131,13 @@ LaTeX package to fix the spacing:
 
   \usepackage[tableposition=top]{caption} 
 
-=item C<center>
+=item C<center>, C<right>, C<left>
 
-Defines whether the table is centered. Default 1 (centered). Requires 
-C<environment>.
+Defines how the table is aligned in the available textwidth. Default is centered. Requires 
+C<environment>. Only one of these options may return a true value.
+    
+  # don't generate any centering code
+  $self->set_center(0);
 
 =item C<label>
 
@@ -1090,8 +1147,13 @@ Default is 0. Requires C<environment>.
 =item C<maincaption>
 
 If get_maincaption() returns a true value, then this value will be displayed 
-in the Table Listing (C<\listoftables>) and before the C<caption>. Default
+in the table listing (C<\listoftables>) and before the C<caption>. Default
 0. Requires C<environment>.
+
+=item C<shortcaption>
+
+Same as maincaption, but does not appear in the caption, only in the table
+listing.
 
 =item C<position>
 
@@ -1230,7 +1292,8 @@ This will produce following LaTeX code:
   \begin{tabular*}{0.75\textwidth}{l@{\extracolsep{\fill} ... }
 
 For tables of C<type> I<std>, it is also possible to use the C<tabularx> LaTeX 
-package (see C<width_environment> below).
+package (see C<width_environment> below). The tables of type I<ctable>
+automatically use the C<tabularx> package.
 
 =item C<width_environment>
 
@@ -1248,6 +1311,10 @@ To use for example the one provided by the C<tabularx> LaTeX package, write:
 
 Note this will not add C<@{\extracolsep{\fill}}> and that this overwrites
 a C<custom_tabular_environment>. Default is 0 (see C<width>).
+
+=item C<maxwidth>
+
+Only supported by tables of type I<ctable>. 
 
 =item C<callback>
 
@@ -1447,8 +1514,8 @@ C<LaTeX::Table> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-L<Carp>, L<Module::Pluggable>, L<Moose>, L<English>,
-L<Readonly>, L<Scalar::Util>, L<Text::Wrap>
+L<Carp>, L<Module::Pluggable>, L<Moose>, L<English>, L<Scalar::Util>,
+L<Template>, L<Text::Wrap>
 
 =head1 BUGS AND LIMITATIONS
 
@@ -1466,17 +1533,20 @@ L<Data::Table>, L<LaTeX::Encode>
 
 =over
 
-=item Andrew Ford (ANDREWF) for many great suggestions. He also wrote L<LaTeX::Driver> and
-L<LaTeX::Encode> which are used by I<csv2pdf>.
+=item Andrew Ford (ANDREWF) for many great suggestions. He also wrote
+L<LaTeX::Driver> and L<LaTeX::Encode> which are used by I<csv2pdf>.
 
-=item Lapo Filippo Mori for the excellent tutorial I<Tables in LaTeX2e: Packages and Methods>.
+=item Lapo Filippo Mori for the excellent tutorial I<Tables in LaTeX2e:
+Packages and Methods>.
 
-=item Simon Fear for the C<booktabs> LaTeX package. The L<"SYNOPSIS"> table is the example
-in his documentation.
+=item Simon Fear for the C<booktabs> LaTeX package. The L<"SYNOPSIS"> table is
+the example in his documentation.
 
 =item Peter Wilson for the C<xtab> LaTeX package.
 
 =item David Carlisle for the C<colortbl> and the C<tabularx> LaTeX packages.
+
+=item Wybo Dekker for the C<ctable> package.
 
 =back
 

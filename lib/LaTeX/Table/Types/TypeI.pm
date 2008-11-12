@@ -1,21 +1,25 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-08 03:31:37 +0100 (Sat, 08 Nov 2008) $
-# $Revision: 1199 $
+#     $Date: 2008-11-11 23:56:16 +0100 (Tue, 11 Nov 2008) $
+# $Revision: 1230 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
+
+use strict;
+use warnings;
 
 use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1199 $' =~ m{ \$Revision: \s+ (\S+) }xms;
-use Readonly;
+our ($VERSION) = '$Revision: 1230 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+
+use Carp;
 
 has '_table_obj' => ( is => 'rw', isa => 'LaTeX::Table', required => 1 );
 has '_tabular_environment' => ( is => 'ro', required => 1 );
-has '_template' => ( is => 'ro', required => 1 );
+has '_template'            => ( is => 'ro', required => 1 );
 
 has '_RULE_TOP_ID'   => ( is => 'ro', default => 0 );
 has '_RULE_MID_ID'   => ( is => 'ro', default => 1 );
@@ -51,39 +55,49 @@ sub generate_latex_code {
 
     my $code = $self->_get_header_columns_code($header);
 
+    my $center = $tbl->get_center;
+
+    if ( $tbl->get__default_align ) {
+        $center = 1;
+    }
+
     my $template_vars = {
-        'COLORDEF' => $self->_get_colordef_code,
-        'ENVIRONMENT' => $tbl->get_environment,
-        'POS'   => $self->_get_pos_code(),
-        'SIZE' => $self->_get_size_code(),
-        'BEGIN_CENTER' => $self->_get_begin_center_code(),
-        'CAPTION' => $self->_get_caption_code(0),
-        'HEADER_CAPTION' => $self->_get_caption_code(1),
-        'SIDEWAYS' => $tbl->get_sideways(),
-        'STAR' => $tbl->get_star(),
-        'EXTRA_ROW_HEIGHT' => $self->_get_extra_row_height_code(),
-        'BEGIN_RESIZEBOX' =>  $self->_get_begin_resizebox_code(),
-        'WIDTH' => $self->_get_width_code(),
-        'COL_DEF' => $table_def,
-        'HEADER_CODE' => $code,
-        'TABLEHEAD'  => $self->_get_tablehead_code($code),
-        'TABLETAIL' => $self->_get_tabletail_code( $data, 0 ),
-        'TABLETAIL_LAST' => $self->_get_tabletail_code( $data, 1 ),
-        'XENTRYSTRETCH' =>  $self->_get_xentrystretch_code(),
-        'LABEL' => $self->_get_label_code(),
-        'BODY' => $self->_body(),
-        'END_CENTER' => $self->_get_end_center_code(),
-        'END_RESIZEBOX' =>  $self->_get_end_resizebox_code(),
+        'COLORDEF'            => $self->_get_colordef_code,
+        'ENVIRONMENT'         => $tbl->get_environment,
+        'POS'                 => $tbl->get_position(),
+        'SIZE'                => $self->_get_size_code(),
+        'CENTER'              => $center,
+        'LEFT'                => $tbl->get_left(),
+        'RIGHT'               => $tbl->get_right(),
+        'CAPTION_TOP'         => $tbl->get_caption_top(),
+        'CAPTION'             => $self->_get_caption(),
+        'CAPTION_CMD'         => $self->_get_caption_command_code(),
+        'CAPTION_SHORT'       => $self->_get_shortcaption(),
+        'SIDEWAYS'            => $tbl->get_sideways(),
+        'STAR'                => $tbl->get_star(),
+        'EXTRA_ROW_HEIGHT'    => $self->_get_extra_row_height_code(),
+        'BEGIN_RESIZEBOX'     => $self->_get_begin_resizebox_code(),
+        'WIDTH'               => $tbl->get_width(),
+        'MAXWIDTH'            => $tbl->get_maxwidth(),
+        'COL_DEF'             => $table_def,
+        'HEADER_CODE'         => $code,
+        'TABLEHEAD'           => $self->_get_tablehead_code($code),
+        'TABLETAIL'           => $self->_get_tabletail_code( $data, 0 ),
+        'TABLETAIL_LAST'      => $self->_get_tabletail_code( $data, 1 ),
+        'XENTRYSTRETCH'       => $self->_get_xentrystretch_code(),
+        'LABEL'               => $tbl->get_label(),
+        'BODY'                => $self->_body(),
+        'END_RESIZEBOX'       => $self->_get_end_resizebox_code(),
         'TABULAR_ENVIRONMENT' => $self->_get_tabular_environment(),
-        'FOOTTABLE' => $tbl->get_foottable(),
+        'FOOTTABLE'           => $tbl->get_foottable(),
     };
-    
+
     my $template_obj = Template->new();
     my $template     = $self->_template;
     my $template_output;
 
-    $template_obj->process(\$template, $template_vars,
-        \$template_output);
+    $template_obj->process( \$template, $template_vars, \$template_output )
+        or croak $template_obj->error();
     return $template_output;
 }
 
@@ -137,71 +151,34 @@ ROW:
     return $code;
 }
 
-sub _get_begin_center_code {
-    my ($self) =@_;
-    if ( $self->_table_obj->get_center ) {
-        return "\\centering\n";
-    }
-    return q{};
-}
-sub _get_end_center_code {
-    return q{};
-}
-
 sub _get_width_code {
-    my ($self) =@_;
-    my $width               = q{};
-    my $tbl = $self->_table_obj;
+    my ($self) = @_;
+    my $width  = q{};
+    my $tbl    = $self->_table_obj;
 
     if ( $tbl->get_width ) {
         $width = '{' . $tbl->get_width . '}';
-        if ($tbl->get_width_environment
-            && !(
-                   $tbl->get_width_environment eq 'tabularx'
-                && $tbl->get_type              eq 'std'
-            )
-            )
-        {
-            $tbl->invalid_option_usage( 'width_environment',
-                      'Not known: '
-                    . $tbl->get_width_environment
-                    . '. Valid environments are: 0, tabularx (not for xtab)'
-            );
-        }
-    }
-    elsif ( $tbl->get_width_environment eq 'tabularx' ) {
-        $tbl->invalid_option_usage( 'width_environment',
-            'Is tabularx and width is unset' );
     }
     return $width;
 }
 
 sub _get_caption_command_code {
-    my ($self, $header) =@_;
-    my $tbl = $self->_table_obj;
-    my $c_caption;
+    my ($self)    = @_;
+    my $tbl       = $self->_table_obj;
+    my $c_caption = 'caption';
     if ( $tbl->get_caption_top ) {
-        if ( !$header ) {
-            return q{};
-        }
         $c_caption = $tbl->get_caption_top;
         $c_caption =~ s{ \A \\ }{}xms;
         if ( $c_caption eq '1' ) {
             $c_caption = 'caption';
         }
     }
-    else {
-        if ($header) {
-            return q{};
-        }
-        $c_caption = 'caption';
-    }
     return $c_caption;
 }
 
 sub _get_colordef_code {
-    my ($self) = @_;
-    my $tbl = $self->_table_obj;
+    my ($self)   = @_;
+    my $tbl      = $self->_table_obj;
     my $colordef = q{};
     if ( defined $tbl->get_theme_settings->{DEFINE_COLORS} ) {
         $colordef = $tbl->get_theme_settings->{DEFINE_COLORS} . "\n";
@@ -224,7 +201,7 @@ sub _get_begin_resizebox_code {
 
 sub _get_end_resizebox_code {
     my ($self) = @_;
-    my $end_resizebox       = q{};
+    my $end_resizebox = q{};
     if ( $self->_table_obj->get_resizebox ) {
         $end_resizebox = "}\n";
     }
@@ -240,33 +217,38 @@ sub _get_end_resizebox_code {
 #              the header or footer. ignored for xtab, because there it
 #              is always placed on top
 
-sub _get_caption_code {
+sub _get_caption {
     my ( $self, $header ) = @_;
-    my $f_caption = q{};
     my $s_caption = q{};
     my $tbl       = $self->_table_obj;
-    my $theme     = $tbl->get_theme_settings;
-
-    my $c_caption = $self->_get_caption_command_code($header);
-    if ( $c_caption eq q{} ) {
-        return q{};
+    if ( !$tbl->get_caption ) {
+        return 0;
     }
+
+    my $theme = $tbl->get_theme_settings;
+
     my $tmp = q{};
     if ( $tbl->get_maincaption ) {
-        $f_caption = '[' . $tbl->get_maincaption . ']';
-        $tmp       = $tbl->get_maincaption . '. ';
+        $tmp = $tbl->get_maincaption . '. ';
         if ( defined $theme->{CAPTION_FONT_STYLE} ) {
             $tmp = $tbl->_add_font_family( $tmp,
                 $theme->{CAPTION_FONT_STYLE} );
         }
     }
-    else {
-        return q{} if !$tbl->get_caption;
+
+    return $tmp . $tbl->get_caption;
+}
+
+sub _get_shortcaption {
+    my ($self) = @_;
+    my $tbl = $self->_table_obj;
+    if ( $tbl->get_maincaption ) {
+        return $tbl->get_maincaption;
     }
-
-    $s_caption = '{' . $tmp . $tbl->get_caption . '}';
-
-    return q{\\} . $c_caption . $f_caption . $s_caption . "\n";
+    if ( $tbl->get_shortcaption ) {
+        return $tbl->get_shortcaption;
+    }
+    return 0;
 }
 
 sub _get_extra_row_height_code {
@@ -337,38 +319,6 @@ sub _get_size_code {
         );
     }
     return "\\$size\n";
-}
-
-###########################################################################
-# Usage      : $self->_get_label_code();
-# Purpose    : create the LaTeX label
-# Parameters : none
-# Returns    : LaTeX code
-
-sub _get_label_code {
-    my ($self) = @_;
-    my $label = $self->_table_obj->get_label;
-    if ($label) {
-        return "\\label{$label}\n";
-    }
-    return q{};
-}
-
-###########################################################################
-# Usage      : $self->_get_pos_code();
-# Purpose    : generates the LaTeX code of the table position (e.g. [htb])
-# Returns    : LaTeX code
-# Parameters : none
-
-sub _get_pos_code {
-    my ($self) = @_;
-    if ( $self->_table_obj->get_position ) {
-        return '[' . $self->_table_obj->get_position . "]\n";
-    }
-    else {
-        return "\n";
-    }
-
 }
 
 sub _get_tabular_environment {
