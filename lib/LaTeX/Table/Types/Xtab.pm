@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-11 23:56:16 +0100 (Tue, 11 Nov 2008) $
-# $Revision: 1230 $
+#     $Date: 2008-11-23 06:50:12 +0100 (Sun, 23 Nov 2008) $
+# $Revision: 1241 $
 #############################################################################
 
 package LaTeX::Table::Types::Xtab;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1230 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1241 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
 {
@@ -24,7 +24,7 @@ my $template =<<'EOT'
 [% IF CENTER %]\begin{center}
 [% END %][% IF LEFT %]\begin{flushleft}
 [% END %][% IF RIGHT %]\begin{flushright}
-[% END %][% BEGIN_RESIZEBOX %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF WIDTH %]{[%WIDTH %]}[% END %]{[% COL_DEF %]}
+[% END %][% BEGIN_RESIZEBOX %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF WIDTH %]{[%WIDTH %]}[% END %]{[% COLDEF %]}
 [% BODY %]\end{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}
 [% END_RESIZEBOX %][% IF CENTER %]\end{center}[% END %][% IF LEFT %]\end{flushleft}[% END %][% IF RIGHT %]\end{flushright}[% END %]
 } 
@@ -86,7 +86,7 @@ sub _get_tabletail_code {
         my $v0 = q{|} x $vlines->[0];
         $code = "$linecode1\\multicolumn{$nu_cols}{${v0}r$v0}{{"
             . $tbl->get_tabletailmsg
-            . "}} \\\\ \n";
+            . "}} \\\\\n";
     }
     if ($final_tabletail) {
         return "\\tablelasttail{}";
@@ -126,7 +126,7 @@ LaTeX::Table::Types::Xtab - Create multi-page tables with the xtabular package.
 
 =head1 SEE ALSO
 
-L<LaTeX::Table>, L<LaTeX::Table::Types::TypesI>
+L<LaTeX::Table>, L<LaTeX::Table::Types::TypeI>
 
 =head1 AUTHOR
 

@@ -28,21 +28,19 @@ my $table = LaTeX::Table->new(
 
 my $expected_output = <<'EOT'
 \begin{tabular}{|l||r|r|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
-
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{tabular}
-
 EOT
     ;
 
@@ -62,7 +60,6 @@ open my $FH, '<', 't/tmp/out.tex';
 my @filecontent = <$FH>;
 chomp @filecontent;
 close $FH;
-push @expected_output, q{};
 
 is_deeply( \@filecontent, [@expected_output],
     'without table environment, generate()' )
@@ -77,18 +74,17 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{|l||r|r|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
-
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{tabular}
 \caption[Beer Counter]{\textbf{Beer Counter. }Number of beers before and after 4pm.}
@@ -112,18 +108,17 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{|l||r|r|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
-
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{tabular}
 \caption{Number of beers before and after 4pm.}
@@ -151,18 +146,17 @@ $table = LaTeX::Table->new(
 $expected_output = <<'EOT'
 \begin{table}
 \begin{tabular}{|l||r|r|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
-
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{tabular}
 \end{table}
@@ -192,21 +186,19 @@ $expected_output = <<'EOT'
 \begin{table}
 \caption{test caption}
 \begin{tabular}{lrr}
-    \toprule
-\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}\\ 
-\multicolumn{1}{c}{\textbf{}} & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}}\\ 
+\toprule
+\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}      \\
+\multicolumn{1}{c}{\textbf{}}     & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
 \midrule
-
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \bottomrule
 \end{tabular}
 \end{table}
-
 EOT
   ;
 
@@ -223,21 +215,19 @@ $expected_output = <<'EOT'
 \begin{table}
 \topcaption{test caption}
 \begin{tabular}{lrr}
-    \toprule
-\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}\\ 
-\multicolumn{1}{c}{\textbf{}} & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}}\\ 
+\toprule
+\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}      \\
+\multicolumn{1}{c}{\textbf{}}     & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
 \midrule
-
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \bottomrule
 \end{tabular}
 \end{table}
-
 EOT
   ;
 
@@ -258,21 +248,19 @@ $table = LaTeX::Table->new(
 );
 $expected_output = <<'EOT'
 \begin{tabular}{|l||l|l|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
-
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{tabular}
-
 EOT
     ;
 
@@ -287,7 +275,7 @@ my $header = [ [ 'Character', 'Fullname', 'Voice' ], ];
 my $data = [
     [ 'Homer', 'Homer Jay Simpson',               'Dan Castellaneta', ],
     [],
-    [ 'Marge', 'Marjorie Simpson (née Bouvier)', 'Julie Kavner', ],
+    [ 'Marge', 'Marjorie Simpson (nee Bouvier)', 'Julie Kavner', ],
     [ 'Bart',  'Bartholomew Jojo Simpson',        'Nancy Cartwright', ],
     [ 'Lisa',  'Elizabeth Marie Simpson',         'Yeardley Smith', ],
     [   'Maggie',
@@ -309,18 +297,16 @@ $expected_output = <<'EOT'
 \begin{table}[ht]
 \centering
 \begin{tabularx}{0.9\textwidth}{lXX}
-    \toprule
-
-Homer & Homer Jay Simpson & Dan Castellaneta\\ 
+\toprule
+Homer  & Homer Jay Simpson              & Dan Castellaneta                                                                   \\
 \midrule
-Marge & Marjorie Simpson (née Bouvier) & Julie Kavner\\ 
-Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
-Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
-Maggie & Margaret Simpson & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
+Marge  & Marjorie Simpson (nee Bouvier) & Julie Kavner                                                                       \\
+Bart   & Bartholomew Jojo Simpson       & Nancy Cartwright                                                                   \\
+Lisa   & Elizabeth Marie Simpson        & Yeardley Smith                                                                     \\
+Maggie & Margaret Simpson               & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer \\
 \bottomrule
 \end{tabularx}
 \end{table}
-
 EOT
     ;
 
@@ -346,20 +332,18 @@ $expected_output = <<'EOT'
 \begin{table}[ht]
 \centering
 \begin{tabularx}{0.9\textwidth}{lXX}
-    \toprule
-\multicolumn{1}{c}{\textbf{Character}} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}}\\ 
+\toprule
+\multicolumn{1}{c}{\textbf{Character}} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}} \\
 \midrule
-
-Homer & Homer Jay Simpson & Dan Castellaneta\\ 
+Homer  & Homer Jay Simpson              & Dan Castellaneta                                                                   \\
 \midrule
-Marge & Marjorie Simpson (née Bouvier) & Julie Kavner\\ 
-Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
-Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
-Maggie & Margaret Simpson & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
+Marge  & Marjorie Simpson (nee Bouvier) & Julie Kavner                                                                       \\
+Bart   & Bartholomew Jojo Simpson       & Nancy Cartwright                                                                   \\
+Lisa   & Elizabeth Marie Simpson        & Yeardley Smith                                                                     \\
+Maggie & Margaret Simpson               & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer \\
 \bottomrule
 \end{tabularx}
 \end{table}
-
 EOT
     ;
 
@@ -376,20 +360,18 @@ $expected_output = <<'EOT'
 \begin{table}[ht]
 \centering
 \begin{tabular*}{0.9\textwidth}{l@{\extracolsep{\fill}}p{5cm}p{5cm}}
-    \toprule
-\multicolumn{1}{c}{\textbf{Character}} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}}\\ 
+\toprule
+\multicolumn{1}{c}{\textbf{Character}} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}} \\
 \midrule
-
-Homer & Homer Jay Simpson & Dan Castellaneta\\ 
+Homer  & Homer Jay Simpson              & Dan Castellaneta                                                                   \\
 \midrule
-Marge & Marjorie Simpson (née Bouvier) & Julie Kavner\\ 
-Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
-Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
-Maggie & Margaret Simpson & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
+Marge  & Marjorie Simpson (nee Bouvier) & Julie Kavner                                                                       \\
+Bart   & Bartholomew Jojo Simpson       & Nancy Cartwright                                                                   \\
+Lisa   & Elizabeth Marie Simpson        & Yeardley Smith                                                                     \\
+Maggie & Margaret Simpson               & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer \\
 \bottomrule
 \end{tabular*}
 \end{table}
-
 EOT
     ;
 
@@ -415,18 +397,16 @@ $output = $table->generate_string();
 
 $expected_output = <<'EOT'
 \begin{tabular}{|r||l|l|}
-    \hline
-\multicolumn{3}{|c|}{\textbf{A}}\\ 
-\multicolumn{2}{|c|}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}}\\ 
-\multicolumn{1}{|c||}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}} & \multicolumn{1}{c|}{\textbf{C}}\\ 
+\hline
+\multicolumn{3}{|c|}{\textbf{A}}  \\
+\multicolumn{2}{|c|}{\textbf{A}}  & \multicolumn{1}{c|}{\textbf{B}} \\
+\multicolumn{1}{|c||}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}} & \multicolumn{1}{c|}{\textbf{C}} \\
 \hline
 \hline
-
-1 & w & x\\ 
-2 & \multicolumn{2}{c|}{c}\\ 
+1 & w                      & x \\
+2 & \multicolumn{2}{c|}{c} \\
 \hline
 \end{tabular}
-
 EOT
     ;
 
@@ -444,14 +424,13 @@ $expected_output = <<'EOT'
 \definecolor{latextbl}{RGB}{78,130,190}
 \setlength{\extrarowheight}{1pt}
 \begin{tabular}{|rll|}
-    \hline
-\rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}}\\ 
-\rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}}\\ 
-\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{B}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{C}}\\ 
 \hline
-
-\rowcolor{latextbl!25}1 & w & x\\ 
-\rowcolor{latextbl!10}2 & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c}\\ 
+\rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}} \\
+\rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}}  & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}} \\
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}}  & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{B}}  & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{C}} \\
+\hline
+\rowcolor{latextbl!25}1 & w                                                  & x \\
+\rowcolor{latextbl!10}2 & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c} \\
 \hline
 \end{tabular}
 EOT
@@ -472,17 +451,15 @@ $expected_output = <<'EOT'
 \setlength{\extrarowheight}{1pt}
 \resizebox{0.6\textwidth}{!}{
 \begin{tabular}{|rll|}
-    \hline
-\rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}}\\ 
-\rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}}\\ 
-\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{B}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{C}}\\ 
 \hline
-
-\rowcolor{latextbl!25}1 & w & x\\ 
-\rowcolor{latextbl!10}2 & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c}\\ 
+\rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}} \\
+\rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}}  & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}} \\
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}}  & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{B}}  & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{C}} \\
 \hline
-\end{tabular}
-}
+\rowcolor{latextbl!25}1 & w                                                  & x \\
+\rowcolor{latextbl!10}2 & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c} \\
+\hline
+\end{tabular}}
 EOT
     ;
 
@@ -499,17 +476,15 @@ $expected_output = <<'EOT'
 \setlength{\extrarowheight}{1pt}
 \resizebox{300pt}{200pt}{
 \begin{tabular}{|rll|}
-    \hline
-\rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}}\\ 
-\rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}}\\ 
-\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{B}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{C}}\\ 
 \hline
-
-\rowcolor{latextbl!25}1 & w & x\\ 
-\rowcolor{latextbl!10}2 & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c}\\ 
+\rowcolor{latextbl}\multicolumn{3}{|>{\columncolor{latextbl}}c|}{\color{white}\textbf{A}} \\
+\rowcolor{latextbl}\multicolumn{2}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}}  & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{B}} \\
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{A}}  & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{B}}  & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{C}} \\
 \hline
-\end{tabular}
-}
+\rowcolor{latextbl!25}1 & w                                                  & x \\
+\rowcolor{latextbl!10}2 & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c} \\
+\hline
+\end{tabular}}
 EOT
     ;
 
@@ -536,11 +511,10 @@ $expected_output = <<'EOT'
 \centering
 \setlength{\extrarowheight}{1pt}
 \begin{tabular}{|rll|}
-    \hline
-
-\rowcolor{latextbl!25}\multicolumn{1}{|>{\columncolor{latextbl}}r}{\color{white}\textbf{1}} & w & x\\ 
 \hline
-\rowcolor{latextbl!10}\multicolumn{1}{|>{\columncolor{latextbl}}r}{\color{white}\textbf{2}} & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c}\\ 
+\rowcolor{latextbl!25}\multicolumn{1}{|>{\columncolor{latextbl}}r}{\color{white}\textbf{1}} & w                                                  & x \\
+\hline
+\rowcolor{latextbl!10}\multicolumn{1}{|>{\columncolor{latextbl}}r}{\color{white}\textbf{2}} & \multicolumn{2}{>{\columncolor{latextbl!10}}c|}{c} \\
 \hline
 \end{tabular}
 \end{table}
@@ -579,14 +553,13 @@ $expected_output = <<'EOT'
 \centering
 \setlength{\extrarowheight}{1pt}
 \begin{tabular}{|rlllll|}
-    \hline
-\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Time}\end{sideways}} & \multicolumn{5}{>{\columncolor{latextbl}}c|}{\begin{sideways}\color{white}\textbf{Weekdays}\end{sideways}}\\ 
 \hline
-\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Monday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Tuesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Wednesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Thursday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\begin{sideways}\color{white}\textbf{Friday}\end{sideways}}\\ 
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Time}\end{sideways}} & \multicolumn{5}{>{\columncolor{latextbl}}c|}{\begin{sideways}\color{white}\textbf{Weekdays}\end{sideways}} \\
 \hline
-
-\rowcolor{latextbl!25}9.00 &  &  &  &  & \\ 
-\rowcolor{latextbl!10}12.00 &  &  &  &  & \\ 
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{}\end{sideways}}     & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Monday}\end{sideways}}    & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Tuesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Wednesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Thursday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\begin{sideways}\color{white}\textbf{Friday}\end{sideways}} \\
+\hline
+\rowcolor{latextbl!25}9.00  &  &  &  &  &  \\
+\rowcolor{latextbl!10}12.00 &  &  &  &  &  \\
 \hline
 \end{tabular}
 \end{sidewaystable}

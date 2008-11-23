@@ -34,15 +34,14 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{llr}
-    \toprule
-\multicolumn{3}{c}{\textbf{A}}\\ 
-\multicolumn{2}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}}\\ 
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
+\toprule
+\multicolumn{3}{c}{\textbf{A}} \\
+\multicolumn{2}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} \\
+\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
-
-\multicolumn{3}{c}{D}\\ 
-\multicolumn{2}{c}{D} & 1.2\\ 
-D & E & 1.3\\ 
+\multicolumn{3}{c}{D} \\
+\multicolumn{2}{c}{D} & 1.2 \\
+D                     & E   & 1.3 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -57,5 +56,3 @@ is_deeply(
     [ split( "\n", $expected_output ) ],
     'is_number works with complicated shortcutted headers and data',
 );
-
-

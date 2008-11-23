@@ -1,7 +1,6 @@
 before 1.0
 
 - fine tune default parameters
-- nicer, aligned output
 - nicer examples.pdf
 - shortcut for multirows
 - remove deprecated code (release candidate 1)

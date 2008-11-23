@@ -46,14 +46,13 @@ my $expected_output = <<'EOT'
 \begin{sidewaystable}
 \centering
 \begin{tabular}{|r||l|l|}
-    \hline
-\multicolumn{1}{|c||}{\textsc{A}} & \multicolumn{1}{c|}{\textsc{B}} & \multicolumn{1}{c|}{\textsc{C}}\\ 
+\hline
+\multicolumn{1}{|c||}{\textsc{A}} & \multicolumn{1}{c|}{\textsc{B}} & \multicolumn{1}{c|}{\textsc{C}} \\
 \hline
 \hline
-
-1 & w & x\\ 
+1 & w & x \\
 \hline
-2 & y & z\\ 
+2 & y & z \\
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
@@ -78,14 +77,13 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{|r||l|l|}
-    \hline
-\multicolumn{1}{|c||}{A} & \multicolumn{1}{c|}{B} & \multicolumn{1}{c|}{C}\\ 
+\hline
+\multicolumn{1}{|c||}{A} & \multicolumn{1}{c|}{B} & \multicolumn{1}{c|}{C} \\
 \hline
 \hline
-
-1 & w & x\\ 
+1 & w & x \\
 \hline
-2 & y & z\\ 
+2 & y & z \\
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
@@ -108,14 +106,13 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{|r||l|l|}
-    \hline
-A & B & C\\ 
+\hline
+A & B & C \\
 \hline
 \hline
-
-1 & w & x\\ 
+1 & w & x \\
 \hline
-2 & y & z\\ 
+2 & y & z \\
 \hline
 \end{tabular}
 \caption[Test]{Test. Test Caption}
@@ -145,13 +142,12 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{rll}
-    \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
+\toprule
+\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
-
-1 & w & x\\ 
+1 & w & x \\
 \midrule
-2 & y & z\\ 
+2 & y & z \\
 \bottomrule
 \end{tabular}
 \caption[Test]{Test. Test Caption}
@@ -175,13 +171,12 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{rll}
-    \toprule
-\multicolumn{1}{c}{\textsc{A}} & \multicolumn{1}{c}{\textsc{B}} & \multicolumn{1}{c}{\textsc{C}}\\ 
+\toprule
+\multicolumn{1}{c}{\textsc{A}} & \multicolumn{1}{c}{\textsc{B}} & \multicolumn{1}{c}{\textsc{C}} \\
 \midrule
-
-1 & w & x\\ 
+1 & w & x \\
 \midrule
-2 & y & z\\ 
+2 & y & z \\
 \bottomrule
 \end{tabular}
 \caption[Test]{Test. Test Caption}

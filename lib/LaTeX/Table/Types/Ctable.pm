@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-11 23:56:16 +0100 (Tue, 11 Nov 2008) $
-# $Revision: 1230 $
+#     $Date: 2008-11-23 01:38:40 +0100 (Sun, 23 Nov 2008) $
+# $Revision: 1238 $
 #############################################################################
 
 package LaTeX::Table::Types::Ctable;
@@ -10,14 +10,14 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1230 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1238 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
 {[% COLORDEF %][% SIZE %][% EXTRA_ROW_HEIGHT %][% BEGIN_RESIZEBOX%]
 \ctable[[% IF CAPTION %]caption = {[% CAPTION %]},
 [% IF CAPTION_SHORT %]cap = {[% CAPTION_SHORT %]},
 [% END %][% UNLESS CAPTION_TOP %]botcap,
-[% END %][% END %][% IF POS %]pos = [% POS %],
+[% END %][% END %][% IF POSITION %]pos = [% POSITION %],
 [% END %][% IF LABEL %]label = {[% LABEL %]},
 [% END %][% IF MAXWIDTH %]maxwidth = {[% MAXWIDTH %]},
 [% END %][% IF WIDTH %]width = {[% WIDTH %]},
@@ -26,7 +26,7 @@ my $template =<<'EOT'
 [% END %][% IF RIGHT %]right,
 [% END %][% IF SIDEWAYS %]sideways,
 [% END %][% IF STAR %]star,
-[% END %]]{[% COL_DEF %]}{[% FOOTTABLE %]}{
+[% END %]]{[% COLDEF %]}{[% FOOTTABLE %]}{
 [% HEADER_CODE %][% BODY %]}
 [% END_RESIZEBOX %]}
 EOT
@@ -53,7 +53,7 @@ LaTeX::Table::Types::Ctable - Create tables with the ctable package
 
 =head1 SEE ALSO
 
-L<LaTeX::Table>, L<LaTeX::Table::Types::TypesI>
+L<LaTeX::Table>, L<LaTeX::Table::Types::TypeI>
 
 =head1 AUTHOR
 

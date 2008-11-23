@@ -1,5 +1,11 @@
 Revision history for LaTeX-Table
 
+0.9.10 Sun  Nov 23 02:15:00 2008
+        - removed unnecessary blanks and spaces in LaTeX output
+        - LaTeX output aligned
+        - Meyrin Theme
+        - POD corrections
+
 0.9.9  Wed  Nov 12 12:01:00 2008
         - removed Readonly, caused cpantester fails
         - shortcaption

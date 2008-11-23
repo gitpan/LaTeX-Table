@@ -23,14 +23,13 @@ my $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{|r||r|r|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}}\\ 
+\hline
+\multicolumn{1}{|c||}{\textbf{A}} & \multicolumn{1}{c|}{\textbf{B}} \\
 \hline
 \hline
-
-1234 & 12345678901 & 12345\\ 
-5678 & 234567890 & \\ 
-12345 & 1234567890 & 12345\\ 
+1234  & 12345678901 & 12345 \\
+5678  & 234567890   &       \\
+12345 & 1234567890  & 12345 \\
 \hline
 \end{tabular}
 \end{table}
@@ -64,16 +63,15 @@ $expected_output = <<'EOT';
 \begin{table}
 \centering
 \begin{tabular}{|l||p{4cm}|p{4cm}|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{Character}} & \multicolumn{1}{c|}{\textbf{Fullname}} & \multicolumn{1}{c|}{\textbf{Voice}}\\ 
+\hline
+\multicolumn{1}{|c||}{\textbf{Character}} & \multicolumn{1}{c|}{\textbf{Fullname}} & \multicolumn{1}{c|}{\textbf{Voice}} \\
 \hline
 \hline
-
-Homer & Homer Jay Simpson & Dan Castellaneta\\ 
-Marge & Marjorie Simpson (née Bouvier) & Julie Kavner\\ 
-Bart & Bartholomew Jojo Simpson & Nancy Cartwright\\ 
-Lisa & Elizabeth Marie Simpson & Yeardley Smith\\ 
-Maggie & Margaret Simpson & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer\\ 
+Homer  & Homer Jay Simpson               & Dan Castellaneta                                                                   \\
+Marge  & Marjorie Simpson (née Bouvier) & Julie Kavner                                                                       \\
+Bart   & Bartholomew Jojo Simpson        & Nancy Cartwright                                                                   \\
+Lisa   & Elizabeth Marie Simpson         & Yeardley Smith                                                                     \\
+Maggie & Margaret Simpson                & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer \\
 \hline
 \end{tabular}
 \end{table}

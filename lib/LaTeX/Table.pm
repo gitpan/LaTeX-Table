@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-11 23:44:28 +0100 (Tue, 11 Nov 2008) $
-# $Revision: 1228 $
+#     $Date: 2008-11-23 06:50:12 +0100 (Sun, 23 Nov 2008) $
+# $Revision: 1241 $
 #############################################################################
 
 package LaTeX::Table;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 
-use version; our $VERSION = qv('0.9.9');
+use version; our $VERSION = qv('0.9.10');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -549,7 +549,7 @@ sub _get_cell_bg_color {
 # Comments   : n/a
 # See also   :
 
-sub _get_row_code {
+sub _get_row_array {
     my ( $self, $cols_ref, $bgcolor, $is_header ) = @_;
     my @cols_defs = map { $self->_get_mc_def($_) } @{$cols_ref};
     my @cols      = ();
@@ -634,7 +634,13 @@ sub _get_row_code {
         # @cols has always at least one element, otherwise we draw a line
         $cols[0] = "\\rowcolor{$bgcolor}" . $cols[0];
     }
-    return join( ' & ', @cols ) . "\\\\ \n";
+    return \@cols;
+}
+
+sub _get_row_code {
+    my ( $self, $cols_ref, $bgcolor, $is_header ) = @_;
+    my $cols = $self->_get_row_array($cols_ref, $bgcolor, $is_header);
+    return join( ' & ', @{$cols} ) . "\\\\\n";
 }
 
 sub _add_mc_def {
@@ -846,7 +852,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.9
+This document describes LaTeX::Table version 0.9.10
 
 =head1 SYNOPSIS
 
@@ -1025,14 +1031,14 @@ and are not further formatted. So,
 
   my $header = [
       [ 'Item:2c', '' ],
-      ['\cline{1-2}'],
+      ['\cmidrule{1-2}'],
       [ 'Animal', 'Description', 'Price' ]
   ];
 
 will produce following LaTeX code in the default Zurich theme:
 
   \multicolumn{2}{c}{\textbf{Item}} & \multicolumn{1}{c}{\textbf{}}\\ 
-  \cline{1-2}
+  \cmidrule{1-2}
   \multicolumn{1}{c}{\textbf{Animal}} & \multicolumn{1}{c}{\textbf{Description}} & \multicolumn{1}{c}{\textbf{Price}}\\ 
 
 Note that there is no C<\multicolumn>, C<\textbf> or C<\\> added to the second row.
@@ -1083,11 +1089,15 @@ command is used, i.e. C<\midrule> vs. C<\hline>).
 
 If get_environment() returns a true value, then a floating environment will be 
 generated. For I<std> tables, the default environment is 'table'. A true value different
-from '1' will be used as environment name.
+from '1' will be used as environment name. Default is 1 (use a 'table'
+environment).
 
 The non-floating I<xtab> environment is mandatory (get_environment() must
 return a true value here) and supports all options in this section except
 for C<position>.
+
+The I<ctable> type automatically adds an environment when any of the
+following options are set.
 
   \begin{table}[htb]
       \centering
@@ -1131,6 +1141,17 @@ LaTeX package to fix the spacing:
 
   \usepackage[tableposition=top]{caption} 
 
+=item C<maincaption>
+
+If get_maincaption() returns a true value, then this value will be displayed 
+in the table listing (C<\listoftables>) and before the C<caption>. Default
+0. Requires C<environment>.
+
+=item C<shortcaption>
+
+Same as C<maincaption>, but does not appear in the caption, only in the table
+listing. Default 0. Requires C<environment>.
+
 =item C<center>, C<right>, C<left>
 
 Defines how the table is aligned in the available textwidth. Default is centered. Requires 
@@ -1143,17 +1164,6 @@ C<environment>. Only one of these options may return a true value.
 
 The label of the table. Only generated if get_label() returns a true value.
 Default is 0. Requires C<environment>.
-
-=item C<maincaption>
-
-If get_maincaption() returns a true value, then this value will be displayed 
-in the table listing (C<\listoftables>) and before the C<caption>. Default
-0. Requires C<environment>.
-
-=item C<shortcaption>
-
-Same as maincaption, but does not appear in the caption, only in the table
-listing.
 
 =item C<position>
 
@@ -1452,7 +1462,7 @@ C<\multicolumn{$cols}{$alignment}{$text}>. This module supports a simple
 shortcut of the format C<$text:$cols$alignment>. For example, C<Item:2c> is 
 equivalent to C<\multicolumn{2}{c}{Item}>. Note that vertical lines (C<|>) are
 automatically added here according the LINES settings in the theme. 
-See L<LaTeX::Table::Themes::ThemeI">. C<LaTeX::Table> also uses this shortcut to determine
+See L<LaTeX::Table::Themes::ThemeI>. C<LaTeX::Table> also uses this shortcut to determine
 the column ids. So in this example,
 
   my $data = [ [' \multicolumn{2}{c}{A}', 'B' ], [ 'C:2c', 'D' ] ];
@@ -1463,23 +1473,30 @@ See L<"TABULAR ENVIRONMENT">.
 
 =head1 THEMES
 
-The theme can be selected with C<$table-E<gt>set_theme($themename)>. 
-Currently, following predefined themes are available: I<Zurich>, I<plain> (no
-formatting), I<NYC> (for presentations), I<Berlin>, I<Dresden>, I<Houston>, 
-I<Miami> and I<Paris>. The script F<generate_examples.pl> in the I<examples> directory of
-this distributions generates some examples for all available themes.
+The theme can be selected with 
 
-The default theme, Zurich, is highly recommended. It requires 
-C<\usepackage{booktabs}> in your LaTeX document. The top and bottom lines are 
-slightly heavier (ie thicker, or darker) than the other lines. See
-L<LaTeX::Table::Themes::Booktabs>.
+  $table->set_theme($themename)
+
+Currently, following predefined main themes are available: I<Zurich>, I<plain>
+(no formatting), I<NYC> (for presentations), I<Berlin> and I<Paris>. Variants
+of these themes are also available, see the theme modules below. The script
+F<generate_examples.pl> in the I<examples> directory of this distributions
+generates some examples for all available themes. 
+
+The default theme, Zurich, is highly recommended. It requires
+C<\usepackage{booktabs}> in your LaTeX document.
 
 See L<LaTeX::Table::Themes::ThemeI> how to define custom themes.
+
+L<LaTeX::Table::Themes::Beamer>, L<LaTeX::Table::Themes::Booktabs>,
+L<LaTeX::Table::Themes::Classic>, L<LaTeX::Table::Themes::Modern>.
 
 =head1 EXAMPLES
 
 See I<examples/examples.pdf> in this distribution for a short tutorial that
-covers the main features of this module. 
+covers the main features of this module. See also the example application
+I<csv2pdf> for an example of the common task of converting a CSV (or Excel)
+file to LaTeX or even PDF.
 
 =head1 DIAGNOSTICS
 
@@ -1533,20 +1550,20 @@ L<Data::Table>, L<LaTeX::Encode>
 
 =over
 
+=item David Carlisle for the C<colortbl> and the C<tabularx> LaTeX packages.
+
+=item Wybo Dekker for the C<ctable> LaTeX package.
+
+=item Simon Fear for the C<booktabs> LaTeX package. The L<"SYNOPSIS"> table is
+the example in his documentation.
+
 =item Andrew Ford (ANDREWF) for many great suggestions. He also wrote
 L<LaTeX::Driver> and L<LaTeX::Encode> which are used by I<csv2pdf>.
 
 =item Lapo Filippo Mori for the excellent tutorial I<Tables in LaTeX2e:
 Packages and Methods>.
 
-=item Simon Fear for the C<booktabs> LaTeX package. The L<"SYNOPSIS"> table is
-the example in his documentation.
-
 =item Peter Wilson for the C<xtab> LaTeX package.
-
-=item David Carlisle for the C<colortbl> and the C<tabularx> LaTeX packages.
-
-=item Wybo Dekker for the C<ctable> package.
 
 =back
 

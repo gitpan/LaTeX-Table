@@ -29,25 +29,25 @@ my $expected_output =<<'EOT'
 \label{beercounter}
 
 \tablehead{\hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
 }
 \tabletail{\hline
 \hline
-\multicolumn{3}{|r|}{{Continued on next page}} \\ 
+\multicolumn{3}{|r|}{{Continued on next page}} \\
 \hline
 }
 \tablelasttail{}
 \begin{center}
 \begin{xtabular}{|l||r|r|}
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{xtabular}
 \end{center}
@@ -67,8 +67,8 @@ $expected_output =<<'EOT'
 \label{beercounter}
 
 \tablehead{\hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
 }
@@ -77,12 +77,12 @@ $expected_output =<<'EOT'
 \tablelasttail{}
 \begin{center}
 \begin{xtabular}{|l||r|r|}
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{xtabular}
 \end{center}
@@ -104,15 +104,15 @@ $expected_output =<<'EOT'
 \label{beercounter}
 
 \tablefirsthead{\hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
 }
 \tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[\abovecaptionskip]
 \hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
 }
@@ -121,12 +121,12 @@ $expected_output =<<'EOT'
 }
 \tablelasttail{}
 \begin{xtabular}{|l||r|r|}
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{xtabular}
 
@@ -147,15 +147,15 @@ $expected_output =<<'EOT'
 \label{beercounter}
 
 \tablefirsthead{\hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
 }
 \tablehead{\multicolumn{3}{c}{{ \normalsize \tablename\ \thetable: Continued from previous page}}\\[\abovecaptionskip]
 \hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
 }
@@ -164,12 +164,12 @@ $expected_output =<<'EOT'
 }
 \tablelasttail{}
 \begin{xtabular}{|l||r|r|}
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{xtabular}
 
@@ -192,8 +192,8 @@ $expected_output =<<'EOT'
 \label{beercounter}
 
 \tablehead{\hline
-\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}\\ 
-\multicolumn{1}{|c||}{\textbf{}} & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}}\\ 
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
 \hline
 \hline
 }
@@ -201,12 +201,12 @@ $expected_output =<<'EOT'
 }
 \tablelasttail{}
 \begin{mpxtabular}{|l||r|r|}
-Lisa & 0 & 0\\ 
-Marge & 0 & 1\\ 
-Wiggum & 0 & 5\\ 
-Otto & 1 & 3\\ 
-Homer & 2 & 6\\ 
-Barney & 8 & 16\\ 
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
 \hline
 \end{mpxtabular}
 

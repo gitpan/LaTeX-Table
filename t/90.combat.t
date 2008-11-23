@@ -21,13 +21,12 @@ my $expected_output = <<'EOT'
 \begin{sidewaystable}[ht]
 \centering
 \begin{tabular}{lcc}
-    \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
+\toprule
+\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
-
-1 & w & x\\ 
+1 & w & x \\
 \midrule
-2 & y & z\\ 
+2 & y & z \\
 \bottomrule
 \end{tabular}
 \end{sidewaystable}
@@ -61,13 +60,12 @@ $expected_output = <<'EOT'
 \begin{table}[ht]
 \centering
 \begin{tabular}{rp{5cm}r}
-    \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
+\toprule
+\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
-
-1 & w & x\\ 
+1   & w      & x \\
 \midrule
-2.1 & y12345 & z\\ 
+2.1 & y12345 & z \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -89,13 +87,12 @@ $expected_output = <<'EOT'
 \begin{table}[ht]
 \centering
 \begin{tabularx}{300pt}{cXc}
-    \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
+\toprule
+\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
-
-1 & w & x\\ 
+1   & w      & x \\
 \midrule
-2.1 & y12345 & z\\ 
+2.1 & y12345 & z \\
 \bottomrule
 \end{tabularx}
 \end{table}

@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-11 23:56:16 +0100 (Tue, 11 Nov 2008) $
-# $Revision: 1230 $
+#     $Date: 2008-11-23 07:22:06 +0100 (Sun, 23 Nov 2008) $
+# $Revision: 1243 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -13,7 +13,9 @@ use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1230 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1243 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+
+use Scalar::Util qw(reftype);
 
 use Carp;
 
@@ -53,18 +55,18 @@ sub generate_latex_code {
         $table_def = $tbl->_get_coldef_code($data);
     }
 
-    my $code = $self->_get_header_columns_code($header);
-
     my $center = $tbl->get_center;
 
     if ( $tbl->get__default_align ) {
         $center = 1;
     }
+    
+    my $header_code = $self->_get_header_columns_code($header);
 
     my $template_vars = {
         'COLORDEF'            => $self->_get_colordef_code,
         'ENVIRONMENT'         => $tbl->get_environment,
-        'POS'                 => $tbl->get_position(),
+        'POSITION'            => $tbl->get_position(),
         'SIZE'                => $self->_get_size_code(),
         'CENTER'              => $center,
         'LEFT'                => $tbl->get_left(),
@@ -79,9 +81,9 @@ sub generate_latex_code {
         'BEGIN_RESIZEBOX'     => $self->_get_begin_resizebox_code(),
         'WIDTH'               => $tbl->get_width(),
         'MAXWIDTH'            => $tbl->get_maxwidth(),
-        'COL_DEF'             => $table_def,
-        'HEADER_CODE'         => $code,
-        'TABLEHEAD'           => $self->_get_tablehead_code($code),
+        'COLDEF'              => $table_def,
+        'HEADER_CODE'         => $header_code,
+        'TABLEHEAD'           => $self->_get_tablehead_code( $header_code ),
         'TABLETAIL'           => $self->_get_tabletail_code( $data, 0 ),
         'TABLETAIL_LAST'      => $self->_get_tabletail_code( $data, 1 ),
         'XENTRYSTRETCH'       => $self->_get_xentrystretch_code(),
@@ -112,13 +114,14 @@ sub _body {
 
     # check the data and apply callback function
     my @data = $tbl->_examine_data;
+    my @code;
 ROW:
     for my $row (@data) {
         $i++;
 
         # empty rows produce a horizontal line
         if ( !@{$row} ) {
-            $code .= $self->_get_single_hline_code();
+            push @code, $self->_get_single_hline_code();
             next ROW;
         }
         else {
@@ -126,7 +129,7 @@ ROW:
             # single column rows that start with a backslash are just
             # printed out
             if ( $tbl->_row_is_latex_command($row) ) {
-                $code .= $row->[0] . "\n";
+                push @code, $row->[0] . "\n";
                 next ROW;
             }
 
@@ -137,29 +140,48 @@ ROW:
             if ( ( $row_id % 2 ) == 1 ) {
                 $bgcolor = $theme->{'DATA_BG_COLOR_ODD'};
             }
-            $code .= $tbl->_get_row_code( $row, $bgcolor, 0 );
+            push @code, $tbl->_get_row_array( $row, $bgcolor, 0 );
 
             # do we have to draw a horizontal line?
             if ( $i == scalar @data ) {
-                $code .= $self->_get_hline_code( $self->_RULE_BOTTOM_ID );
+                push @code, $self->_get_hline_code( $self->_RULE_BOTTOM_ID );
             }
             else {
-                $code .= $self->_get_hline_code( $self->_RULE_INNER_ID );
+                push @code, $self->_get_hline_code( $self->_RULE_INNER_ID );
             }
         }
     }
-    return $code;
+
+    return $self->_align_code(\@code);
 }
 
-sub _get_width_code {
-    my ($self) = @_;
-    my $width  = q{};
-    my $tbl    = $self->_table_obj;
-
-    if ( $tbl->get_width ) {
-        $width = '{' . $tbl->get_width . '}';
+sub _align_code {
+    my ( $self, $code_ref ) = @_;
+    my %max;
+    for my $row (@{$code_ref}) {
+       next if (!defined reftype $row);
+       for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
+           $row->[$i] =~ s{^\s+|\s+$}{}gxms;
+           my $l = length $row->[$i];
+           if (!defined $max{$i} || $max{$i} < $l) {
+               $max{$i} = $l;
+           }
+       }
     }
-    return $width;
+
+    my $code = q{};
+    ROW:
+    for my $row (@{$code_ref}) {
+       if (!defined reftype $row) {
+           $code .= $row;
+           next ROW;
+       }
+       for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
+            $row->[$i] = sprintf '%-*s', $max{$i}, $row->[$i];
+       }
+       $code .=  join( ' & ', @{$row} ) . " \\\\\n";
+    }
+    return $code;
 }
 
 sub _get_caption_command_code {
@@ -357,19 +379,20 @@ sub _get_header_columns_code {
     my $tbl   = $self->_table_obj;
     my $code  = q{};
     my $theme = $tbl->get_theme_settings;
-    $code .= $self->_get_hline_code( $self->_RULE_TOP_ID );
 
     my $i = 0;
+
+    my @code = ( $self->_get_hline_code( $self->_RULE_TOP_ID ) );
 
 CENTER_ROW:
     for my $row ( @{$header} ) {
         my @cols = @{$row};
         if ( scalar @cols == 0 ) {
-            $code .= $self->_get_single_hline_code();
+            push @code, $self->_get_single_hline_code();
             next CENTER_ROW;
         }
         if ( $tbl->_row_is_latex_command($row) ) {
-            $code .= $cols[0] . "\n";
+            push @code, $cols[0] . "\n";
             next CENTER_ROW;
         }
 
@@ -386,16 +409,15 @@ CENTER_ROW:
             $j += $tbl->_extract_number_columns($col);
         }
 
-        $code
-            .= $tbl->_get_row_code( \@cols, $theme->{'HEADER_BG_COLOR'}, 1 );
+        push @code, $tbl->_get_row_array( \@cols, $theme->{'HEADER_BG_COLOR'}, 1 );
         $i++;
     }
 
     # without header, just draw the topline, not this midline
     if ($i) {
-        $code .= $self->_get_hline_code( $self->_RULE_MID_ID );
+        push @code, $self->_get_hline_code( $self->_RULE_MID_ID );
     }
-    return $code;
+    return $self->_align_code(\@code);
 }
 
 sub _get_tabletail_code     { return q{}; }

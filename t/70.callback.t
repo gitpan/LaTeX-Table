@@ -33,15 +33,14 @@ my $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{|l||l|l|}
-    \hline
-\multicolumn{1}{|c||}{\textbf{a}} & \multicolumn{1}{c|}{\textbf{b}} & \multicolumn{1}{c|}{\textbf{c}}\\ 
-\multicolumn{1}{|c||}{\textbf{foo}} & \multicolumn{1}{c|}{\textbf{B}} & \multicolumn{1}{c|}{\textbf{foo}}\\ 
+\hline
+\multicolumn{1}{|c||}{\textbf{a}}   & \multicolumn{1}{c|}{\textbf{b}} & \multicolumn{1}{c|}{\textbf{c}}   \\
+\multicolumn{1}{|c||}{\textbf{foo}} & \multicolumn{1}{c|}{\textbf{B}} & \multicolumn{1}{c|}{\textbf{foo}} \\
 \hline
 \hline
-
-MARGE & foo & BART\\ 
-marge & homer & bart\\ 
-MARGE & foo & BART\\ 
+MARGE & foo   & BART \\
+marge & homer & bart \\
+MARGE & foo   & BART \\
 \hline
 \end{tabular}
 \end{table}
@@ -72,14 +71,13 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{lll}
-    \toprule
-\multicolumn{2}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{C}}\\ 
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}}\\ 
+\toprule
+\multicolumn{2}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{C}} \\
+\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
-
-0 & 0 & 0\\ 
-0 & 0 & 0\\ 
-0 & 0 & 0\\ 
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -122,15 +120,14 @@ $expected_output = <<'EOT'
 \begin{table}
 \centering
 \begin{tabular}{lll}
-    \toprule
-\multicolumn{3}{c}{\textbf{XA}}\\ 
-\multicolumn{2}{c}{\textbf{XA}} & \multicolumn{1}{c}{\textbf{ZB}}\\ 
-\multicolumn{1}{c}{\textbf{XA}} & \multicolumn{1}{c}{\textbf{YB}} & \multicolumn{1}{c}{\textbf{ZC}}\\ 
+\toprule
+\multicolumn{3}{c}{\textbf{XA}} \\
+\multicolumn{2}{c}{\textbf{XA}} & \multicolumn{1}{c}{\textbf{ZB}} \\
+\multicolumn{1}{c}{\textbf{XA}} & \multicolumn{1}{c}{\textbf{YB}} & \multicolumn{1}{c}{\textbf{ZC}} \\
 \midrule
-
-\multicolumn{3}{c}{XD}\\ 
-\multicolumn{2}{c}{XD} & ZE\\ 
-XD & YE & ZF\\ 
+\multicolumn{3}{c}{XD} \\
+\multicolumn{2}{c}{XD} & ZE \\
+XD                     & YE & ZF \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -145,5 +142,3 @@ is_deeply(
     [ split( "\n", $expected_output ) ],
     'callback works with complicated shortcutted headers and data',
 );
-
-
