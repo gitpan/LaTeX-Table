@@ -24,9 +24,9 @@ my $output = $table->generate_string();
 my $expected_output = <<'EOT';
 \begin{table}
 \centering
-\begin{tabular}{rlr}
+\begin{tabular}{llr}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 123.45678 & 12345678901234567890 & 12345 \\
 123.45    & A                    & 12345 \\
@@ -53,7 +53,7 @@ $expected_output = <<'EOT';
 \centering
 \begin{tabular}{llr}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 123.45678 & 12345678901234567890 & 12345 \\
 123.45    & A                    & 12345 \\
@@ -82,7 +82,7 @@ $expected_output = <<'EOT';
 \centering
 \begin{tabular}{lrr}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 123.45678 & 12345678901234567890 & 12345 \\
 123.45    & A                    & 12345 \\
@@ -120,7 +120,7 @@ $expected_output = <<'EOT';
 \centering
 \begin{tabular}{lrr}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 123.45678 & 12345678901123456789011234567890 & 12345 \\
 123.45    & 1234567898                       & 12345 \\
@@ -148,7 +148,7 @@ $expected_output = <<'EOT';
 \centering
 \begin{tabular}{l>{\raggedright\arraybackslash}p{7cm}r}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 123.45678 & 1234567890 1234567890 1234567890 & 12345 \\
 123.45    & 1234567898.122                   & 12345 \\
@@ -178,9 +178,9 @@ $output = $table->generate_string();
 $expected_output = <<'EOT';
 \begin{table}
 \centering
-\begin{tabular}{rUr}
+\begin{tabular}{lUr}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 123.45678 & http://www.google.com   & 12345 \\
 123.45    & http://www.slashdot.org & 12345 \\

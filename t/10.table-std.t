@@ -1,4 +1,4 @@
-use Test::More tests => 18;
+use Test::More tests => 19;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -187,8 +187,8 @@ $expected_output = <<'EOT'
 \caption{test caption}
 \begin{tabular}{lrr}
 \toprule
-\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}      \\
-\multicolumn{1}{c}{\textbf{}}     & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
+\textbf{Name} & \multicolumn{2}{c}{\textbf{Beers}}      \\
+              & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
 \midrule
 Lisa   & 0 & 0  \\
 Marge  & 0 & 1  \\
@@ -216,8 +216,8 @@ $expected_output = <<'EOT'
 \topcaption{test caption}
 \begin{tabular}{lrr}
 \toprule
-\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}      \\
-\multicolumn{1}{c}{\textbf{}}     & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
+\textbf{Name} & \multicolumn{2}{c}{\textbf{Beers}}      \\
+              & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
 \midrule
 Lisa   & 0 & 0  \\
 Marge  & 0 & 1  \\
@@ -317,6 +317,31 @@ is_deeply(
     'no header'
 );
 
+$table->set_width_environment('tabulary');
+$expected_output = <<'EOT'
+\begin{table}[ht]
+\centering
+\begin{tabulary}{0.9\textwidth}{lLL}
+\toprule
+Homer  & Homer Jay Simpson              & Dan Castellaneta                                                                   \\
+\midrule
+Marge  & Marjorie Simpson (nee Bouvier) & Julie Kavner                                                                       \\
+Bart   & Bartholomew Jojo Simpson       & Nancy Cartwright                                                                   \\
+Lisa   & Elizabeth Marie Simpson        & Yeardley Smith                                                                     \\
+Maggie & Margaret Simpson               & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer \\
+\bottomrule
+\end{tabulary}
+\end{table}
+EOT
+    ;
+
+$output = $table->generate_string();
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'tabulary'
+);
+
 
 ## tabularx test
 $table = LaTeX::Table->new(
@@ -333,7 +358,7 @@ $expected_output = <<'EOT'
 \centering
 \begin{tabularx}{0.9\textwidth}{lXX}
 \toprule
-\multicolumn{1}{c}{\textbf{Character}} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}} \\
+\textbf{Character} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}} \\
 \midrule
 Homer  & Homer Jay Simpson              & Dan Castellaneta                                                                   \\
 \midrule
@@ -361,7 +386,7 @@ $expected_output = <<'EOT'
 \centering
 \begin{tabular*}{0.9\textwidth}{l@{\extracolsep{\fill}}p{5cm}p{5cm}}
 \toprule
-\multicolumn{1}{c}{\textbf{Character}} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}} \\
+\textbf{Character} & \multicolumn{1}{c}{\textbf{Fullname}} & \multicolumn{1}{c}{\textbf{Voice}} \\
 \midrule
 Homer  & Homer Jay Simpson              & Dan Castellaneta                                                                   \\
 \midrule

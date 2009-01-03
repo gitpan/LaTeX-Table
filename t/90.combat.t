@@ -22,7 +22,7 @@ my $expected_output = <<'EOT'
 \centering
 \begin{tabular}{lcc}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 1 & w & x \\
 \midrule
@@ -59,9 +59,9 @@ $table->set_tabledef_strategy({
 $expected_output = <<'EOT'
 \begin{table}[ht]
 \centering
-\begin{tabular}{rp{5cm}r}
+\begin{tabular}{lp{5cm}r}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 1   & w      & x \\
 \midrule
@@ -86,9 +86,9 @@ $table->set_width_environment('tabularx');
 $expected_output = <<'EOT'
 \begin{table}[ht]
 \centering
-\begin{tabularx}{300pt}{cXc}
+\begin{tabularx}{300pt}{lXc}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 1   & w      & x \\
 \midrule

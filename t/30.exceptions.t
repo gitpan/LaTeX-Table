@@ -1,4 +1,4 @@
-use Test::More tests => 31;
+use Test::More tests => 32;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -199,6 +199,20 @@ eval { $table->generate_string; };
 like(
     $EVAL_ERROR, 
     qr{Invalid usage of option width_environment: Is tabularx and width is unset\. },
+    'unknown width environment'
+) || diag $EVAL_ERROR;
+
+$table = LaTeX::Table->new(
+    {   header  => $header,
+        data    => $data,
+        width_environment => 'tabulary',
+    }
+);
+
+eval { $table->generate_string; };
+like(
+    $EVAL_ERROR, 
+    qr{Invalid usage of option width_environment: Is tabulary and width is unset\. },
     'unknown width environment'
 ) || diag $EVAL_ERROR;
 

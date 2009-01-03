@@ -37,7 +37,7 @@ $expected_output = <<'EOT'
 \toprule
 \multicolumn{3}{c}{\textbf{A}} \\
 \multicolumn{2}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} \\
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A}                     & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 \multicolumn{3}{c}{D} \\
 \multicolumn{2}{c}{D} & 1.2 \\

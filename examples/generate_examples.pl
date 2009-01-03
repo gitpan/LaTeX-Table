@@ -69,6 +69,7 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
     $table->set_type('std');
     $table->set_header($test_header);
     $table->set_data($test_data);
+    #$table->set_width('0.9\textwidth');
     $table->generate();
 
     #    warn Dumper $test_data;
@@ -140,17 +141,16 @@ print ${OUT} $table->generate_string;
 
 $code = << 'EOC'
 We can use the \texttt{tabularx} package to find better column widths than the
-default 5cm. See Table \ref{wrap2} for the results.
+default 5cm. See Table~\ref{wrap2} for the results.
 {
 \small
 \begin{lstlisting}
 $table = LaTeX::Table->new(
     {   header            => $header,
         data              => $data,
-        label             => 'wrap2',
         width             => '0.9\textwidth',
         width_environment => 'tabularx',
-        caption           => 'tabularx X column attribute.',
+        caption           => 'Uses the tabularx package.',
     }
 );
 \end{lstlisting}
@@ -158,10 +158,33 @@ $table = LaTeX::Table->new(
 EOC
     ;
 $table->set_label('wrap2');
-$table->set_caption('tabularx X column attribute.');
+$table->set_caption('Uses the tabularx package.');
 
 $table->set_width('0.9\textwidth');
 $table->set_width_environment('tabularx');
+print ${OUT} $code . $table->generate_string;
+
+$code = << 'EOC'
+A third option is to use the \texttt{tabulary} package. See Table~\ref{wrap3}.
+{
+\small
+\begin{lstlisting}
+$table = LaTeX::Table->new(
+    {   header            => $header,
+        data              => $data,
+        width             => '0.9\textwidth',
+        width_environment => 'tabulary',
+        caption           => 'Uses the tabulary package.',
+    }
+);
+\end{lstlisting}
+}
+EOC
+    ;
+$table->set_label('wrap3');
+$table->set_caption('Uses the tabulary package.');
+$table->set_width_environment('tabulary');
+
 print ${OUT} $code . $table->generate_string;
 
 $code = << 'EOC'
@@ -755,6 +778,7 @@ __DATA__
 \usepackage{booktabs}
 \usepackage{rotating}
 \usepackage{tabularx}
+\usepackage{tabulary}
 \usepackage{listings}
 %\usepackage{color}
 \usepackage{colortbl}

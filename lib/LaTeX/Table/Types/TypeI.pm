@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-23 07:22:06 +0100 (Sun, 23 Nov 2008) $
-# $Revision: 1243 $
+#     $Date: 2009-01-03 12:55:22 +0100 (Sat, 03 Jan 2009) $
+# $Revision: 1257 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -13,7 +13,7 @@ use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1243 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1257 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 use Scalar::Util qw(reftype);
 
@@ -52,8 +52,8 @@ sub generate_latex_code {
         $table_def = $tbl->get_coldef;
     }
     else {
-        $table_def = $tbl->_get_coldef_code($data);
-    }
+            $table_def = $tbl->_get_coldef_code($data);
+        }
 
     my $center = $tbl->get_center;
 
@@ -404,8 +404,9 @@ CENTER_ROW:
             if ( $tbl->get_callback ) {
                 $col = $tbl->_apply_callback( $i, $j, $col, 1 );
             }
-            $col = $tbl->_apply_header_formatting( $col, 1 );
-
+            
+            $col = $tbl->_apply_header_formatting( $col, (!defined
+                    $theme->{STUB_ALIGN} || $j > 0) );
             $j += $tbl->_extract_number_columns($col);
         }
 
@@ -429,7 +430,7 @@ __END__
 
 =head1 NAME
 
-LaTeX::Table::Types::TypeI - Interface for Types
+LaTeX::Table::Types::TypeI - Interface for LaTeX table types.
 
 =head1 SYNOPSIS
 
@@ -457,7 +458,7 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

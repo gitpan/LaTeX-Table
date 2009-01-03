@@ -141,9 +141,9 @@ $output = $table->generate_string();
 $expected_output = <<'EOT'
 \begin{table}
 \centering
-\begin{tabular}{rll}
+\begin{tabular}{lll}
 \toprule
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 1 & w & x \\
 \midrule
@@ -170,9 +170,9 @@ $output = $table->generate_string();
 $expected_output = <<'EOT'
 \begin{table}
 \centering
-\begin{tabular}{rll}
+\begin{tabular}{lll}
 \toprule
-\multicolumn{1}{c}{\textsc{A}} & \multicolumn{1}{c}{\textsc{B}} & \multicolumn{1}{c}{\textsc{C}} \\
+\textsc{A} & \multicolumn{1}{c}{\textsc{B}} & \multicolumn{1}{c}{\textsc{C}} \\
 \midrule
 1 & w & x \\
 \midrule

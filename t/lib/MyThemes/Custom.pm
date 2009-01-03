@@ -8,6 +8,7 @@ sub _definition {
      {
         'HEADER_FONT_STYLE' => 'sc',
         'HEADER_CENTERED'   => 1,
+        'STUB_ALIGN'        => q{l},
         'VERTICAL_LINES'    => [ 0, 0, 0 ],
         'HORIZONTAL_LINES'  => [ 1, 1, 0 ],
         'BOOKTABS'          => 1,

@@ -1,11 +1,12 @@
-LaTeX-Table version 0.9.10
+LaTeX-Table version 0.9.11
 
 This module supports multipage tables via the xtab package.  For publication
 quality tables it utilizes the booktabs package. It also supports the tabularx
-package for nicer fixed-width tables. Furthermore, it supports the colortbl
-package for colored tables optimized for presentations.  The powerful new
-ctable package is supported and especially recommended when footnotes are
-needed. LaTeX::Table ships with some predefined, good looking themes.
+and tabulary packages for nicer fixed-width tables. Furthermore, it supports
+the colortbl package for colored tables optimized for presentations.  The
+powerful new ctable package is supported and especially recommended when
+footnotes are needed. LaTeX::Table ships with some predefined, good looking
+themes.
 
 INSTALLATION
 
@@ -63,7 +64,7 @@ Text::Wrap
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2006-2008, Markus Riester
+Copyright (C) 2006-2009, Markus Riester
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

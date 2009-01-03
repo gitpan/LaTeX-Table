@@ -43,11 +43,13 @@ sub _definition {
             'HEADER_FONT_STYLE'  => 'bf',
             'HEADER_CENTERED'    => 1,
             'CAPTION_FONT_STYLE' => 'bf',
+            'STUB_ALIGN'         => 'l',
             'VERTICAL_LINES'     => [ 0, 0, 0 ],
             'HORIZONTAL_LINES'   => [ 0, 1, 0 ],
             'BOOKTABS'           => 0,
         },
         'plain' => {
+            'STUB_ALIGN'         => 'l',
             'VERTICAL_LINES'   => [ 0, 0, 0 ],
             'HORIZONTAL_LINES' => [ 0, 0, 0 ],
             'BOOKTABS'         => 0,
@@ -75,7 +77,7 @@ This module provides following themes:
 
 =head1 REQUIRES
 
-The themes defined in this module require no additional LaTeX packes.
+The themes defined in this module require no additional LaTeX packages.
 
 =head1 SEE ALSO
 
@@ -87,7 +89,7 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

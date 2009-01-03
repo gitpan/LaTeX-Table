@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-09 22:19:07 +0100 (Sun, 09 Nov 2008) $
-# $Revision: 1206 $
+#     $Date: 2009-01-03 12:55:22 +0100 (Sat, 03 Jan 2009) $
+# $Revision: 1257 $
 #############################################################################
 
 package LaTeX::Table::Themes::ThemeI;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Role;
 
 use version;
-our ($VERSION) = '$Revision: 1206 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1257 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 requires '_definition';
 
@@ -22,7 +22,7 @@ __END__
 
 =head1 NAME
 
-LaTeX::Table::Themes::ThemeI - Interface for Themes
+LaTeX::Table::Themes::ThemeI - Interface for LaTeX table themes.
 
 =head1 SYNOPSIS
 
@@ -129,9 +129,17 @@ whereas rows are not separated by horizontal lines.
 Will set C<\extrarowheight> in the floating environment. Requires the C<array>
 LaTeX package.
 
+=item C<STUB_ALIGN> 
+
+Defines how the left-hand column, the stub, is aligned. Default is 'l' (left
+aligned).
+
 =item C<HEADER_CENTERED>
 
-Valid values are 0 (not centered) or 1 (centered).
+This controls the alignment of the header columns, excluding the stub when
+C<STUB_ALIGN> is defined. Valid values are 0 (not centered) or 1 (centered).
+Typically, it is recommended to center headers, but sometimes this does not
+look right. In this case, (left) align the header manually.
 
 =item C<BOOKTABS>
 
@@ -167,7 +175,7 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

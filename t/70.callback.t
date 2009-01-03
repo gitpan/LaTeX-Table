@@ -73,7 +73,7 @@ $expected_output = <<'EOT'
 \begin{tabular}{lll}
 \toprule
 \multicolumn{2}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{C}} \\
-\multicolumn{1}{c}{\textbf{A}} & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
+\textbf{A}                     & \multicolumn{1}{c}{\textbf{B}} & \multicolumn{1}{c}{\textbf{C}} \\
 \midrule
 0 & 0 & 0 \\
 0 & 0 & 0 \\
@@ -123,7 +123,7 @@ $expected_output = <<'EOT'
 \toprule
 \multicolumn{3}{c}{\textbf{XA}} \\
 \multicolumn{2}{c}{\textbf{XA}} & \multicolumn{1}{c}{\textbf{ZB}} \\
-\multicolumn{1}{c}{\textbf{XA}} & \multicolumn{1}{c}{\textbf{YB}} & \multicolumn{1}{c}{\textbf{ZC}} \\
+\textbf{XA}                     & \multicolumn{1}{c}{\textbf{YB}} & \multicolumn{1}{c}{\textbf{ZC}} \\
 \midrule
 \multicolumn{3}{c}{XD} \\
 \multicolumn{2}{c}{XD} & ZE \\

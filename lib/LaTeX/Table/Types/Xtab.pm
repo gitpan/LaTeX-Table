@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-23 06:50:12 +0100 (Sun, 23 Nov 2008) $
-# $Revision: 1241 $
+#     $Date: 2009-01-03 12:55:22 +0100 (Sat, 03 Jan 2009) $
+# $Revision: 1257 $
 #############################################################################
 
 package LaTeX::Table::Types::Xtab;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1241 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1257 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
 {
@@ -114,7 +114,7 @@ __END__
 
 =head1 NAME
 
-LaTeX::Table::Types::Xtab - Create multi-page tables with the xtabular package.
+LaTeX::Table::Types::Xtab - Create multi-page LaTeX tables with the xtabular package.
 
 =head1 INTERFACE
 
@@ -134,7 +134,7 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

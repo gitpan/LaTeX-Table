@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-23 06:50:12 +0100 (Sun, 23 Nov 2008) $
-# $Revision: 1241 $
+#     $Date: 2009-01-03 12:42:28 +0100 (Sat, 03 Jan 2009) $
+# $Revision: 1256 $
 #############################################################################
 
 package LaTeX::Table;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 
-use version; our $VERSION = qv('0.9.10');
+use version; our $VERSION = qv('0.9.11');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -231,6 +231,10 @@ sub _check_options {
         $self->invalid_option_usage( 'width_environment',
             'Is tabularx and width is unset' );
     }
+    if ( !$self->get_width && $self->get_width_environment eq 'tabulary' ) {
+        $self->invalid_option_usage( 'width_environment',
+            'Is tabulary and width is unset' );
+    }
     return;
 }
 
@@ -383,6 +387,7 @@ sub _default_coldef_strategy {
         NUMBER_COL_X          => 'r',
         LONG_COL              => 'p{5cm}',
         LONG_COL_X            => 'X',
+        LONG_COL_Y            => 'L',
         DEFAULT_COL           => 'l',
         DEFAULT_COL_X         => 'l',
     };
@@ -515,11 +520,13 @@ sub _apply_header_formatting {
         $col = $self->_add_mc_def(
             { value => $col, align => 'c', cols => '1' } );
     }
-    if ( defined $theme->{'HEADER_FONT_STYLE'} ) {
-        $col = $self->_add_font_family( $col, $theme->{'HEADER_FONT_STYLE'} );
-    }
-    if ( defined $theme->{'HEADER_FONT_COLOR'} ) {
-        $col = $self->_add_font_color( $col, $theme->{'HEADER_FONT_COLOR'} );
+    if (length $col) {
+        if ( defined $theme->{'HEADER_FONT_STYLE'} ) {
+            $col = $self->_add_font_family( $col, $theme->{'HEADER_FONT_STYLE'} );
+        }
+        if ( defined $theme->{'HEADER_FONT_COLOR'} ) {
+            $col = $self->_add_font_color( $col, $theme->{'HEADER_FONT_COLOR'} );
+        }
     }
     return $col;
 }
@@ -715,6 +722,9 @@ sub _get_coldef_type_col_suffix {
         'ctable') {
         return '_COL_X';
     }
+    if ( $self->get_width_environment eq 'tabulary' ) {
+        return '_COL_Y';
+    }
     return '_COL';
 }
 
@@ -750,12 +760,16 @@ sub _get_coldef_code {
         for my $attribute ( sort @attributes ) {
             if ( $attribute =~ m{ \A $col $typesuffix \z }xms ) {
                 $align = $strategy->{$attribute};
-            } elsif ( $typesuffix eq '_COL_X' && $attribute =~ m{ \A $col _COL \z }xms ) {
+            # for _X and _Y, use default if no special defs are found     
+            } elsif ( ( $typesuffix eq '_COL_X' || $typesuffix eq '_COL_Y' ) && $attribute =~ m{ \A $col _COL \z }xms ) {
                 $align = $strategy->{$attribute};
             }
         }
 
         if ( $i == 0 ) {
+            if (defined $self->get_theme_settings->{'STUB_ALIGN'}) {
+                $align = $self->get_theme_settings->{'STUB_ALIGN'};
+            }
             $table_def .= $v0 . $align . $v1;
         }
         elsif ( $i == ( scalar(@cols) - 1 ) ) {
@@ -852,7 +866,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.10
+This document describes LaTeX::Table version 0.9.11
 
 =head1 SYNOPSIS
 
@@ -925,21 +939,21 @@ Now in your LaTeX document:
   
 =head1 DESCRIPTION
 
-LaTeX makes professional typesetting easy. Unfortunately,
-this is not entirely true for tables and the standard LaTeX table macros have
-a rather limited functionality. This module supports many packages that are 
-available on CTAN and hides the complexity of using them behind an easy and
-intuitive API.
+LaTeX makes professional typesetting easy. Unfortunately, this is not entirely
+true for tables and the standard LaTeX table macros have a rather limited
+functionality. This module supports many CTAN packages and hides the
+complexity of using them behind an easy and intuitive API.
 
 =head1 FEATURES 
 
 This module supports multipage tables via the C<xtab> package.  For
-publication quality tables it utilizes the C<booktabs> package. It also
-supports the C<tabularx> package for nicer fixed-width tables. Furthermore, it
-supports the C<colortbl> package for colored tables optimized for
-presentations.  The powerful new C<ctable> package is supported and especially
-recommended when footnotes are needed. C<LaTeX::Table> ships with some
-predefined, good looking L<"THEMES">.
+publication quality tables, it uses the C<booktabs> package. It also supports
+the C<tabularx> and C<tabulary> packages for nicer fixed-width tables.
+Furthermore, it supports the C<colortbl> package for colored tables optimized
+for presentations. The powerful new C<ctable> package is supported and
+especially recommended when footnotes are needed. C<LaTeX::Table> ships with
+some predefined, good looking L<"THEMES">. The progrmm I<ltpretty> makes it
+possible to use this module from within an text editor. 
 
 =head1 INTERFACE 
 
@@ -1037,9 +1051,9 @@ and are not further formatted. So,
 
 will produce following LaTeX code in the default Zurich theme:
 
-  \multicolumn{2}{c}{\textbf{Item}} & \multicolumn{1}{c}{\textbf{}}\\ 
+  \multicolumn{2}{c}{\textbf{Item}} &                                          \\ 
   \cmidrule{1-2}
-  \multicolumn{1}{c}{\textbf{Animal}} & \multicolumn{1}{c}{\textbf{Description}} & \multicolumn{1}{c}{\textbf{Price}}\\ 
+  \textbf{Animal}                   & \multicolumn{1}{c}{\textbf{Description}} & \multicolumn{1}{c}{\textbf{Price}}\\ 
 
 Note that there is no C<\multicolumn>, C<\textbf> or C<\\> added to the second row.
 
@@ -1105,7 +1119,7 @@ following options are set.
       ...
       \end{tabular}
       \caption{Price list}
-      \label{table:prices}
+      \label{tbl:prices}
   \end{table} 
 
 =item C<caption>
@@ -1145,7 +1159,14 @@ LaTeX package to fix the spacing:
 
 If get_maincaption() returns a true value, then this value will be displayed 
 in the table listing (C<\listoftables>) and before the C<caption>. Default
-0. Requires C<environment>.
+0. Requires C<environment>. For example,
+
+  maincaption => 'Price List',
+  caption     => 'Try our special offer today!',
+
+will generate
+
+  \caption[Price List]{Price List. Try our special offer today!}
 
 =item C<shortcaption>
 
@@ -1157,13 +1178,22 @@ listing. Default 0. Requires C<environment>.
 Defines how the table is aligned in the available textwidth. Default is centered. Requires 
 C<environment>. Only one of these options may return a true value.
     
-  # don't generate any centering code
-  $self->set_center(0);
+  # don't generate any aligning code
+  $table->set_center(0);
 
 =item C<label>
 
 The label of the table. Only generated if get_label() returns a true value.
-Default is 0. Requires C<environment>.
+Default is 0. Requires C<environment>. 
+
+ $table->set_label('tbl:prices');
+
+then in LaTeX:
+
+ table~\ref{tbl:prices}
+
+Note that many style guides (for example the CMOS) recommend a lower case
+I<table> in text references.
 
 =item C<position>
 
@@ -1212,12 +1242,13 @@ The table column definition, e.g. 'lrcr' which would result in:
   \begin{tabular}{lrcr}
   ..
 
-If unset, C<LaTeX::Table> tries to 
-guess a good definition. Columns containing only numbers are right-justified,
-others left-justified. Columns with cells longer than 30 characters are
-I<p> (paragraph) columns of size '5cm' or I<X> columns when the C<tabularx> package
-is selected. These rules can be changed with set_coldef_strategy(). Default is 
-0 (guess good definition).
+If unset, C<LaTeX::Table> tries to guess a good definition. Columns containing
+only numbers are right-justified, others left-justified. Columns with cells
+longer than 30 characters are I<p> (paragraph) columns of size '5cm' (I<X>
+columns when the C<tabularx>, I<L> when the C<tabulary> package is selected).
+These rules can be changed with set_coldef_strategy(). Default is 0 (guess
+good definition). The left-hand column, the stub, is normally exculded here
+and is always left aligned. See L<LaTeX::Table::Themes::ThemeI>.
 
 =item C<coldef_strategy>
 
@@ -1231,11 +1262,11 @@ the standard types I<NUMBER> and I<LONG> are defined as:
        qr{\A\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*\z}xms,
     NUMBER_MUST_MATCH_ALL => 1,
     NUMBER_COL            => 'r',
-    NUMBER_COL_X          => 'r',
     LONG                  => qr{\A\s*(?=\w+\s+\w+).{29,}?\S}xms,
     LONG_MUST_MATCH_ALL   => 0,
     LONG_COL              => 'p{5cm}',
     LONG_COL_X            => 'X',
+    LONG_COL_Y            => 'L',
   };
 
 =over
@@ -1259,12 +1290,12 @@ so for example a I<LONG> I<NUMBER> column has as final type I<NUMBER>.
 
 The C<coldef> attribute for I<TYPE> columns. Required (no default value).
 
-=item C<TYPE_COL_X>
+=item C<TYPE_COL_X>, C<TYPE_COL_Y>
 
-Same as C<TYPE_COL> but for C<tabularx> tables. If undefined, the attribute
-defined in C<TYPE_COL> is used for C<tabularx> tables as well. 
+Same as C<TYPE_COL> but for C<tabularx> or C<tabulary> tables. If undefined,
+the attribute defined in C<TYPE_COL> is used. 
 
-=item C<DEFAULT_COL>, C<DEFAULT_COL_X>
+=item C<DEFAULT_COL>, C<DEFAULT_COL_X>, C<DEFAULT_COL_Y>
 
 The C<coldef> attribute for columns that do not match any specified type.
 Default 'l' (left-justified).
@@ -1289,10 +1320,10 @@ Examples:
 
 =item C<width>
 
-If get_width() returns a true value, then C<LaTeX::Table> will append a C<*> 
-to the tabular environment name (e.g. C<tabular*> or C<xtabular*>) and will
-add the specified width. It will also add C<@{\extracolsep{\fill}}> to the 
-table column definition:
+If get_width() returns a true value, then C<LaTeX::Table> will use the starred
+version of the environment (e.g. C<tabular*> or C<xtabular*>) and will add the
+specified width as second parameter. It will also add
+C<@{\extracolsep{\fill}}> to the table column definition:
 
   # use 75% of textwidth 
   $table->set_width('0.75\textwidth');
@@ -1301,8 +1332,8 @@ This will produce following LaTeX code:
 
   \begin{tabular*}{0.75\textwidth}{l@{\extracolsep{\fill} ... }
 
-For tables of C<type> I<std>, it is also possible to use the C<tabularx> LaTeX 
-package (see C<width_environment> below). The tables of type I<ctable>
+For tables of C<type> I<std>, it is also possible to use the C<tabularx> and
+C<tabulary> LaTeX packages (see C<width_environment> below). The tables of type I<ctable>
 automatically use the C<tabularx> package.
 
 =item C<width_environment>
@@ -1393,11 +1424,16 @@ is 'Continued from previous page'.
 =item C<tabletailmsg>
 
 Message at the end of a multipage table. Default is 'Continued on next page'. 
+When using C<caption_top>, this is in most cases unnecessary and it is
+recommended to omit the tabletail (see below).
 
 =item C<tabletail>
 
 Custom table tail. Default is multicolumn with the tabletailmsg (see above) 
 right-justified. 
+  
+  # don't add any tabletail code:
+  $table->set_tabletail(q{});
 
 =item C<xentrystretch>
 
@@ -1502,7 +1538,8 @@ file to LaTeX or even PDF.
 
 If you get a LaTeX error message, please check whether you have included all
 required packages. The packages we use are C<array>, C<booktabs>, C<colortbl>,
-C<ctable>, C<graphicx>, C<rotating>, C<tabularx>, C<xcolor> and C<xtab>. 
+C<ctable>, C<graphicx>, C<rotating>, C<tabularx>, C<tabulary>, C<xcolor> and
+C<xtab>. 
 
 C<LaTeX::Table> may throw one of these errors and warnings:
 
@@ -1536,7 +1573,9 @@ L<Template>, L<Text::Wrap>
 
 =head1 BUGS AND LIMITATIONS
 
-No bugs have been reported. 
+The width option causes problems with themes using the C<colortbl> package.
+You may have to specify here the overhang arguments of the C<\columcolor>
+commands manually. Patches are of course welcome.
 
 Please report any bugs or feature requests to
 C<bug-latex-table@rt.cpan.org>, or through the web interface at
@@ -1550,7 +1589,7 @@ L<Data::Table>, L<LaTeX::Encode>
 
 =over
 
-=item David Carlisle for the C<colortbl> and the C<tabularx> LaTeX packages.
+=item David Carlisle for the C<colortbl>, C<tabularx> and C<tabulary> LaTeX packages.
 
 =item Wybo Dekker for the C<ctable> LaTeX package.
 
@@ -1573,7 +1612,7 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

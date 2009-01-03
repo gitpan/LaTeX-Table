@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-11 04:38:01 +0100 (Tue, 11 Nov 2008) $
-# $Revision: 1226 $
+#     $Date: 2009-01-03 12:55:22 +0100 (Sat, 03 Jan 2009) $
+# $Revision: 1257 $
 #############################################################################
 
 package LaTeX::Table::Themes::Beamer;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Themes::ThemeI';
 
 use version;
-our ($VERSION) = '$Revision: 1226 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1257 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
     my $themes = {
@@ -49,7 +49,7 @@ __END__
 
 =head1 NAME
 
-LaTeX::Table::Themes::Beamer - Colorful themes optimized for presentations.
+LaTeX::Table::Themes::Beamer - Colorful LaTeX table themes optimized for presentations.
 
 =head1 PROVIDES
 
@@ -76,7 +76,7 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2008, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

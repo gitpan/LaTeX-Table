@@ -3,6 +3,7 @@ before 1.0
 - fine tune default parameters
 - nicer examples.pdf
 - shortcut for multirows
+- make it possible to use custom templates
 - remove deprecated code (release candidate 1)
 
 after 1.0

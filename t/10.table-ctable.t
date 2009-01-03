@@ -33,8 +33,8 @@ label = {beercounter},
 center,
 ]{lrr}{\tnote{footnotes are placed under the table}}{
 \toprule
-\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}      \\
-\multicolumn{1}{c}{\textbf{}}     & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
+\textbf{Name} & \multicolumn{2}{c}{\textbf{Beers}}      \\
+              & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
 \midrule
 Lisa\tmark & 0 & 0  \\
 Marge      & 0 & 1  \\
@@ -65,8 +65,8 @@ label = {beercounter},
 center,
 ]{lrr}{\tnote{footnotes are placed under the table}}{
 \toprule
-\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}      \\
-\multicolumn{1}{c}{\textbf{}}     & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
+\textbf{Name} & \multicolumn{2}{c}{\textbf{Beers}}      \\
+              & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
 \midrule
 Lisa\tmark & 0 & 0  \\
 Marge      & 0 & 1  \\
@@ -95,8 +95,8 @@ label = {beercounter},
 right,
 ]{lrr}{\tnote{footnotes are placed under the table}}{
 \toprule
-\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}      \\
-\multicolumn{1}{c}{\textbf{}}     & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
+\textbf{Name} & \multicolumn{2}{c}{\textbf{Beers}}      \\
+              & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
 \midrule
 Lisa\tmark & 0 & 0  \\
 Marge      & 0 & 1  \\
@@ -134,8 +134,8 @@ maxwidth = {0.9\textwidth},
 right,
 ]{lXr}{\tnote{footnotes are placed under the table}}{
 \toprule
-\multicolumn{1}{c}{\textbf{Name}} & \multicolumn{2}{c}{\textbf{Beers}}      \\
-\multicolumn{1}{c}{\textbf{}}     & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
+\textbf{Name} & \multicolumn{2}{c}{\textbf{Beers}}      \\
+              & \multicolumn{1}{c}{\textbf{before 4pm}} & \multicolumn{1}{c}{\textbf{after 4pm}} \\
 \midrule
 Lisa\tmark & 0                                                      & 0  \\
 Marge      & 0                                                      & 1  \\
@@ -176,7 +176,7 @@ $expected_output =<<'EOT'
 \ctable[center,
 ]{l>{\ttfamily}l}{}{
 \toprule
-\multicolumn{1}{c}{\textbf{Website}} & \multicolumn{1}{c}{\textbf{URL}} \\
+\textbf{Website} & \multicolumn{1}{c}{\textbf{URL}} \\
 \midrule
 Slashdot  & http://www.slashdot.org  \\
 Perlmonks & http://www.perlmonks.org \\
