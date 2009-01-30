@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-03 12:42:28 +0100 (Sat, 03 Jan 2009) $
-# $Revision: 1256 $
+#     $Date: 2009-01-30 15:18:13 +0100 (Fri, 30 Jan 2009) $
+# $Revision: 1278 $
 #############################################################################
 
 package LaTeX::Table::Types::Std;
@@ -10,17 +10,17 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1256 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1278 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
-[% COLORDEF %][% IF ENVIRONMENT %]\begin{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% IF POSITION %][[% POSITION %]][% END %]
-[% SIZE %][% IF CENTER %]\centering
+[% COLORDEF_CODE %][% IF ENVIRONMENT %]\begin{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% IF POSITION %][[% POSITION %]][% END %]
+[% FONTSIZE_CODE %][% FONTFAMILY_CODE %][% RULES_WIDTH_GLOBAL %][% IF CENTER %]\centering
 [% END %][% IF LEFT %]\raggedright
 [% END %][% IF RIGHT %]\raggedleft
-[% END %][% IF CAPTION_TOP %][% IF CAPTION %]\[% CAPTION_CMD %][% IF CAPTION_SHORT %][[% CAPTION_SHORT %]][% END %]{[% CAPTION %]}
+[% END %][% IF CAPTION_TOP %][% IF CAPTION %]\[% CAPTION_CMD %][% IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %]}
 [% END %][% END %][% END %][% EXTRA_ROW_HEIGHT %][% BEGIN_RESIZEBOX%]\begin{[% TABULAR_ENVIRONMENT %]}[% IF WIDTH %]{[% WIDTH %]}[% END %]{[% COLDEF %]}
-[% HEADER_CODE %][% BODY %]\end{[% TABULAR_ENVIRONMENT %]}[% END_RESIZEBOX %][% IF ENVIRONMENT %][% UNLESS CAPTION_TOP %][% IF CAPTION %]
-\[% CAPTION_CMD %][% IF CAPTION_SHORT %][[% CAPTION_SHORT %]][% END %]{[% CAPTION %]}[% END %][% END %][%IF LABEL %]
+[% RULES_COLOR_GLOBAL %][% HEADER_CODE %][% DATA_CODE %]\end{[% TABULAR_ENVIRONMENT %]}[% END_RESIZEBOX %][% IF ENVIRONMENT %][% UNLESS CAPTION_TOP %][% IF CAPTION %]
+\[% CAPTION_CMD %][% IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %]}[% END %][% END %][%IF LABEL %]
 \label{[% LABEL %]}[% END %]
 \end{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% END %]
 EOT

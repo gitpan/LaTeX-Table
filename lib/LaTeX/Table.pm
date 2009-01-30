@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-03 12:42:28 +0100 (Sat, 03 Jan 2009) $
-# $Revision: 1256 $
+#     $Date: 2009-01-30 15:27:12 +0100 (Fri, 30 Jan 2009) $
+# $Revision: 1280 $
 #############################################################################
 
 package LaTeX::Table;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 
-use version; our $VERSION = qv('0.9.11');
+use version; our $VERSION = qv('0.9.12');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -32,21 +32,22 @@ use Text::Wrap qw(wrap);
 
 for my $attr (qw(label maincaption shortcaption caption caption_top coldef coldef_strategy
     columns_like_header text_wrap header_sideways width maxwidth width_environment
-    custom_tabular_environment position size callback tabletail xentrystretch
+    custom_tabular_environment position fontsize fontfamily callback tabletail xentrystretch
     resizebox sideways star _data_summary)) {
     has $attr => (is => 'rw', default => 0);
 }
 
-has 'filename'      => ( is => 'rw', isa => 'Str', default => 'latextable.tex' );
-has 'foottable'     => ( is => 'rw', isa => 'Str', default => q{} );
-has 'type'          => ( is => 'rw', default => 'std' );
-has '_type_obj'     => ( is => 'rw' );
-has 'header'        => ( is => 'rw', default => sub { [] } );
-has 'data'          => ( is => 'rw', default => sub { [] } );
-has 'environment'   => ( is => 'rw', default => 1 );
-has 'theme'         => ( is => 'rw', default => 'Zurich' );
-has 'predef_themes' => ( is => 'rw', default => sub { {} } );
-has 'custom_themes' => ( is => 'rw', default => sub { {} } );
+has 'custom_template' => ( is => 'rw', isa => 'Str', default => 0 );
+has 'filename'        => ( is => 'rw', isa => 'Str', default => 'latextable.tex' );
+has 'foottable'       => ( is => 'rw', isa => 'Str', default => q{} );
+has 'type'            => ( is => 'rw', default => 'std' );
+has '_type_obj'       => ( is => 'rw' );
+has 'header'          => ( is => 'rw', default => sub { [] } );
+has 'data'            => ( is => 'rw', default => sub { [] } );
+has 'environment'     => ( is => 'rw', default => 1 );
+has 'theme'           => ( is => 'rw', default => 'Zurich' );
+has 'predef_themes'   => ( is => 'rw', default => sub { {} } );
+has 'custom_themes'   => ( is => 'rw', default => sub { {} } );
 
 for my $attr (qw(center left right _default_align)) {
     has $attr   => ( is => 'rw', isa => 'Bool', predicate => "has_$attr" );
@@ -60,6 +61,7 @@ has 'table_environment' => ( is => 'rw', default => 'deprecated' );
 has 'tabledef'          => ( is => 'rw', default => 'deprecated' );
 has 'tabledef_strategy' => ( is => 'rw', default => 'deprecated' );
 has 'tablepos'          => ( is => 'rw', default => 'deprecated' );
+has 'size'              => ( is => 'rw', default => 'deprecated' );
 
 __PACKAGE__->meta->make_immutable;
 
@@ -131,6 +133,10 @@ sub _compatibility_layer {
     if ( $self->get_tabledef_strategy ne 'deprecated' ) {
         carp('DEPRECATED: Use coldef_strategy instead of tabledef_strategy.');
         $self->set_coldef_strategy( $self->get_tabledef_strategy );
+    }
+    if ( $self->get_size ne 'deprecated' ) {
+        carp('DEPRECATED: size was renamed to fontsize.');
+        $self->set_fontsize( $self->get_size );
     }
     my $cs = $self->get_coldef_strategy();
 
@@ -325,8 +331,7 @@ sub _examine_data {
                 && length $col > $text_wrap->[$j] )
             {
                 my $l = 0;
-
-                ## no critic
+                ## no critic (Variables::ProhibitPackageVars)
                 local ($Text::Wrap::columns) = $text_wrap->[$j];
                 ## use critic
                 my $lines = wrap( q{}, q{}, $col );
@@ -439,8 +444,10 @@ sub _get_coldef_types {
     my ($self) = @_;
 
     # everything that does not contain an underscore is a coltype
-    return
+    my @coltypes =
         sort grep {m{ \A [^_]+ \z }xms} keys %{ $self->get_coldef_strategy };
+
+    return @coltypes;
 }
 
 sub _get_data_summary {
@@ -780,9 +787,7 @@ sub _get_coldef_code {
         }
         $i++;
         if ( $i == 1 && $self->get_width && !$self->get_width_environment && $self->get_type ne 'ctable' ) {
-            ## no critic
             $table_def .= '@{\extracolsep{\fill}}'
-                ## use critic
         }
     }
     return $table_def;
@@ -866,7 +871,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.11
+This document describes LaTeX::Table version 0.9.12
 
 =head1 SYNOPSIS
 
@@ -952,8 +957,8 @@ the C<tabularx> and C<tabulary> packages for nicer fixed-width tables.
 Furthermore, it supports the C<colortbl> package for colored tables optimized
 for presentations. The powerful new C<ctable> package is supported and
 especially recommended when footnotes are needed. C<LaTeX::Table> ships with
-some predefined, good looking L<"THEMES">. The progrmm I<ltpretty> makes it
-possible to use this module from within an text editor. 
+some predefined, good looking L<"THEMES">. The program I<ltpretty> makes it
+possible to use this module from within a text editor. 
 
 =head1 INTERFACE 
 
@@ -1093,6 +1098,17 @@ formatting. So,
 is equivalent to the example above (except that there always the correct line
 command is used, i.e. C<\midrule> vs. C<\hline>).
 
+=item C<custom_template> 
+
+The table types listed above use the L<Template> toolkit internally. These
+tempates are very flexible and powerful, but you can also provide a custom
+template.
+
+  # Returns the header and data formatted in LaTeX code. Nothing else.
+  $table->set_custom_template('[% HEADER_CODE %][% DATA_CODE %]');
+
+See L<LaTeX::Table::Types::TypeI>.
+
 =back
 
 =head2 FLOATING TABLES
@@ -1158,8 +1174,7 @@ LaTeX package to fix the spacing:
 =item C<maincaption>
 
 If get_maincaption() returns a true value, then this value will be displayed 
-in the table listing (C<\listoftables>) and before the C<caption>. Default
-0. Requires C<environment>. For example,
+in the table listing (C<\listoftables>) and before the C<caption>. For example,
 
   maincaption => 'Price List',
   caption     => 'Try our special offer today!',
@@ -1167,6 +1182,8 @@ in the table listing (C<\listoftables>) and before the C<caption>. Default
 will generate
 
   \caption[Price List]{Price List. Try our special offer today!}
+
+Default 0. Requires C<environment>. 
 
 =item C<shortcaption>
 
@@ -1198,25 +1215,38 @@ I<table> in text references.
 =item C<position>
 
 The position of the environment, e.g. 'htb'. Only generated if get_position()
-returns a true value. Requires C<environment> and tables of C<type> I<std>.
+returns a true value. Default 0. Requires C<environment> and tables of C<type>
+I<std>.
 
 =item C<sideways>
 
-Rotates the environment by 90 degrees. Requires the C<rotating> LaTeX package.
+Rotates the environment by 90 degrees. Default 0. Requires the C<rotating>
+LaTeX package.
+
+ $table->set_sideways(1);
 
 This does not work with I<xtab> tables - please tell me if you know how to
 implement this.
-
-=item C<size>
-
-Font size. Valid values are 'tiny', 'scriptsize', 'footnotesize', 'small',
-'normal', 'large', 'Large', 'LARGE', 'huge', 'Huge' and 0. Default is 0 (does 
-not define a font size). Requires C<environment>.
 
 =item C<star>
 
 Use the starred versions of the environments, which place the float over two
 columns when the C<twocolumn> option or the C<\twocolumn> command is active.
+Default 0.
+
+ $table->set_star(1);
+
+=item C<fontfamily>
+
+Valid values are 'rm' (Roman, serif), 'sf' (Sans-serif), 'tt' (Monospace or
+typewriter) and 0. Default is 0 (does not define a font family).  Requires
+C<environment>.
+
+=item C<fontsize>
+
+Valid values are 'tiny', 'scriptsize', 'footnotesize', 'small', 'normal',
+'large', 'Large', 'LARGE', 'huge', 'Huge' and 0. Default is 0 (does not define
+a font size). Requires C<environment>.
 
 =back
 
@@ -1557,8 +1587,8 @@ usage of this option.
 
 =item C<DEPRECATED. ...>  
 
-There were some minor API changes in C<LaTeX::Table> 0.1.0, 0.8.0, 0.9.0 and
-0.9.3.  Just apply the changes to the script or contact its author.
+There were some minor API changes in C<LaTeX::Table> 0.1.0, 0.8.0, 0.9.0,
+0.9.3 and 0.9.12. Just apply the changes to the script or contact its author.
 
 =back
 

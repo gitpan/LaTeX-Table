@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-03 12:59:20 +0100 (Sat, 03 Jan 2009) $
-# $Revision: 1259 $
+#     $Date: 2009-01-03 17:00:22 +0100 (Sat, 03 Jan 2009) $
+# $Revision: 1261 $
 #############################################################################
 
 use strict;
@@ -164,7 +164,7 @@ __END__
 
 =head1 NAME
 
-csv2pdf - A simple but yet powerful example application.
+csv2pdf - A simple but yet powerful LaTeX::Table example application.
 
 =head1 SYNOPSIS
 

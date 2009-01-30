@@ -1,5 +1,13 @@
 Revision history for LaTeX-Table
 
+0.9.12 Fri  Jan 30  15:00:00 2009
+        - fontfamily
+        - API change: size renamed to fontsize
+        - custom_template
+        - themes can now define rule width and color (only global)
+        - Muenchen, NYC3, NYC4, Redmond and Redmond2 Themes
+        - Perl-Critic-1.094001 passes
+
 0.9.11 Sat  Jan 3  13:00:00 2009
         - tabulary package
         - STUB_ALIGN in themes

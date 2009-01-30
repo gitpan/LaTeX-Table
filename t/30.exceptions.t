@@ -82,9 +82,9 @@ ok( !$EVAL_ERROR, 'no error with valid theme' ) || diag $EVAL_ERROR;
 # size tests
 
 $table = LaTeX::Table->new(
-    {   header  => $header,
-        data    => $data,
-        size    => 'HUGE',
+    {   header   => $header,
+        data     => $data,
+        fontsize => 'HUGE',
     }
 );
 
@@ -94,7 +94,7 @@ like(
     qr{^Invalid usage of option custom_themes: Size not known: HUGE. Valid sizes},
     'unknown size'
 ) || diag $EVAL_ERROR;
-$table->set_size('Huge');
+$table->set_fontsize('Huge');
 
 eval { $table->generate_string; };
 ok( !$EVAL_ERROR, 'no error with valid size' ) || diag $EVAL_ERROR;

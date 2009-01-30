@@ -27,7 +27,7 @@ for my $i ( 1 .. 6 ) {
 my $table = LaTeX::Table->new(
     {   maincaption => 'Price List',
         caption     => 'Try our special offer today!',
-        size        => 'large',
+        fontsize    => 'large',
         callback    => sub {
             my ( $row, $col, $value, $is_header ) = @_;
             if ( $col == 2 && !$is_header ) {
@@ -63,6 +63,12 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
         ];
     }
 
+    if ($theme eq 'Muenchen') {
+        $table->set_fontfamily('sf');
+    }
+    else {
+        $table->set_fontfamily(0);
+    }    
     $table->set_filename("$theme.tex");
     $table->set_caption_top(0);
     $table->set_theme($theme);
@@ -70,6 +76,10 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
     $table->set_header($test_header);
     $table->set_data($test_data);
     #$table->set_width('0.9\textwidth');
+    $table->generate();
+
+    $table->set_type('ctable');
+    $table->set_filename("${theme}ctable.tex");
     $table->generate();
 
     #    warn Dumper $test_data;
@@ -763,6 +773,7 @@ print $OUT $code;
 
 for my $theme ( sort keys %{ $table->get_available_themes } ) {
     print $OUT "\\subsection{$theme Theme}\n \\input{$theme.tex}\n";
+    print $OUT "\\input{${theme}ctable.tex}\n";
     print $OUT "\\input{${theme}multipage.tex} \\clearpage \\newpage\n";
 }
 

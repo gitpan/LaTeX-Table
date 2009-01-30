@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-03 12:55:22 +0100 (Sat, 03 Jan 2009) $
-# $Revision: 1257 $
+#     $Date: 2009-01-30 15:18:13 +0100 (Fri, 30 Jan 2009) $
+# $Revision: 1278 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -13,7 +13,7 @@ use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1257 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1278 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 use Scalar::Util qw(reftype);
 
@@ -26,7 +26,7 @@ has '_template'            => ( is => 'ro', required => 1 );
 has '_RULE_TOP_ID'   => ( is => 'ro', default => 0 );
 has '_RULE_MID_ID'   => ( is => 'ro', default => 1 );
 has '_RULE_INNER_ID' => ( is => 'ro', default => 2 );
-## no critic
+## no critic (ValuesAndExpressions::ProhibitMagicNumbers)
 has '_RULE_BOTTOM_ID' => ( is => 'ro', default => 3 );
 ## use critic
 
@@ -64,38 +64,48 @@ sub generate_latex_code {
     my $header_code = $self->_get_header_columns_code($header);
 
     my $template_vars = {
-        'COLORDEF'            => $self->_get_colordef_code,
-        'ENVIRONMENT'         => $tbl->get_environment,
-        'POSITION'            => $tbl->get_position(),
-        'SIZE'                => $self->_get_size_code(),
         'CENTER'              => $center,
         'LEFT'                => $tbl->get_left(),
         'RIGHT'               => $tbl->get_right(),
+        'ENVIRONMENT'         => $tbl->get_environment,
+        'FONTFAMILY'          => $tbl->get_fontfamily(),
+        'FONTFAMILY_CODE'     => $self->_get_fontfamily_code(),
+        'FONTSIZE'            => $tbl->get_fontsize(),
+        'FONTSIZE_CODE'       => $self->_get_fontsize_code(),
+        'FOOTTABLE'           => $tbl->get_foottable(),
+        'POSITION'            => $tbl->get_position(),
         'CAPTION_TOP'         => $tbl->get_caption_top(),
         'CAPTION'             => $self->_get_caption(),
         'CAPTION_CMD'         => $self->_get_caption_command_code(),
-        'CAPTION_SHORT'       => $self->_get_shortcaption(),
+        'SHORTCAPTION'        => $self->_get_shortcaption(),
         'SIDEWAYS'            => $tbl->get_sideways(),
         'STAR'                => $tbl->get_star(),
         'EXTRA_ROW_HEIGHT'    => $self->_get_extra_row_height_code(),
+        'RULES_COLOR_GLOBAL'  => $self->_get_rules_color_global_code(),
+        'RULES_WIDTH_GLOBAL'  => $self->_get_rules_width_global_code(),
         'BEGIN_RESIZEBOX'     => $self->_get_begin_resizebox_code(),
         'WIDTH'               => $tbl->get_width(),
         'MAXWIDTH'            => $tbl->get_maxwidth(),
         'COLDEF'              => $table_def,
+        'LABEL'               => $tbl->get_label(),
         'HEADER_CODE'         => $header_code,
         'TABLEHEAD'           => $self->_get_tablehead_code( $header_code ),
         'TABLETAIL'           => $self->_get_tabletail_code( $data, 0 ),
         'TABLETAIL_LAST'      => $self->_get_tabletail_code( $data, 1 ),
-        'XENTRYSTRETCH'       => $self->_get_xentrystretch_code(),
-        'LABEL'               => $tbl->get_label(),
-        'BODY'                => $self->_body(),
+        'XENTRYSTRETCH_CODE'  => $self->_get_xentrystretch_code(),
+        'DATA_CODE'           => $self->_get_data_code(),
         'END_RESIZEBOX'       => $self->_get_end_resizebox_code(),
         'TABULAR_ENVIRONMENT' => $self->_get_tabular_environment(),
-        'FOOTTABLE'           => $tbl->get_foottable(),
+        'COLORDEF_CODE'       => $self->_get_colordef_code,
     };
 
     my $template_obj = Template->new();
     my $template     = $self->_template;
+
+    if ($tbl->get_custom_template) {
+        $template = $tbl->get_custom_template;
+    }
+
     my $template_output;
 
     $template_obj->process( \$template, $template_vars, \$template_output )
@@ -103,7 +113,7 @@ sub generate_latex_code {
     return $template_output;
 }
 
-sub _body {
+sub _get_data_code {
     my ($self) = @_;
     my $code   = q{};
     my $tbl    = $self->_table_obj;
@@ -283,6 +293,26 @@ sub _get_extra_row_height_code {
     return q{};
 }
 
+sub _get_rules_color_global_code {
+    my ($self) = @_;
+    if ( defined $self->_table_obj->get_theme_settings->{RULES_COLOR_GLOBAL} ) {
+        return $self->_table_obj->get_theme_settings->{RULES_COLOR_GLOBAL}
+            . "\n";
+    }
+    return q{};
+}
+
+sub _get_rules_width_global_code {
+    my ($self) = @_;
+    if ( defined $self->_table_obj->get_theme_settings->{RULES_WIDTH_GLOBAL} ) {
+        return $self->_table_obj->get_theme_settings->{RULES_WIDTH_GLOBAL}
+            . "\n";
+    }
+    return q{};
+}
+
+
+
 sub _get_hline_code {
     my ( $self, $id ) = @_;
     my $tbl    = $self->_table_obj;
@@ -310,13 +340,13 @@ sub _get_single_hline_code {
 }
 
 ###########################################################################
-# Usage      : $self->_get_size_code();
-# Purpose    : generates the LaTeX code of the size (e.g. \small, \large)
+# Usage      : $self->_get_fontsize_code();
+# Purpose    : generates the LaTeX code of the fontsize (e.g. \small, \large)
 # Returns    : LaTeX code
 # Parameters : none
-# Throws     : exception if size is not valid
+# Throws     : exception if fontsize is not valid
 
-sub _get_size_code {
+sub _get_fontsize_code {
     my ($self) = @_;
     my %valid = (
         'tiny'         => 1,
@@ -330,7 +360,7 @@ sub _get_size_code {
         'huge'         => 1,
         'Huge'         => 1,
     );
-    my $size = $self->_table_obj->get_size;
+    my $size = $self->_table_obj->get_fontsize;
     return q{} if !$size;
 
     if ( !defined $valid{$size} ) {
@@ -341,6 +371,27 @@ sub _get_size_code {
         );
     }
     return "\\$size\n";
+}
+
+
+sub _get_fontfamily_code {
+    my ($self) = @_;
+    my %valid = (
+        'rm' => 1,
+        'sf' => 1,
+        'tt' => 1,
+    );
+    my $family = $self->_table_obj->get_fontfamily;
+    return q{} if !$family;
+
+    if ( !defined $valid{$family} ) {
+        $self->_table_obj->invalid_option_usage(
+            'fontfamily',
+            "Family not known: $family. Valid families are: " . join ', ',
+            sort keys %valid
+        );
+    }
+    return "\\${family}family\n";
 }
 
 sub _get_tabular_environment {
@@ -438,13 +489,50 @@ LaTeX::Table::Types::TypeI - Interface for LaTeX table types.
 
 This is the type interface (or L<Moose> role), that all type objects must use.
 L<LaTeX::Table> delegates the boring work of building the LaTeX code to type
-objects.
+objects. It stores all information we have in easy to use L<"TEMPLATE
+VARIABLES">. L<LaTeX::Table> ships with very flexible templates
+(L<LaTeX::Table::Types::Std>, L<LaTeX::Table::Types::Ctable>,
+L<LaTeX::Table::Types::Xtab>) that should work in 99 percent, but you can also
+use the template variables defined here with custom templates.
 
 =head1 INTERFACE
 
 =over
 
 =item C<generate_latex_code>
+
+=back
+
+=head1 TEMPLATE VARIABLES
+
+CAUTION: This API is not stable. Everything here is likely to be changed in
+the near future! 
+
+All options are accessable here, e.g. C<LABEL> returns the same value as
+get_label(). In addition, some variables already contain formatted LaTeX code:
+
+=over
+
+=item C<HEADER_CODE>
+
+The formatted header:
+
+  \toprule
+  \multicolumn{2}{c}{Item} &             \\
+  \cmidrule(r){1-2}
+  Animal                   & Description & Price \\
+  \midrule
+
+=item C<DATA_CODE> 
+
+The formatted data:
+
+  Gnat      & per gram & 13.65 \\
+            & each     & 0.01  \\
+  Gnu       & stuffed  & 92.59 \\
+  Emu       & stuffed  & 33.33 \\
+  Armadillo & frozen   & 8.99  \\
+  \bottomrule
 
 =back
 

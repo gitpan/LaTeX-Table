@@ -2,17 +2,11 @@ severity=1
 verbose=11
 
 [-Documentation::RequirePodSections]
-#source   = module_starter_pbp_0_0_3
-#language = en_US
 
 [Miscellanea::RequireRcsKeywords]
 keywords = Date Author Revision
 
-# this is simply stupid
 [-ValuesAndExpressions::RequireInterpolationOfMetachars]
 
 [InputOutput::RequireBriefOpen]
 lines = 15
-
-#currently not compatible with CLass::Std
-[-Variables::ProhibitUnusedVariables]

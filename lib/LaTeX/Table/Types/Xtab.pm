@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-03 12:55:22 +0100 (Sat, 03 Jan 2009) $
-# $Revision: 1257 $
+#     $Date: 2009-01-30 15:18:13 +0100 (Fri, 30 Jan 2009) $
+# $Revision: 1278 $
 #############################################################################
 
 package LaTeX::Table::Types::Xtab;
@@ -10,12 +10,12 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1257 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1278 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
 {
-[% COLORDEF %][% EXTRA_ROW_HEIGHT %][% SIZE %][% IF CAPTION %][%IF CAPTION_TOP
-%]\topcaption[% ELSE %]\bottomcaption[% END %][%IF CAPTION_SHORT %][[% CAPTION_SHORT %]][% END %]{[% CAPTION %]}
+[% COLORDEF_CODE %][% EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RULES_COLOR_GLOBAL %][% FONTSIZE_CODE %][% FONTFAMILY_CODE %][% IF CAPTION %][%IF CAPTION_TOP
+%]\topcaption[% ELSE %]\bottomcaption[% END %][%IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %]}
 [% END %][% XENTRYSTRETCH %][% IF LABEL %]\label{[% LABEL %]}
 [% END %]
 [% TABLEHEAD %]
@@ -25,7 +25,7 @@ my $template =<<'EOT'
 [% END %][% IF LEFT %]\begin{flushleft}
 [% END %][% IF RIGHT %]\begin{flushright}
 [% END %][% BEGIN_RESIZEBOX %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF WIDTH %]{[%WIDTH %]}[% END %]{[% COLDEF %]}
-[% BODY %]\end{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}
+[% DATA_CODE %]\end{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}
 [% END_RESIZEBOX %][% IF CENTER %]\end{center}[% END %][% IF LEFT %]\end{flushleft}[% END %][% IF RIGHT %]\end{flushright}[% END %]
 } 
 EOT

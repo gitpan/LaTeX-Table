@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-03 12:55:22 +0100 (Sat, 03 Jan 2009) $
-# $Revision: 1257 $
+#     $Date: 2009-01-30 13:42:41 +0100 (Fri, 30 Jan 2009) $
+# $Revision: 1277 $
 #############################################################################
 
 package LaTeX::Table::Themes::ThemeI;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Role;
 
 use version;
-our ($VERSION) = '$Revision: 1257 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1277 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 requires '_definition';
 
@@ -140,6 +140,15 @@ This controls the alignment of the header columns, excluding the stub when
 C<STUB_ALIGN> is defined. Valid values are 0 (not centered) or 1 (centered).
 Typically, it is recommended to center headers, but sometimes this does not
 look right. In this case, (left) align the header manually.
+
+=item C<RULES_COLOR_GLOBAL>
+
+If your theme uses the C<colortbl> LaTeX package, this command should handle
+the coloring of the rules. See the C<colortbl> documentation.
+
+  'RULES_COLOR_GLOBAL' => 
+       '\setlength\arrayrulewidth{2pt}\arrayrulecolor{blue}' .
+       '\setlength\doublerulesep{2pt}\doublerulesepcolor{yellow}',
 
 =item C<BOOKTABS>
 

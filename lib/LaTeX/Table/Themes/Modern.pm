@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-03 12:42:28 +0100 (Sat, 03 Jan 2009) $
-# $Revision: 1256 $
+#     $Date: 2009-01-30 13:42:41 +0100 (Fri, 30 Jan 2009) $
+# $Revision: 1277 $
 #############################################################################
 
 package LaTeX::Table::Themes::Modern;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Themes::ThemeI';
 
 use version;
-our ($VERSION) = '$Revision: 1256 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1277 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
     my $themes = {
@@ -24,6 +24,18 @@ sub _definition {
                 'VERTICAL_LINES'     => [ 1, 1, 1 ],
                 'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
                 'BOOKTABS'           => 0,
+            },
+            'Muenchen' => {
+                'HEADER_FONT_STYLE'  => 'bf',
+                'STUB_ALIGN'    => 'l',
+                'DEFINE_COLORS'      =>
+                '\definecolor{latexttbl}{RGB}{78,130,190}',
+                'CAPTION_FONT_STYLE' => 'bf',
+                'DATA_BG_COLOR_EVEN' => 'latextbl!20',
+                'VERTICAL_LINES'     => [ 0, 0, 0 ],
+                'HORIZONTAL_LINES'   => [ 0, 0, 0 ],
+                'BOOKTABS'           => 1,
+                'EXTRA_ROW_HEIGHT'   => '1pt',
             },
     };
     return $themes;
@@ -41,12 +53,19 @@ LaTeX::Table::Themes::Modern - Modern LaTeX table themes.
 This module provides following themes:
 
   Paris
+  Muenchen
 
 =head1 REQUIRES
 
 The themes defined in this module requires following LaTeX packages:
 
   \usepackage{xcolor}
+
+=head1 NOTES
+
+You probably want to use a Sans-serif font:
+
+  $tbl->set_fontfamily('sf');
 
 =head1 SEE ALSO
 
