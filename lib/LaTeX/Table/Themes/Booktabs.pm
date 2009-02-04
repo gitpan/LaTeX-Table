@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-03 12:55:57 +0100 (Sat, 03 Jan 2009) $
-# $Revision: 1258 $
+#     $Date: 2009-02-03 17:09:45 +0100 (Tue, 03 Feb 2009) $
+# $Revision: 1298 $
 #############################################################################
 
 package LaTeX::Table::Themes::Booktabs;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Themes::ThemeI';
 
 use version;
-our ($VERSION) = '$Revision: 1258 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1298 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
     my $themes = {
@@ -18,14 +18,14 @@ sub _definition {
             'HEADER_FONT_STYLE' => 'bf',
             'HEADER_CENTERED'   => 1,
             'STUB_ALIGN'        => 'l',
-            'VERTICAL_LINES'    => [ 0, 0, 0 ],
-            'HORIZONTAL_LINES'  => [ 1, 1, 0 ],
+            'VERTICAL_RULES'    => [ 0, 0, 0 ],
+            'HORIZONTAL_RULES'  => [ 1, 1, 0 ],
             'BOOKTABS'          => 1,
         },
         'Meyrin' => {
             'STUB_ALIGN'        => 'l',
-            'VERTICAL_LINES'   => [ 0, 0, 0 ],
-            'HORIZONTAL_LINES' => [ 1, 1, 0 ],
+            'VERTICAL_RULES'   => [ 0, 0, 0 ],
+            'HORIZONTAL_RULES' => [ 1, 1, 0 ],
             'BOOKTABS'         => 1,
         },
     };

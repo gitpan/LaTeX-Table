@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-30 15:18:13 +0100 (Fri, 30 Jan 2009) $
-# $Revision: 1278 $
+#     $Date: 2009-02-04 12:25:08 +0100 (Wed, 04 Feb 2009) $
+# $Revision: 1307 $
 #############################################################################
 
 package LaTeX::Table::Types::Xtab;
@@ -10,12 +10,12 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1278 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1307 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
 {
-[% COLORDEF_CODE %][% EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RULES_COLOR_GLOBAL %][% FONTSIZE_CODE %][% FONTFAMILY_CODE %][% IF CAPTION %][%IF CAPTION_TOP
-%]\topcaption[% ELSE %]\bottomcaption[% END %][%IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %]}
+[%IF CONTINUED %]\addtocounter{table}{-1}[% END %][% DEFINE_COLORS_CODE %][% EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RULES_COLOR_GLOBAL %][% FONTSIZE_CODE %][% FONTFAMILY_CODE %][% IF CAPTION %][%IF CAPTION_TOP
+%]\topcaption[% ELSE %]\bottomcaption[% END %][%IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][% END %]}
 [% END %][% XENTRYSTRETCH %][% IF LABEL %]\label{[% LABEL %]}
 [% END %]
 [% TABLEHEAD %]
@@ -24,9 +24,9 @@ my $template =<<'EOT'
 [% IF CENTER %]\begin{center}
 [% END %][% IF LEFT %]\begin{flushleft}
 [% END %][% IF RIGHT %]\begin{flushright}
-[% END %][% BEGIN_RESIZEBOX %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF WIDTH %]{[%WIDTH %]}[% END %]{[% COLDEF %]}
+[% END %][% RESIZEBOX_BEGIN_CODE %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF WIDTH %]{[%WIDTH %]}[% END %]{[% COLDEF %]}
 [% DATA_CODE %]\end{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}
-[% END_RESIZEBOX %][% IF CENTER %]\end{center}[% END %][% IF LEFT %]\end{flushleft}[% END %][% IF RIGHT %]\end{flushright}[% END %]
+[% RESIZEBOX_END_CODE %][% IF CENTER %]\end{center}[% END %][% IF LEFT %]\end{flushleft}[% END %][% IF RIGHT %]\end{flushright}[% END %]
 } 
 EOT
 ;
@@ -70,8 +70,8 @@ sub _get_tabletail_code {
 
     my $tbl = $self->_table_obj;
     my $code;
-    my $hlines    = $tbl->get_theme_settings->{'HORIZONTAL_LINES'};
-    my $vlines    = $tbl->get_theme_settings->{'VERTICAL_LINES'};
+    my $hlines    = $tbl->get_theme_settings->{'HORIZONTAL_RULES'};
+    my $vlines    = $tbl->get_theme_settings->{'VERTICAL_RULES'};
     my $linecode1 = $self->_get_hline_code($self->_RULE_MID_ID);
     my $linecode2 = $self->_get_hline_code($self->_RULE_BOTTOM_ID);
 

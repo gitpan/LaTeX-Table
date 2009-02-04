@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-30 15:27:12 +0100 (Fri, 30 Jan 2009) $
-# $Revision: 1280 $
+#     $Date: 2009-02-04 11:52:54 +0100 (Wed, 04 Feb 2009) $
+# $Revision: 1304 $
 #############################################################################
 
 package LaTeX::Table;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 
-use version; our $VERSION = qv('0.9.12');
+use version; our $VERSION = qv('0.9.13');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -30,31 +30,36 @@ use Module::Pluggable
 
 use Text::Wrap qw(wrap);
 
-for my $attr (qw(label maincaption shortcaption caption caption_top coldef coldef_strategy
-    columns_like_header text_wrap header_sideways width maxwidth width_environment
+for my $attr (
+    qw(label maincaption shortcaption caption caption_top coldef coldef_strategy
+    columns_like_header continued text_wrap header_sideways width maxwidth width_environment
     custom_tabular_environment position fontsize fontfamily callback tabletail xentrystretch
-    resizebox sideways star _data_summary)) {
-    has $attr => (is => 'rw', default => 0);
+    resizebox sideways star _data_summary)
+    )
+{
+    has $attr => ( is => 'rw', default => 0 );
 }
 
 has 'custom_template' => ( is => 'rw', isa => 'Str', default => 0 );
-has 'filename'        => ( is => 'rw', isa => 'Str', default => 'latextable.tex' );
-has 'foottable'       => ( is => 'rw', isa => 'Str', default => q{} );
-has 'type'            => ( is => 'rw', default => 'std' );
-has '_type_obj'       => ( is => 'rw' );
-has 'header'          => ( is => 'rw', default => sub { [] } );
-has 'data'            => ( is => 'rw', default => sub { [] } );
-has 'environment'     => ( is => 'rw', default => 1 );
-has 'theme'           => ( is => 'rw', default => 'Zurich' );
-has 'predef_themes'   => ( is => 'rw', default => sub { {} } );
-has 'custom_themes'   => ( is => 'rw', default => sub { {} } );
+has 'filename'  => ( is => 'rw', isa => 'Str', default => 'latextable.tex' );
+has 'foottable' => ( is => 'rw', isa => 'Str', default => q{} );
+has 'type' => ( is => 'rw', default => 'std' );
+has '_type_obj' => ( is => 'rw' );
+has 'header' => ( is => 'rw', default => sub { [] } );
+has 'data'   => ( is => 'rw', default => sub { [] } );
+has 'environment'   => ( is => 'rw', default => 1 );
+has 'theme'         => ( is => 'rw', default => 'Zurich' );
+has 'predef_themes' => ( is => 'rw', default => sub { {} } );
+has 'custom_themes' => ( is => 'rw', default => sub { {} } );
 
 for my $attr (qw(center left right _default_align)) {
-    has $attr   => ( is => 'rw', isa => 'Bool', predicate => "has_$attr" );
+    has $attr => ( is => 'rw', isa => 'Bool', predicate => "has_$attr" );
 }
 
-has 'tabletailmsg'  => ( is => 'rw', default => 'Continued on next page' );
-has 'tableheadmsg'  => ( is => 'rw', default => 'Continued from previous page' );
+has 'continuedmsg' => ( is => 'rw', default => '(continued)' );
+has 'tabletailmsg' => ( is => 'rw', default => 'Continued on next page' );
+has 'tableheadmsg' =>
+    ( is => 'rw', default => 'Continued from previous page' );
 
 # deprecated
 has 'table_environment' => ( is => 'rw', default => 'deprecated' );
@@ -86,27 +91,27 @@ sub generate_string {
     # analyze the data
     $self->_calc_data_summary( $self->get_data );
 
-
-    if ($self->get_type eq 'xtab') {
-        $self->set__type_obj( LaTeX::Table::Types::Xtab->new(_table_obj =>
-                $self) );
+    if ( $self->get_type eq 'xtab' ) {
+        $self->set__type_obj(
+            LaTeX::Table::Types::Xtab->new( _table_obj => $self ) );
     }
-    elsif ($self->get_type eq 'ctable') {
-        $self->set__type_obj( LaTeX::Table::Types::Ctable->new(_table_obj =>
-                $self) );
+    elsif ( $self->get_type eq 'ctable' ) {
+        $self->set__type_obj(
+            LaTeX::Table::Types::Ctable->new( _table_obj => $self ) );
     }
     else {
-        $self->set__type_obj( LaTeX::Table::Types::Std->new(_table_obj => $self) );
+        $self->set__type_obj(
+            LaTeX::Table::Types::Std->new( _table_obj => $self ) );
     }
 
-
-    my $code = $self->get__type_obj->generate_latex_code( $self->get_header, $self->get_data );
+    my $code = $self->get__type_obj->generate_latex_code( $self->get_header,
+        $self->get_data );
 
     return $code;
 }
 
 sub _load_themes {
-    my ( $self ) = @_;
+    my ($self) = @_;
     my %defs;
 
     for my $theme_obj ( $self->themes ) {
@@ -226,12 +231,12 @@ sub _check_options {
     if ( $self->get_width_environment eq 'tabular*' ) {
         $self->set_width_environment(0);
     }
-    
+
     $self->_check_align;
 
-    if ($self->get_maincaption && $self->get_shortcaption) {
-        $self->invalid_option_usage('maincaption, shortcaption',
-            'only one allowed.');
+    if ( $self->get_maincaption && $self->get_shortcaption ) {
+        $self->invalid_option_usage( 'maincaption, shortcaption',
+            'only one allowed.' );
     }
     if ( !$self->get_width && $self->get_width_environment eq 'tabularx' ) {
         $self->invalid_option_usage( 'width_environment',
@@ -245,36 +250,37 @@ sub _check_options {
 }
 
 sub _check_align {
-    my ($self) = @_;
-    my $cnt_def_alignments = 0;
+    my ($self)              = @_;
+    my $cnt_def_alignments  = 0;
     my $cnt_true_alignments = 0;
 
-    if ($self->has_center) {
+    if ( $self->has_center ) {
         $cnt_def_alignments++;
     }
-    if ($self->has_right) {
+    if ( $self->has_right ) {
         $cnt_def_alignments++;
     }
-    if ($self->has_left) {
+    if ( $self->has_left ) {
         $cnt_def_alignments++;
     }
-    if ($self->get_center) {
+    if ( $self->get_center ) {
         $cnt_true_alignments++;
     }
-    if ($self->get_right) {
+    if ( $self->get_right ) {
         $cnt_true_alignments++;
     }
-    if ($self->get_left) {
+    if ( $self->get_left ) {
         $cnt_true_alignments++;
     }
 
-    if ($cnt_true_alignments > 1) {
-        $self->invalid_option_usage('center, left, right',
-            'only one allowed.');
+    if ( $cnt_true_alignments > 1 ) {
+        $self->invalid_option_usage( 'center, left, right',
+            'only one allowed.' );
     }
-    if ($cnt_def_alignments == 0) {
+    if ( $cnt_def_alignments == 0 ) {
         $self->set__default_align(1);
-    } else {
+    }
+    else {
         $self->set__default_align(0);
     }
     return;
@@ -378,7 +384,6 @@ sub generate {
         or $self->_ioerror( 'close', $OS_ERROR );
     return 1;
 }
-
 
 sub _default_coldef_strategy {
     my ($self) = @_;
@@ -517,6 +522,7 @@ ROW:
     $self->set__data_summary( \@summary );
     return;
 }
+
 sub _apply_header_formatting {
     my ( $self, $col, $aligning ) = @_;
     my $theme = $self->get_theme_settings;
@@ -527,12 +533,14 @@ sub _apply_header_formatting {
         $col = $self->_add_mc_def(
             { value => $col, align => 'c', cols => '1' } );
     }
-    if (length $col) {
+    if ( length $col ) {
         if ( defined $theme->{'HEADER_FONT_STYLE'} ) {
-            $col = $self->_add_font_family( $col, $theme->{'HEADER_FONT_STYLE'} );
+            $col = $self->_add_font_family( $col,
+                $theme->{'HEADER_FONT_STYLE'} );
         }
         if ( defined $theme->{'HEADER_FONT_COLOR'} ) {
-            $col = $self->_add_font_color( $col, $theme->{'HEADER_FONT_COLOR'} );
+            $col = $self->_add_font_color( $col,
+                $theme->{'HEADER_FONT_COLOR'} );
         }
     }
     return $col;
@@ -568,19 +576,12 @@ sub _get_row_array {
     my @cols_defs = map { $self->_get_mc_def($_) } @{$cols_ref};
     my @cols      = ();
     my $theme     = $self->get_theme_settings;
-    my $vlines    = $theme->{'VERTICAL_LINES'};
+    my $vlines    = $theme->{'VERTICAL_RULES'};
     my $v0        = q{|} x $vlines->[0];
     my $v1        = q{|} x $vlines->[1];
     my $v2        = q{|} x $vlines->[2];
     my $j         = 0;
     my $col_id    = 0;
-    if ( $is_header && $self->get_header_sideways() ) {
-
-        for my $col_def (@cols_defs) {
-            $col_def->{value}
-                = '\begin{sideways}' . $col_def->{value} . '\end{sideways}';
-        }
-    }
     for my $col_def (@cols_defs) {
         if ( !$is_header && $self->get_columns_like_header ) {
         HEADER_COLUMN:
@@ -653,7 +654,7 @@ sub _get_row_array {
 
 sub _get_row_code {
     my ( $self, $cols_ref, $bgcolor, $is_header ) = @_;
-    my $cols = $self->_get_row_array($cols_ref, $bgcolor, $is_header);
+    my $cols = $self->_get_row_array( $cols_ref, $bgcolor, $is_header );
     return join( ' & ', @{$cols} ) . "\\\\\n";
 }
 
@@ -725,8 +726,9 @@ sub _add_font_color {
 
 sub _get_coldef_type_col_suffix {
     my ($self) = @_;
-    if ( $self->get_width_environment eq 'tabularx' || $self->get_type eq
-        'ctable') {
+    if (   $self->get_width_environment eq 'tabularx'
+        || $self->get_type eq 'ctable' )
+    {
         return '_COL_X';
     }
     if ( $self->get_width_environment eq 'tabulary' ) {
@@ -746,7 +748,7 @@ sub _get_coldef_type_col_suffix {
 sub _get_coldef_code {
     my ( $self, $data ) = @_;
     my @cols   = $self->_get_data_summary();
-    my $vlines = $self->get_theme_settings->{'VERTICAL_LINES'};
+    my $vlines = $self->get_theme_settings->{'VERTICAL_RULES'};
 
     my $v0 = q{|} x $vlines->[0];
     my $v1 = q{|} x $vlines->[1];
@@ -767,14 +769,18 @@ sub _get_coldef_code {
         for my $attribute ( sort @attributes ) {
             if ( $attribute =~ m{ \A $col $typesuffix \z }xms ) {
                 $align = $strategy->{$attribute};
-            # for _X and _Y, use default if no special defs are found     
-            } elsif ( ( $typesuffix eq '_COL_X' || $typesuffix eq '_COL_Y' ) && $attribute =~ m{ \A $col _COL \z }xms ) {
+
+                # for _X and _Y, use default if no special defs are found
+            }
+            elsif ( ( $typesuffix eq '_COL_X' || $typesuffix eq '_COL_Y' )
+                && $attribute =~ m{ \A $col _COL \z }xms )
+            {
                 $align = $strategy->{$attribute};
             }
         }
 
         if ( $i == 0 ) {
-            if (defined $self->get_theme_settings->{'STUB_ALIGN'}) {
+            if ( defined $self->get_theme_settings->{'STUB_ALIGN'} ) {
                 $align = $self->get_theme_settings->{'STUB_ALIGN'};
             }
             $table_def .= $v0 . $align . $v1;
@@ -786,8 +792,12 @@ sub _get_coldef_code {
             $table_def .= $align . $v2;
         }
         $i++;
-        if ( $i == 1 && $self->get_width && !$self->get_width_environment && $self->get_type ne 'ctable' ) {
-            $table_def .= '@{\extracolsep{\fill}}'
+        if (   $i == 1
+            && $self->get_width
+            && !$self->get_width_environment
+            && $self->get_type ne 'ctable' )
+        {
+            $table_def .= '@{\extracolsep{\fill}}';
         }
     }
     return $table_def;
@@ -862,7 +872,8 @@ sub get_available_themes {
         ( %{ $self->get_predef_themes }, %{ $self->get_custom_themes } ) };
 }
 
-no Moose; 1;    # Magic true value required at end of module
+no Moose;
+1;    # Magic true value required at end of module
 __END__
 
 =head1 NAME
@@ -871,7 +882,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.12
+This document describes LaTeX::Table version 0.9.13
 
 =head1 SYNOPSIS
 
@@ -986,8 +997,8 @@ as string.
 
 =item C<$table-E<gt>get_available_themes()>
 
-Returns an hash reference to all available (predefined and customs) themes. 
-See L<"THEMES"> for details.
+Returns an hash reference to all available themes.  See L<"THEMES"> for
+details.
 
   for my $theme ( keys %{ $table->get_available_themes } ) {
     ...
@@ -1076,7 +1087,7 @@ And you will get a table like this:
   | Emu   |   33.33 |
   +-------+---------+
 
-An empty column array will produce a horizontal line:
+An empty column array will produce a horizontal rule (line):
 
   $table->set_data([ [ 'Gnu', '92.59' ], [], [ 'Emu', '33.33' ] ]);
 
@@ -1095,14 +1106,14 @@ formatting. So,
 
   $table->set_data([ [ 'Gnu', '92.59' ], ['\hline'], [ 'Emu', '33.33' ] ]);
 
-is equivalent to the example above (except that there always the correct line
+is equivalent to the example above (except that there always the correct rule
 command is used, i.e. C<\midrule> vs. C<\hline>).
 
 =item C<custom_template> 
 
 The table types listed above use the L<Template> toolkit internally. These
-tempates are very flexible and powerful, but you can also provide a custom
-template.
+type tempates are very flexible and powerful, but you can also provide a
+custom template:
 
   # Returns the header and data formatted in LaTeX code. Nothing else.
   $table->set_custom_template('[% HEADER_CODE %][% DATA_CODE %]');
@@ -1189,6 +1200,18 @@ Default 0. Requires C<environment>.
 
 Same as C<maincaption>, but does not appear in the caption, only in the table
 listing. Default 0. Requires C<environment>.
+
+=item C<continued>
+
+If true, then the table counter will be decremented by one and the
+C<continuedmsg> is appended to the caption. Useful for splitting tables. Default 0.
+
+  $table->set_continued(1);
+
+=item C<continuedmsg>
+
+If get_continued() returns a true value, then this text is appended to the
+caption. Default '(continued)'.
 
 =item C<center>, C<right>, C<left>
 
@@ -1526,8 +1549,8 @@ rotate all headers, use a callback function B<instead>:
 Multicolumns are defined in LaTeX with
 C<\multicolumn{$cols}{$alignment}{$text}>. This module supports a simple 
 shortcut of the format C<$text:$cols$alignment>. For example, C<Item:2c> is 
-equivalent to C<\multicolumn{2}{c}{Item}>. Note that vertical lines (C<|>) are
-automatically added here according the LINES settings in the theme. 
+equivalent to C<\multicolumn{2}{c}{Item}>. Note that vertical rules (C<|>) are
+automatically added here according the rules settings in the theme. 
 See L<LaTeX::Table::Themes::ThemeI>. C<LaTeX::Table> also uses this shortcut to determine
 the column ids. So in this example,
 

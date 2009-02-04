@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-30 15:18:13 +0100 (Fri, 30 Jan 2009) $
-# $Revision: 1278 $
+#     $Date: 2009-02-04 12:25:08 +0100 (Wed, 04 Feb 2009) $
+# $Revision: 1307 $
 #############################################################################
 
 package LaTeX::Table::Types::Ctable;
@@ -10,10 +10,11 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1278 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1307 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
-{[% COLORDEF_CODE %][% FONTSIZE_CODE %][% FONTFAMILY_CODE %][% EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% BEGIN_RESIZEBOX%]
+{[% DEFINE_COLORS_CODE %][% FONTSIZE_CODE %][% FONTFAMILY_CODE %][%
+EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RESIZEBOX_BEGIN_CODE %]
 \ctable[[% IF CAPTION %]caption = {[% CAPTION %]},
 [% IF SHORTCAPTION %]cap = {[% SHORTCAPTION %]},
 [% END %][% UNLESS CAPTION_TOP %]botcap,
@@ -26,9 +27,10 @@ my $template =<<'EOT'
 [% END %][% IF RIGHT %]right,
 [% END %][% IF SIDEWAYS %]sideways,
 [% END %][% IF STAR %]star,
+[% END %][% IF CONTINUED %]continued = {[% CONTINUEDMSG %]},
 [% END %]]{[% COLDEF %]}{[% FOOTTABLE %]}{
 [% RULES_COLOR_GLOBAL %][% HEADER_CODE %][% DATA_CODE %]}
-[% END_RESIZEBOX %]}
+[% RESIZEBOX_END_CODE %]}
 EOT
 ;
 

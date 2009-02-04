@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-30 15:18:13 +0100 (Fri, 30 Jan 2009) $
-# $Revision: 1278 $
+#     $Date: 2009-02-04 12:25:08 +0100 (Wed, 04 Feb 2009) $
+# $Revision: 1307 $
 #############################################################################
 
 package LaTeX::Table::Types::Std;
@@ -10,17 +10,18 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1278 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1307 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
-[% COLORDEF_CODE %][% IF ENVIRONMENT %]\begin{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% IF POSITION %][[% POSITION %]][% END %]
+[%IF CONTINUED %]\addtocounter{table}{-1}[% END %][% DEFINE_COLORS_CODE %][% IF ENVIRONMENT %]\begin{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% IF POSITION %][[% POSITION %]][% END %]
 [% FONTSIZE_CODE %][% FONTFAMILY_CODE %][% RULES_WIDTH_GLOBAL %][% IF CENTER %]\centering
 [% END %][% IF LEFT %]\raggedright
 [% END %][% IF RIGHT %]\raggedleft
-[% END %][% IF CAPTION_TOP %][% IF CAPTION %]\[% CAPTION_CMD %][% IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %]}
-[% END %][% END %][% END %][% EXTRA_ROW_HEIGHT %][% BEGIN_RESIZEBOX%]\begin{[% TABULAR_ENVIRONMENT %]}[% IF WIDTH %]{[% WIDTH %]}[% END %]{[% COLDEF %]}
-[% RULES_COLOR_GLOBAL %][% HEADER_CODE %][% DATA_CODE %]\end{[% TABULAR_ENVIRONMENT %]}[% END_RESIZEBOX %][% IF ENVIRONMENT %][% UNLESS CAPTION_TOP %][% IF CAPTION %]
-\[% CAPTION_CMD %][% IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %]}[% END %][% END %][%IF LABEL %]
+[% END %][% IF CAPTION_TOP %][% IF CAPTION %]\[% CAPTION_CMD %][% IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][% END %]}
+[% END %][% END %][% END %][% EXTRA_ROW_HEIGHT %][% RESIZEBOX_BEGIN_CODE %]\begin{[% TABULAR_ENVIRONMENT %]}[% IF WIDTH %]{[% WIDTH %]}[% END %]{[% COLDEF %]}
+[% RULES_COLOR_GLOBAL %][% HEADER_CODE %][% DATA_CODE %]\end{[%
+TABULAR_ENVIRONMENT %]}[% RESIZEBOX_END_CODE %][% IF ENVIRONMENT %][% UNLESS CAPTION_TOP %][% IF CAPTION %]
+\[% CAPTION_CMD %][% IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][% END %]}[% END %][% END %][%IF LABEL %]
 \label{[% LABEL %]}[% END %]
 \end{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% END %]
 EOT

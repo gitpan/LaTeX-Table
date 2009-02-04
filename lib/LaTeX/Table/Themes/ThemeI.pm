@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-30 13:42:41 +0100 (Fri, 30 Jan 2009) $
-# $Revision: 1277 $
+#     $Date: 2009-02-04 13:12:40 +0100 (Wed, 04 Feb 2009) $
+# $Revision: 1310 $
 #############################################################################
 
 package LaTeX::Table::Themes::ThemeI;
@@ -12,9 +12,22 @@ use warnings;
 use Moose::Role;
 
 use version;
-our ($VERSION) = '$Revision: 1277 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1310 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 requires '_definition';
+
+around '_definition' => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $ret = $orig->($self, @_);
+    for my $theme (keys %{$ret}) {
+        if (defined $ret->{$theme}->{BOOKTABS} && $ret->{$theme}->{BOOKTABS}) {
+                $ret->{$theme}->{RULES_CMD} =
+                    [ '\toprule', '\midrule', '\midrule', '\bottomrule' ];
+       }
+    }
+    return $ret;
+};
 
 1;
 
@@ -41,8 +54,8 @@ LaTeX::Table::Themes::ThemeI - Interface for LaTeX table themes.
           'DATA_BG_COLOR_EVEN' => 'latextbl!10',
           'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{93,127,114}',
           'HEADER_CENTERED'    => 1,
-          'VERTICAL_LINES'     => [ 1, 0, 0 ],
-          'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
+          'VERTICAL_RULES'     => [ 1, 0, 0 ],
+          'HORIZONTAL_RULES'   => [ 1, 1, 0 ],
           'BOOKTABS'           => 0,
           'EXTRA_ROW_HEIGHT'   => '1pt',
       }};
@@ -71,8 +84,8 @@ A theme is defined as an hash reference containing all options:
                   'DATA_BG_COLOR_ODD'  => 'blue!30',
                   'DATA_BG_COLOR_EVEN' => 'blue!10',
                   'CAPTION_FONT_STYLE' => 'sc',
-                  'VERTICAL_LINES'     => [ 1, 2, 1 ],
-                  'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+                  'VERTICAL_RULES'     => [ 1, 2, 1 ],
+                  'HORIZONTAL_RULES'   => [ 1, 2, 0 ],
                   'EXTRA_ROW_HEIGHT'   => '2pt',
                   'BOOKTABS'           => 0,
               },
@@ -100,26 +113,62 @@ You can define colors with C<DEFINE_COLORS>, for example:
 
   'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
 
-=item Lines
+=item Rules
 
-C<VERTICAL_LINES>, C<HORIZONTAL_LINES>. A reference to an array with three
-integers, e.g. C<[ 1, 2, 0 ]>. The first integer defines the number of outer
-lines. The second the number of lines after the header and after the first
-column. The third is the number of inner lines. For example I<Dresden> is
-defined as:
+=over 
+
+=item C<VERTICAL_RULES>, C<HORIZONTAL_RULES> 
+
+A reference to an array with three integers, e.g. C<[ 1, 2, 0 ]>. The first
+integer defines the number of outer rules. The second the number of rules
+after the header and after the first column. The third is the number of inner
+rules. For example I<Dresden> is defined as:
 
   'Dresden' => {
       ...  
-      'VERTICAL_LINES'     => [ 1, 2, 1 ],
-      'HORIZONTAL_LINES'   => [ 1, 2, 0 ],
+      'VERTICAL_RULES'     => [ 1, 2, 1 ],
+      'HORIZONTAL_RULES'   => [ 1, 2, 0 ],
   }
 
-The first integers define one outer line - vertical and horizontal. So a box
-is drawn around the table. The second integers define two lines between header
-and table and two vertical lines between first and second column. And finally
-the third integers define that columns are separated by a single vertical line
-whereas rows are not separated by horizontal lines.
-            
+The first integers define one outer rule - vertical and horizontal. So a box
+is drawn around the table. The second integers define two rules between header
+and table and two vertical rules between first and second column. And finally
+the third integers define that columns are separated by a single vertical
+rule whereas rows are not separated by horizontal lines.
+
+=item C<RULES_COLOR_GLOBAL>
+
+If your theme uses the C<colortbl> LaTeX package, this command should handle
+the coloring of the rules. See the C<colortbl> documentation.
+
+  'RULES_COLOR_GLOBAL' =>
+      '\arrayrulecolor{white}\doublerulesepcolor{black}',
+
+=item C<RULES_WIDTH_GLOBAL>
+
+Code that controls the width of the rules. See for example the C<colortbl>
+documentation.
+
+ 'RULES_WIDTH_GLOBAL' =>
+     '\setlength\arrayrulewidth{1pt}\setlength\doublerulesep{0pt}',
+
+=item RULES_CMD
+
+A reference to an array with four LaTeX commands for the top, mid (between header and
+data), inner and bottom rules. 
+
+  RULES_CMD => [ '\toprule', '\midrule', '\midrule', '\bottomrule' ];
+
+=item C<BOOKTABS>
+
+Use the C<booktabs> LaTeX package for "Publication quality tables". Instead of
+C<\hline>, C<LaTeX::Table> then uses C<\toprule>, C<\midrule> and
+C<\bottomrule>.  0 (don't use this package) or 1 (use it). A shortcut for
+
+  RULES_CMD => [ '\toprule', '\midrule', '\midrule', '\bottomrule' ];
+
+=back
+
 =item Misc
 
 =over 
@@ -140,21 +189,6 @@ This controls the alignment of the header columns, excluding the stub when
 C<STUB_ALIGN> is defined. Valid values are 0 (not centered) or 1 (centered).
 Typically, it is recommended to center headers, but sometimes this does not
 look right. In this case, (left) align the header manually.
-
-=item C<RULES_COLOR_GLOBAL>
-
-If your theme uses the C<colortbl> LaTeX package, this command should handle
-the coloring of the rules. See the C<colortbl> documentation.
-
-  'RULES_COLOR_GLOBAL' => 
-       '\setlength\arrayrulewidth{2pt}\arrayrulecolor{blue}' .
-       '\setlength\doublerulesep{2pt}\doublerulesepcolor{yellow}',
-
-=item C<BOOKTABS>
-
-Use the C<booktabs> LaTeX package for "Publication quality tables". Instead of
-C<\hline>, C<LaTeX::Table> then uses C<\toprule>, C<\midrule> and
-C<\bottomrule>.  0 (don't use this package) or 1 (use it).
 
 =back
 

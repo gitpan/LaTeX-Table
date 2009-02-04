@@ -9,6 +9,7 @@ TODO
 bin/csv2pdf
 bin/ltpretty
 examples/generate_examples.pl
+examples/imdbtop40.dat
 examples/examples.pdf
 lib/LaTeX/Table.pm
 lib/LaTeX/Table/Types/TypeI.pm

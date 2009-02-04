@@ -1,4 +1,4 @@
-use Test::More tests => 19;
+use Test::More tests => 20;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -99,6 +99,37 @@ is_deeply(
     'with table environment'
 );
 
+$table->set_continued(1);
+$expected_output = <<'EOT'
+\addtocounter{table}{-1}\begin{table}
+\centering
+\begin{tabular}{|l||r|r|}
+\hline
+\multicolumn{1}{|c||}{\textbf{Name}} & \multicolumn{2}{c|}{\textbf{Beers}}      \\
+\multicolumn{1}{|c||}{\textbf{}}     & \multicolumn{1}{c|}{\textbf{before 4pm}} & \multicolumn{1}{c|}{\textbf{after 4pm}} \\
+\hline
+\hline
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 & 5  \\
+Otto   & 1 & 3  \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
+\hline
+\end{tabular}
+\caption[Beer Counter]{\textbf{Beer Counter. }Number of beers before and after 4pm. (continued)}
+\label{beercounter}
+\end{table}
+EOT
+    ;
+$output = $table->generate_string();
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'with table environment'
+);
+
+$table->set_continued(0);
 # without label and maincaption
 $table->set_environment(1);
 $table->set_label('');
@@ -579,9 +610,9 @@ $expected_output = <<'EOT'
 \setlength{\extrarowheight}{1pt}
 \begin{tabular}{|rlllll|}
 \hline
-\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Time}\end{sideways}} & \multicolumn{5}{>{\columncolor{latextbl}}c|}{\begin{sideways}\color{white}\textbf{Weekdays}\end{sideways}} \\
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Time\end{sideways}}} & \multicolumn{5}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{\begin{sideways}Weekdays\end{sideways}}} \\
 \hline
-\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{}\end{sideways}}     & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Monday}\end{sideways}}    & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Tuesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Wednesday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\begin{sideways}\color{white}\textbf{Thursday}\end{sideways}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\begin{sideways}\color{white}\textbf{Friday}\end{sideways}} \\
+\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}\end{sideways}}}     & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Monday\end{sideways}}}    & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Tuesday\end{sideways}}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Wednesday\end{sideways}}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Thursday\end{sideways}}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{\begin{sideways}Friday\end{sideways}}} \\
 \hline
 \rowcolor{latextbl!25}9.00  &  &  &  &  &  \\
 \rowcolor{latextbl!10}12.00 &  &  &  &  &  \\

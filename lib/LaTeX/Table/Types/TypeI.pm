@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-30 15:18:13 +0100 (Fri, 30 Jan 2009) $
-# $Revision: 1278 $
+#     $Date: 2009-02-04 13:01:31 +0100 (Wed, 04 Feb 2009) $
+# $Revision: 1308 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -13,7 +13,7 @@ use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1278 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1308 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 use Scalar::Util qw(reftype);
 
@@ -64,39 +64,41 @@ sub generate_latex_code {
     my $header_code = $self->_get_header_columns_code($header);
 
     my $template_vars = {
-        'CENTER'              => $center,
-        'LEFT'                => $tbl->get_left(),
-        'RIGHT'               => $tbl->get_right(),
-        'ENVIRONMENT'         => $tbl->get_environment,
-        'FONTFAMILY'          => $tbl->get_fontfamily(),
-        'FONTFAMILY_CODE'     => $self->_get_fontfamily_code(),
-        'FONTSIZE'            => $tbl->get_fontsize(),
-        'FONTSIZE_CODE'       => $self->_get_fontsize_code(),
-        'FOOTTABLE'           => $tbl->get_foottable(),
-        'POSITION'            => $tbl->get_position(),
-        'CAPTION_TOP'         => $tbl->get_caption_top(),
-        'CAPTION'             => $self->_get_caption(),
-        'CAPTION_CMD'         => $self->_get_caption_command_code(),
-        'SHORTCAPTION'        => $self->_get_shortcaption(),
-        'SIDEWAYS'            => $tbl->get_sideways(),
-        'STAR'                => $tbl->get_star(),
-        'EXTRA_ROW_HEIGHT'    => $self->_get_extra_row_height_code(),
-        'RULES_COLOR_GLOBAL'  => $self->_get_rules_color_global_code(),
-        'RULES_WIDTH_GLOBAL'  => $self->_get_rules_width_global_code(),
-        'BEGIN_RESIZEBOX'     => $self->_get_begin_resizebox_code(),
-        'WIDTH'               => $tbl->get_width(),
-        'MAXWIDTH'            => $tbl->get_maxwidth(),
-        'COLDEF'              => $table_def,
-        'LABEL'               => $tbl->get_label(),
-        'HEADER_CODE'         => $header_code,
-        'TABLEHEAD'           => $self->_get_tablehead_code( $header_code ),
-        'TABLETAIL'           => $self->_get_tabletail_code( $data, 0 ),
-        'TABLETAIL_LAST'      => $self->_get_tabletail_code( $data, 1 ),
-        'XENTRYSTRETCH_CODE'  => $self->_get_xentrystretch_code(),
-        'DATA_CODE'           => $self->_get_data_code(),
-        'END_RESIZEBOX'       => $self->_get_end_resizebox_code(),
-        'TABULAR_ENVIRONMENT' => $self->_get_tabular_environment(),
-        'COLORDEF_CODE'       => $self->_get_colordef_code,
+        'CENTER'               => $center,
+        'LEFT'                 => $tbl->get_left(),
+        'RIGHT'                => $tbl->get_right(),
+        'ENVIRONMENT'          => $tbl->get_environment,
+        'FONTFAMILY'           => $tbl->get_fontfamily(),
+        'FONTFAMILY_CODE'      => $self->_get_fontfamily_code(),
+        'FONTSIZE'             => $tbl->get_fontsize(),
+        'FONTSIZE_CODE'        => $self->_get_fontsize_code(),
+        'FOOTTABLE'            => $tbl->get_foottable(),
+        'POSITION'             => $tbl->get_position(),
+        'CAPTION_TOP'          => $tbl->get_caption_top(),
+        'CAPTION'              => $self->_get_caption(),
+        'CAPTION_CMD'          => $self->_get_caption_command(),
+        'CONTINUED'            => $tbl->get_continued(),
+        'CONTINUEDMSG'         => $tbl->get_continuedmsg(),
+        'SHORTCAPTION'         => $self->_get_shortcaption(),
+        'SIDEWAYS'             => $tbl->get_sideways(),
+        'STAR'                 => $tbl->get_star(),
+        'EXTRA_ROW_HEIGHT'     => $self->_get_extra_row_height_code(),
+        'RULES_COLOR_GLOBAL'   => $self->_get_rules_color_global_code(),
+        'RULES_WIDTH_GLOBAL'   => $self->_get_rules_width_global_code(),
+        'RESIZEBOX_BEGIN_CODE' => $self->_get_begin_resizebox_code(),
+        'RESIZEBOX_END_CODE'   => $self->_get_end_resizebox_code(),
+        'WIDTH'                => $tbl->get_width(),
+        'MAXWIDTH'             => $tbl->get_maxwidth(),
+        'COLDEF'               => $table_def,
+        'LABEL'                => $tbl->get_label(),
+        'HEADER_CODE'          => $header_code,
+        'TABLEHEAD'            => $self->_get_tablehead_code( $header_code ),
+        'TABLETAIL'            => $self->_get_tabletail_code( $data, 0 ),
+        'TABLETAIL_LAST'       => $self->_get_tabletail_code( $data, 1 ),
+        'XENTRYSTRETCH_CODE'   => $self->_get_xentrystretch_code(),
+        'DATA_CODE'            => $self->_get_data_code(),
+        'TABULAR_ENVIRONMENT'  => $self->_get_tabular_environment(),
+        'DEFINE_COLORS_CODE'   => $self->_get_colordef_code,
     };
 
     my $template_obj = Template->new();
@@ -131,7 +133,7 @@ ROW:
 
         # empty rows produce a horizontal line
         if ( !@{$row} ) {
-            push @code, $self->_get_single_hline_code();
+            push @code, $self->_get_hline_code( $self->_RULE_INNER_ID, 1);
             next ROW;
         }
         else {
@@ -194,7 +196,7 @@ sub _align_code {
     return $code;
 }
 
-sub _get_caption_command_code {
+sub _get_caption_command {
     my ($self)    = @_;
     my $tbl       = $self->_table_obj;
     my $c_caption = 'caption';
@@ -251,10 +253,17 @@ sub _get_end_resizebox_code {
 
 sub _get_caption {
     my ( $self, $header ) = @_;
+    my $caption = q{};
     my $s_caption = q{};
     my $tbl       = $self->_table_obj;
-    if ( !$tbl->get_caption ) {
-        return 0;
+
+    if ( !$tbl->get_caption) {
+        if (!$tbl->get_maincaption) {
+            return 0;
+        }
+    }
+    else {
+        $caption = $tbl->get_caption;
     }
 
     my $theme = $tbl->get_theme_settings;
@@ -268,7 +277,7 @@ sub _get_caption {
         }
     }
 
-    return $tmp . $tbl->get_caption;
+    return $tmp . $caption;
 }
 
 sub _get_shortcaption {
@@ -311,32 +320,23 @@ sub _get_rules_width_global_code {
     return q{};
 }
 
-
-
 sub _get_hline_code {
-    my ( $self, $id ) = @_;
+    my ( $self, $id, $single ) = @_;
     my $tbl    = $self->_table_obj;
     my $theme  = $tbl->get_theme_settings;
-    my $hlines = $theme->{'HORIZONTAL_LINES'};
-    my $line   = 'hline';
-    if ( defined $theme->{'BOOKTABS'} && $theme->{'BOOKTABS'} ) {
-        my @line_type = qw(toprule midrule midrule bottomrule);
-        $line = $line_type[$id];
+    my $hlines = $theme->{'HORIZONTAL_RULES'};
+    my $line   = '\hline';
+    if ( defined $theme->{RULES_CMD} && reftype $theme->{RULES_CMD} eq 'ARRAY') {
+        $line = $theme->{RULES_CMD}->[$id];
     }
     if ( $id == $self->_RULE_BOTTOM_ID ) {
         $id = 0;
     }
-    return "\\$line\n" x $hlines->[$id];
-}
-
-sub _get_single_hline_code {
-    my ( $self, $id ) = @_;
-    my $theme = $self->_table_obj->get_theme_settings;
-    my $line  = 'hline';
-    if ( defined $theme->{'BOOKTABS'} && $theme->{'BOOKTABS'} ) {
-        $line = 'midrule';
+    # just one line?
+    if (defined $single && $single) {
+        return "$line\n";
     }
-    return "\\$line\n";
+    return "$line\n" x $hlines->[$id];
 }
 
 ###########################################################################
@@ -439,7 +439,7 @@ CENTER_ROW:
     for my $row ( @{$header} ) {
         my @cols = @{$row};
         if ( scalar @cols == 0 ) {
-            push @code, $self->_get_single_hline_code();
+            push @code, $self->_get_hline_code( $self->_RULE_INNER_ID, 1);
             next CENTER_ROW;
         }
         if ( $tbl->_row_is_latex_command($row) ) {
@@ -450,7 +450,13 @@ CENTER_ROW:
         my $j = 0;
 
         for my $col (@cols) {
-
+            
+            if ( $tbl->get_header_sideways() ) {
+                my $col_def = $tbl->_get_mc_def($col);
+                $col_def->{value}
+                    = '\begin{sideways}' . $col_def->{value} . '\end{sideways}';
+                $col = $tbl->_get_mc_value($col_def);
+            }
             #next if $col =~ m{\A \\ }xms;
             if ( $tbl->get_callback ) {
                 $col = $tbl->_apply_callback( $i, $j, $col, 1 );
@@ -490,10 +496,8 @@ LaTeX::Table::Types::TypeI - Interface for LaTeX table types.
 This is the type interface (or L<Moose> role), that all type objects must use.
 L<LaTeX::Table> delegates the boring work of building the LaTeX code to type
 objects. It stores all information we have in easy to use L<"TEMPLATE
-VARIABLES">. L<LaTeX::Table> ships with very flexible templates
-(L<LaTeX::Table::Types::Std>, L<LaTeX::Table::Types::Ctable>,
-L<LaTeX::Table::Types::Xtab>) that should work in 99 percent, but you can also
-use the template variables defined here with custom templates.
+VARIABLES">. L<LaTeX::Table> ships with very flexible templates, but you can
+also use the template variables defined here to build custom templates.
 
 =head1 INTERFACE
 
@@ -505,13 +509,55 @@ use the template variables defined here with custom templates.
 
 =head1 TEMPLATE VARIABLES
 
-CAUTION: This API is not stable. Everything here is likely to be changed in
-the near future! 
+CAUTION: This API is not stable. If you build custom templates, they might not
+work in future versions!
 
-All options are accessable here, e.g. C<LABEL> returns the same value as
-get_label(). In addition, some variables already contain formatted LaTeX code:
+Most options are accessable here:
 
 =over
+
+=item C<CENTER, LEFT, RIGHT>
+
+Example:
+
+  [% IF CENTER %]\centering
+  [% END %]
+
+=item C<ENVIRONMENT, STAR, POSITION, SIDEWAYS>
+
+These options for floating environments are typically used like:
+
+  [% IF ENVIRONMENT %]\begin{[% ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF POSITION %][[% POSITION %]][% END %]
+  ...
+  [% END %]
+  # the tabular environment here
+  ...
+  [% IF ENVIRONMENT %] ...
+  \end{[% ENVIRONMENT %][% IF STAR %]*[% END %]}[% END %]
+
+=item C<CAPTION_TOP, CAPTION_CMD, SHORTCAPTION, CAPTION, CONTINUED, CONTINUEDMSG>
+
+The variables to build the caption command. Note that there is NO template for
+the C<maincaption> option. C<CAPTION> already includes this maincaption if
+specified.
+
+=item C<LABEL>
+
+The label:
+
+ [% IF LABEL %]\label{[% LABEL %]}[% END %]
+
+=item C<TABULAR_ENVIRONMENT, WIDTH, COLDEF>
+
+These three options define the tabular environment:
+
+  \begin{[% TABULAR_ENVIRONMENT %]}[% IF WIDTH %]{[% WIDTH %]}[% END %]{[% COLDEF %]}
+
+=back
+
+In addition, some variables already contain formatted LaTeX code:
+
+=over 
 
 =item C<HEADER_CODE>
 
@@ -534,11 +580,21 @@ The formatted data:
   Armadillo & frozen   & 8.99  \\
   \bottomrule
 
+=item C<FONTFAMILY_CODE, FONTSIZE_CODE>
+
+=item C<RESIZEBOX_BEGIN_CODE, RESIZEBOX_END_CODE>
+
+Everything between these two template variables is resized according the
+C<resizebox> option.
+
 =back
 
 =head1 SEE ALSO
 
 L<LaTeX::Table>
+
+The predefined templates: L<LaTeX::Table::Types::Std>,
+L<LaTeX::Table::Types::Ctable>, L<LaTeX::Table::Types::Xtab>
 
 =head1 AUTHOR
 

@@ -1,4 +1,4 @@
-use Test::More tests => 7;
+use Test::More tests => 9;
 use Test::NoWarnings;
 
 use lib 't/lib';
@@ -8,22 +8,22 @@ my $themes = {
     'Leipzig' => {
         'HEADER_FONT_STYLE' => 'sc',
         'HEADER_CENTERED'   => 1,
-        'VERTICAL_LINES'    => [ 1, 2, 1 ],
-        'HORIZONTAL_LINES'  => [ 1, 2, 0 ],
+        'VERTICAL_RULES'    => [ 1, 2, 1 ],
+        'HORIZONTAL_RULES'  => [ 1, 2, 0 ],
     },
     'Leipzig2' => {
         'HEADER_CENTERED'   => 1,
-        'VERTICAL_LINES'    => [ 1, 2, 1 ],
-        'HORIZONTAL_LINES'  => [ 1, 2, 0 ],
+        'VERTICAL_RULES'    => [ 1, 2, 1 ],
+        'HORIZONTAL_RULES'  => [ 1, 2, 0 ],
     },
     'Leipzig3' => {
-        'VERTICAL_LINES'    => [ 1, 2, 1 ],
-        'HORIZONTAL_LINES'  => [ 1, 2, 0 ],
+        'VERTICAL_RULES'    => [ 1, 2, 1 ],
+        'HORIZONTAL_RULES'  => [ 1, 2, 0 ],
     },
     'Leipzig3b' => {
         'HEADER_CENTERED'   => 0,
-        'VERTICAL_LINES'    => [ 1, 2, 1 ],
-        'HORIZONTAL_LINES'  => [ 1, 2, 0 ],
+        'VERTICAL_RULES'    => [ 1, 2, 1 ],
+        'HORIZONTAL_RULES'  => [ 1, 2, 0 ],
         'BOOKTABS'          => 0,
     },
 };
@@ -191,3 +191,64 @@ is_deeply(
     'custom search path'
 );
 
+is_deeply($table->get_available_themes->{Erfurt}->{RULES_CMD},[ '\toprule',
+    '\midrule', '\midrule', '\bottomrule' ], 'BOOKTABS shortcut' );
+
+
+$test_header = [ [ 'head1', 'head2', 'head3', 'head4' ], ];
+$test_data = [ 
+    [ 'row1', 'row1', 'row1', 'row1' ],  
+    [ 'row2', 'row2', 'row2', 'row2' ],  
+    [ 'row3', 'row3', 'row3', 'row3' ],  
+    [ 'row4', 'row4', 'row4', 'row4' ],  
+];
+
+my $custom_template = << 'EOT'
+[%IF CONTINUED %]\addtocounter{table}{-1}[% END %][% COLORDEF_CODE %][% IF
+ENVIRONMENT %]\begin{[% ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF POSITION %][[% POSITION %]][% END %][% END %]
+\processtable{[% IF CAPTION %][% CAPTION %][% END %][% IF CONTINUED %] [% CONTINUEDMSG %][% END %][% IF LABEL %]\label{[% LABEL %]}[% END %]}
+{\begin{[% TABULAR_ENVIRONMENT %]}{[% COLDEF %]}
+[% HEADER_CODE %][% DATA_CODE %]\end{[% TABULAR_ENVIRONMENT %]}}{[% FOOTTABLE %]}
+[% IF ENVIRONMENT %]\end{table}[% END %]
+EOT
+;
+
+$table = LaTeX::Table->new(
+    {   
+        caption           => 'This is table caption',
+        label             => 'Tab:01',
+        foottable         => 'This is a footnote',
+        position          => '!t',
+        header            => $test_header,
+        data              => $test_data,
+        custom_themes     => $themes,
+        theme             => 'Oxford',
+        custom_template   => $custom_template,
+    }
+);
+
+$expected_output = <<'EOT'
+\begin{table}[!t]
+\processtable{This is table caption\label{Tab:01}}
+{\begin{tabular}{llll}
+\toprule
+head1 & head2 & head3 & head4 \\
+\midrule
+row1 & row1 & row1 & row1 \\
+row2 & row2 & row2 & row2 \\
+row3 & row3 & row3 & row3 \\
+row4 & row4 & row4 & row4 \\
+\botrule
+\end{tabular}}{This is a footnote}
+\end{table}
+EOT
+;
+
+@expected_output = split "\n", $expected_output;
+$output = $table->generate_string();
+
+is_deeply(
+    [ split( "\n", $output ) ],
+    \@expected_output,
+    'custom search path'
+);

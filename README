@@ -1,4 +1,4 @@
-LaTeX-Table version 0.9.12
+LaTeX-Table version 0.9.13
 
 This module supports multipage tables via the xtab package.  For publication
 quality tables it utilizes the booktabs package. It also supports the tabularx

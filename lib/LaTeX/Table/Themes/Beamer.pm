@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-30 13:42:41 +0100 (Fri, 30 Jan 2009) $
-# $Revision: 1277 $
+#     $Date: 2009-02-03 17:09:45 +0100 (Tue, 03 Feb 2009) $
+# $Revision: 1298 $
 #############################################################################
 
 package LaTeX::Table::Themes::Beamer;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Themes::ThemeI';
 
 use version;
-our ($VERSION) = '$Revision: 1277 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1298 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
     my $themes = {
@@ -22,8 +22,8 @@ sub _definition {
             'DATA_BG_COLOR_EVEN' => 'latextbl!10',
             'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
             'HEADER_CENTERED'    => 1,
-            'VERTICAL_LINES'     => [ 1, 0, 0 ],
-            'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
+            'VERTICAL_RULES'     => [ 1, 0, 0 ],
+            'HORIZONTAL_RULES'   => [ 1, 1, 0 ],
             'BOOKTABS'           => 0,
             'EXTRA_ROW_HEIGHT'   => '1pt',
         },
@@ -35,8 +35,8 @@ sub _definition {
             'DATA_BG_COLOR_EVEN' => 'latextbl!10',
             'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
             'HEADER_CENTERED'    => 1,
-            'VERTICAL_LINES'     => [ 1, 0, 0 ],
-            'HORIZONTAL_LINES'   => [ 1, 0, 0 ],
+            'VERTICAL_RULES'     => [ 1, 0, 0 ],
+            'HORIZONTAL_RULES'   => [ 1, 0, 0 ],
             'BOOKTABS'           => 0,
             'EXTRA_ROW_HEIGHT'   => '1pt',
         },
@@ -48,8 +48,8 @@ sub _definition {
             'DATA_BG_COLOR_EVEN' => 'latextbl!10',
             'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
             'HEADER_CENTERED'    => 1,
-            'VERTICAL_LINES'     => [ 1, 1, 1 ],
-            'HORIZONTAL_LINES'   => [ 1, 2, 1 ],
+            'VERTICAL_RULES'     => [ 1, 1, 1 ],
+            'HORIZONTAL_RULES'   => [ 1, 2, 1 ],
             'BOOKTABS'           => 0,
             'EXTRA_ROW_HEIGHT'   => '1pt',
             'RULES_COLOR_GLOBAL' =>
@@ -65,8 +65,8 @@ sub _definition {
             'DATA_BG_COLOR_EVEN' => 'latextbl!10',
             'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
             'HEADER_CENTERED'    => 1,
-            'VERTICAL_LINES'     => [ 0, 0, 0 ],
-            'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
+            'VERTICAL_RULES'     => [ 0, 0, 0 ],
+            'HORIZONTAL_RULES'   => [ 1, 1, 0 ],
             'BOOKTABS'           => 0,
             'EXTRA_ROW_HEIGHT'   => '1pt',
             'RULES_COLOR_GLOBAL' =>
@@ -82,8 +82,8 @@ sub _definition {
             'DATA_BG_COLOR_EVEN' => 'latextbl!10',
             'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
             'STUB_ALIGN' => 'l',
-            'VERTICAL_LINES'     => [ 0, 0, 0 ],
-            'HORIZONTAL_LINES'   => [ 0, 2, 1 ],
+            'VERTICAL_RULES'     => [ 0, 0, 0 ],
+            'HORIZONTAL_RULES'   => [ 0, 2, 1 ],
             'BOOKTABS'           => 0,
             'RULES_COLOR_GLOBAL' =>
                 '\arrayrulecolor{white}\doublerulesepcolor{black}',
@@ -99,8 +99,8 @@ sub _definition {
             'DATA_BG_COLOR_EVEN' => 'latextbl!10',
             'DEFINE_COLORS'      => '\definecolor{latextbl}{RGB}{78,130,190}',
             'STUB_ALIGN' => 'l',
-            'VERTICAL_LINES'     => [ 0, 0, 0 ],
-            'HORIZONTAL_LINES'   => [ 0, 2, 0 ],
+            'VERTICAL_RULES'     => [ 0, 0, 0 ],
+            'HORIZONTAL_RULES'   => [ 0, 2, 0 ],
             'BOOKTABS'           => 0,
             'RULES_COLOR_GLOBAL' =>
                 '\arrayrulecolor{white}\doublerulesepcolor{black}',
@@ -125,6 +125,8 @@ This module provides following themes:
 
   NYC
   NYC2  # same, but without midline after header
+  NYC3  # with a white grid
+  NYC3  # with black horizontal lines
   Redmond
   Redmond2 # same, but without horizontal lines 
 

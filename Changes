@@ -1,5 +1,12 @@
 Revision history for LaTeX-Table
 
+0.9.13 Wed  Feb 4   12:00:00 2009
+        - continued, continuedmsg options
+        - Minor Bug fixed: maincaption required caption.
+        - renamed *_LINES to *_RULES
+        - RULES_CMD in themes
+        - examples.pdf nicer
+
 0.9.12 Fri  Jan 30  15:00:00 2009
         - fontfamily
         - API change: size renamed to fontsize

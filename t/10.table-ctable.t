@@ -1,4 +1,4 @@
-use Test::More tests => 6;
+use Test::More tests => 7;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -190,3 +190,27 @@ EOT
 $output = $table->generate_string();
 is_deeply([ split("\n",$output) ], [split("\n",$expected_output)], 
     'uses _COL_X not specified');
+
+$table->set_continued(1);
+
+$expected_output =<<'EOT'
+{
+\ctable[center,
+continued = {(continued)},
+]{l>{\ttfamily}l}{}{
+\toprule
+\textbf{Website} & \multicolumn{1}{c}{\textbf{URL}} \\
+\midrule
+Slashdot  & http://www.slashdot.org  \\
+Perlmonks & http://www.perlmonks.org \\
+Google    & http://www.google.com    \\
+\bottomrule
+}
+}
+EOT
+;
+
+$output = $table->generate_string();
+is_deeply([ split("\n",$output) ], [split("\n",$expected_output)], 
+    'continued');
+

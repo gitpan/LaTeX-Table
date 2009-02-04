@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-30 13:42:41 +0100 (Fri, 30 Jan 2009) $
-# $Revision: 1277 $
+#     $Date: 2009-02-03 17:09:45 +0100 (Tue, 03 Feb 2009) $
+# $Revision: 1298 $
 #############################################################################
 
 package LaTeX::Table::Themes::Modern;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Themes::ThemeI';
 
 use version;
-our ($VERSION) = '$Revision: 1277 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1298 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
     my $themes = {
@@ -21,8 +21,8 @@ sub _definition {
                 'DEFINE_COLORS'      =>
                 '\definecolor{latextblgray}{gray}{0.7}',
                 'CAPTION_FONT_STYLE' => 'bf',
-                'VERTICAL_LINES'     => [ 1, 1, 1 ],
-                'HORIZONTAL_LINES'   => [ 1, 1, 0 ],
+                'VERTICAL_RULES'     => [ 1, 1, 1 ],
+                'HORIZONTAL_RULES'   => [ 1, 1, 0 ],
                 'BOOKTABS'           => 0,
             },
             'Muenchen' => {
@@ -32,8 +32,8 @@ sub _definition {
                 '\definecolor{latexttbl}{RGB}{78,130,190}',
                 'CAPTION_FONT_STYLE' => 'bf',
                 'DATA_BG_COLOR_EVEN' => 'latextbl!20',
-                'VERTICAL_LINES'     => [ 0, 0, 0 ],
-                'HORIZONTAL_LINES'   => [ 0, 0, 0 ],
+                'VERTICAL_RULES'     => [ 0, 0, 0 ],
+                'HORIZONTAL_RULES'   => [ 0, 0, 0 ],
                 'BOOKTABS'           => 1,
                 'EXTRA_ROW_HEIGHT'   => '1pt',
             },
