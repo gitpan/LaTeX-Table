@@ -1,10 +1,10 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-07 13:45:34 +0100 (Sat, 07 Feb 2009) $
-# $Revision: 1313 $
+#     $Date: 2009-02-23 20:05:36 +0100 (Mon, 23 Feb 2009) $
+# $Revision$
 #############################################################################
 
-package LaTeX::Table::Types::Xtab;
+package LaTeX::Table::Types::Longtable;
 use Moose;
 
 with 'LaTeX::Table::Types::TypeI';
@@ -14,53 +14,37 @@ our ($VERSION) = '$Revision: 1313 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
 {
-[%IF CONTINUED %]\addtocounter{table}{-1}[% END %][% DEFINE_COLORS_CODE %][%
-EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RULES_COLOR_GLOBAL %][%
-FONTSIZE_CODE %][% FONTFAMILY_CODE %][%IF SIDEWAYS %]\begin{landscape}[% END %][% IF CAPTION %][%IF CAPTION_TOP
-%]\topcaption[% ELSE %]\bottomcaption[% END %][%IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][% END %]}
-[% END %][% XENTRYSTRETCH %][% IF LABEL %]\label{[% LABEL %]}
-[% END %]
-[% TABLEHEAD %]
-[% TABLETAIL %]
-[% TABLETAIL_LAST %]
-[% IF CENTER %]\begin{center}
+[% IF CONTINUED %]\addtocounter{table}{-1}[% END 
+%][% DEFINE_COLORS_CODE %][% EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL
+%][% RULES_COLOR_GLOBAL %][% FONTSIZE_CODE %][% FONTFAMILY_CODE 
+%][%IF SIDEWAYS %]\begin{landscape}[% END 
+%][% IF CENTER %]\begin{center}
 [% END %][% IF LEFT %]\begin{flushleft}
 [% END %][% IF RIGHT %]\begin{flushright}
 [% END %][% RESIZEBOX_BEGIN_CODE %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF WIDTH %]{[%WIDTH %]}[% END %]{[% COLDEF %]}
+[% IF CAPTION %][%IF CAPTION_TOP %]\caption[%IF SHORTCAPTION %][[%
+SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][%
+END %][% IF LABEL %]\label{[% LABEL %]}[% END %]}\\
+[% END %][% END %][% HEADER_CODE %]\endfirsthead
+[% IF CAPTION %][% IF CAPTION_TOP %][% IF TABLEHEADMSG %]\caption[]{[% TABLEHEADMSG %]}\\
+[% END %][% END %][% END %]
+[% HEADER_CODE %]\endhead
+[% TABLETAIL %]\endfoot
+[% TABLETAIL_LAST %]
+[% IF CAPTION %][% UNLESS CAPTION_TOP %]\caption[%IF SHORTCAPTION %][[%
+SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][%
+END %][% IF LABEL %]\label{[% LABEL %]}[% END %]}\\
+[% END %][% END %]\endlastfoot
 [% DATA_CODE %]\end{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}
 [% RESIZEBOX_END_CODE %][% IF CENTER %]\end{center}[% END %][% IF LEFT
 %]\end{flushleft}[% END %][% IF RIGHT %]\end{flushright}[% END %][% IF
 SIDEWAYS %]\end{landscape}[% END %]
-} 
+}
 EOT
 ;
 
-has '+_tabular_environment' => (default => 'xtabular');
+has '+_tabular_environment' => (default => 'longtable');
 has '+_template'    => (default => $template);
-
-sub _get_tablehead_code {
-    my ($self, $code) =@_;
-    my $tbl = $self->_table_obj;
-
-    my $tablehead = q{};
-    my @summary   = $tbl->_get_data_summary();
-
-    if ( $tbl->get_caption_top && $tbl->get_tableheadmsg ) {
-        my $continued_caption = '\\multicolumn{'
-            . scalar(@summary)
-            . '}{c}{{ \normalsize \tablename\ \thetable: '
-            . $tbl->get_tableheadmsg
-            . "}}\\\\[\\abovecaptionskip]\n";
-        $tablehead
-            = "\\tablefirsthead{$code}\n\\tablehead{$continued_caption$code}\n";
-
-        #                $tablehead = "\\tablehead{$code}";
-    }
-    else {
-        $tablehead = "\\tablehead{$code}";
-    }
-    return $tablehead;
-}
 
 ###########################################################################
 # Usage      : $self->_get_tabletail_code(\@data, $final_tabletail);
@@ -93,23 +77,9 @@ sub _get_tabletail_code {
             . "}} \\\\\n";
     }
     if ($final_tabletail) {
-        return "\\tablelasttail{}";
+        return q{};
     }
-    return "\\tabletail{$code$linecode2}";
-}
-
-sub _get_xentrystretch_code {
-    my ($self) = @_;
-    my $tbl = $self->_table_obj;
-    if ( $tbl->get_xentrystretch ) {
-        my $xs = $tbl->get_xentrystretch();
-        if ( $xs !~ /\A-?(?:\d+(?:\.\d*)?|\.\d+)\z/xms ) {
-            $tbl->invalid_option_usage( 'xentrystretch',
-                'Not a number: ' . $tbl->get_xentrystretch );
-        }
-        return "\\xentrystretch{$xs}\n";
-    }
-    return q{};
+    return "$code$linecode2";
 }
 
 
@@ -118,7 +88,7 @@ __END__
 
 =head1 NAME
 
-LaTeX::Table::Types::Xtab - Create multi-page LaTeX tables with the xtabular package.
+LaTeX::Table::Types::Longtable - Create multi-page LaTeX tables with the longtable package.
 
 =head1 INTERFACE
 

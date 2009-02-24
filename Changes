@@ -1,5 +1,11 @@
 Revision history for LaTeX-Table
 
+0.9.14 Tue  Feb 24  10:00:00 2009
+        - Meyrin now default theme
+        - sideways now works also with xtab (lscape package)
+        - longtable package
+        - POD cleanups
+
 0.9.13 Wed  Feb 4   12:00:00 2009
         - continued, continuedmsg options
         - Minor Bug fixed: maincaption required caption.

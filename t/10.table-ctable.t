@@ -20,6 +20,7 @@ my $table = LaTeX::Table->new({ filename => 'out.tex',
                                 header    => $test_header,
                                 data      => $test_data,
                                 type      => 'ctable',
+                                theme             => 'Zurich',
                              });
 
 $table->set_foottable('\tnote{footnotes are placed under the table}');
@@ -167,7 +168,8 @@ $table = LaTeX::Table->new(
         coldef_strategy => {
             URL     => qr{ \A \s* http }xms,
             URL_COL => '>{\ttfamily}l',
-        }
+        },
+        theme    => 'Zurich',
     }
 );
 

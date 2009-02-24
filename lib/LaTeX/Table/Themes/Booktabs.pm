@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-03 17:09:45 +0100 (Tue, 03 Feb 2009) $
-# $Revision: 1298 $
+#     $Date: 2009-02-24 10:30:34 +0100 (Tue, 24 Feb 2009) $
+# $Revision: 1326 $
 #############################################################################
 
 package LaTeX::Table::Themes::Booktabs;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Themes::ThemeI';
 
 use version;
-our ($VERSION) = '$Revision: 1298 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1326 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
     my $themes = {
@@ -43,8 +43,8 @@ LaTeX::Table::Themes::Booktabs - Publication quality LaTeX table themes.
 
 This module provides following themes:
 
-  Zurich   # header centered and in bold font
   Meyrin   # as described in the booktabs documentation
+  Zurich   # header centered and in bold font
 
 =head1 REQUIRES
 

@@ -3,7 +3,6 @@ before 1.0
 - fine tune default parameters
 - nicer examples.pdf (started)
 - make it possible to use custom templates (done, now document it)
-- longtable (not urgent, but may require API change, so do that before 1.0)
 - remove deprecated code (release candidate 1)
 
 after 1.0

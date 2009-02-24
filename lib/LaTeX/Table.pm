@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-04 11:52:54 +0100 (Wed, 04 Feb 2009) $
-# $Revision: 1304 $
+#     $Date: 2009-02-24 10:23:12 +0100 (Tue, 24 Feb 2009) $
+# $Revision: 1324 $
 #############################################################################
 
 package LaTeX::Table;
@@ -12,11 +12,12 @@ use warnings;
 use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 
-use version; our $VERSION = qv('0.9.13');
+use version; our $VERSION = qv('0.9.14');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
 use LaTeX::Table::Types::Ctable;
+use LaTeX::Table::Types::Longtable;
 
 use Carp;
 use Scalar::Util qw(reftype);
@@ -48,7 +49,7 @@ has '_type_obj' => ( is => 'rw' );
 has 'header' => ( is => 'rw', default => sub { [] } );
 has 'data'   => ( is => 'rw', default => sub { [] } );
 has 'environment'   => ( is => 'rw', default => 1 );
-has 'theme'         => ( is => 'rw', default => 'Zurich' );
+has 'theme'         => ( is => 'rw', default => 'Meyrin' );
 has 'predef_themes' => ( is => 'rw', default => sub { {} } );
 has 'custom_themes' => ( is => 'rw', default => sub { {} } );
 
@@ -94,6 +95,10 @@ sub generate_string {
     if ( $self->get_type eq 'xtab' ) {
         $self->set__type_obj(
             LaTeX::Table::Types::Xtab->new( _table_obj => $self ) );
+    }
+    elsif ( $self->get_type eq 'longtable' ) {
+        $self->set__type_obj(
+            LaTeX::Table::Types::Longtable->new( _table_obj => $self ) );
     }
     elsif ( $self->get_type eq 'ctable' ) {
         $self->set__type_obj(
@@ -882,7 +887,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.13
+This document describes LaTeX::Table version 0.9.14
 
 =head1 SYNOPSIS
 
@@ -940,9 +945,11 @@ Now in your LaTeX document:
 
   \documentclass{article}
 
-  % for multipage tables
+  % for multipage tables (xtab or longtable)
   \usepackage{xtab}
-  % for publication quality tables (Zurich theme, the default)
+  %\usepackage{longtable}
+
+  % for publication quality tables (Meyrin theme, the default)
   \usepackage{booktabs}
   % for the NYC theme 
   \usepackage{array}
@@ -962,14 +969,14 @@ complexity of using them behind an easy and intuitive API.
 
 =head1 FEATURES 
 
-This module supports multipage tables via the C<xtab> package.  For
-publication quality tables, it uses the C<booktabs> package. It also supports
-the C<tabularx> and C<tabulary> packages for nicer fixed-width tables.
-Furthermore, it supports the C<colortbl> package for colored tables optimized
-for presentations. The powerful new C<ctable> package is supported and
-especially recommended when footnotes are needed. C<LaTeX::Table> ships with
-some predefined, good looking L<"THEMES">. The program I<ltpretty> makes it
-possible to use this module from within a text editor. 
+This module supports multipage tables via the C<xtab> or the C<longtable>
+package.  For publication quality tables, it uses the C<booktabs> package. It
+also supports the C<tabularx> and C<tabulary> packages for nicer fixed-width
+tables.  Furthermore, it supports the C<colortbl> package for colored tables
+optimized for presentations. The powerful new C<ctable> package is supported
+and especially recommended when footnotes are needed. C<LaTeX::Table> ships
+with some predefined, good looking L<"THEMES">. The program I<ltpretty> makes
+it possible to use this module from within a text editor. 
 
 =head1 INTERFACE 
 
@@ -1029,8 +1036,9 @@ The name of the LaTeX output file. Default is 'latextable.tex'.
 =item C<type>
 
 Can be 'std' for standard LaTeX tables, 'ctable' for tables using the
-C<ctable> package or 'xtab' for multipage tables 
-(in appendices for example, requires the C<xtab> LaTeX package). 
+C<ctable> package or 'xtab' and 'longtable' for multipage tables 
+(requires the C<xtab> and C<longtable> LaTeX
+packages, respectively). 
 
 =item C<header>
 
@@ -1065,7 +1073,7 @@ and are not further formatted. So,
       [ 'Animal', 'Description', 'Price' ]
   ];
 
-will produce following LaTeX code in the default Zurich theme:
+will produce following LaTeX code in the Zurich theme:
 
   \multicolumn{2}{c}{\textbf{Item}} &                                          \\ 
   \cmidrule{1-2}
@@ -1140,15 +1148,6 @@ for C<position>.
 The I<ctable> type automatically adds an environment when any of the
 following options are set.
 
-  \begin{table}[htb]
-      \centering
-      \begin{tabular}{lrr}
-      ...
-      \end{tabular}
-      \caption{Price list}
-      \label{tbl:prices}
-  \end{table} 
-
 =item C<caption>
 
 The caption of the table. Only generated if get_caption() returns a true value. 
@@ -1157,8 +1156,8 @@ Default is 0. Requires C<environment>.
 =item C<caption_top>
 
 If get_caption_top() returns a true value, then the caption is placed above the
-table. To use the standard caption command (C<\caption> in I<std>,
-C<\topcaption> in I<xtab>) , use 
+table. To use the standard caption command (C<\caption> in I<std> and
+I<longtable>, C<\topcaption> in I<xtab>) , use 
 
   ...
   caption_top => 1, 
@@ -1228,13 +1227,6 @@ Default is 0. Requires C<environment>.
 
  $table->set_label('tbl:prices');
 
-then in LaTeX:
-
- table~\ref{tbl:prices}
-
-Note that many style guides (for example the CMOS) recommend a lower case
-I<table> in text references.
-
 =item C<position>
 
 The position of the environment, e.g. 'htb'. Only generated if get_position()
@@ -1243,13 +1235,11 @@ I<std>.
 
 =item C<sideways>
 
-Rotates the environment by 90 degrees. Default 0. Requires the C<rotating>
-LaTeX package.
+Rotates the environment by 90 degrees. Default 0. For tables of C<type> I<std>
+and I<ctable>, this requires the C<rotating> LaTeX package, for I<xtab> tables
+the C<lscape> package.
 
  $table->set_sideways(1);
-
-This does not work with I<xtab> tables - please tell me if you know how to
-implement this.
 
 =item C<star>
 
@@ -1503,7 +1493,17 @@ optimal. Requires a number as parameter. Default is 0 (does not use this option)
 
 =item C<theme>
 
-The name of the theme. Default is I<Zurich>. See L<"THEMES">.
+The name of the theme. Default is I<Meyrin>. See L<"THEMES">.
+
+  $table->set_theme('Zurich');
+
+The default theme, Meyrin, requires C<booktabs> LaTeX package.
+
+See L<LaTeX::Table::Themes::ThemeI> how to define custom themes.
+
+The themes are defined in L<LaTeX::Table::Themes::Beamer>,
+L<LaTeX::Table::Themes::Booktabs>, L<LaTeX::Table::Themes::Classic>,
+L<LaTeX::Table::Themes::Modern>.
 
 =item C<predef_themes>
 
@@ -1547,38 +1547,18 @@ rotate all headers, use a callback function B<instead>:
 =head1 MULTICOLUMNS 
 
 Multicolumns are defined in LaTeX with
-C<\multicolumn{$cols}{$alignment}{$text}>. This module supports a simple 
-shortcut of the format C<$text:$cols$alignment>. For example, C<Item:2c> is 
+C<\multicolumn{$cols}{$alignment}{$text}>. This module supports a simple
+shortcut of the format C<$text:$cols$alignment>. For example, C<Item:2c> is
 equivalent to C<\multicolumn{2}{c}{Item}>. Note that vertical rules (C<|>) are
-automatically added here according the rules settings in the theme. 
-See L<LaTeX::Table::Themes::ThemeI>. C<LaTeX::Table> also uses this shortcut to determine
-the column ids. So in this example,
+automatically added here according the rules settings in the theme.  See
+L<LaTeX::Table::Themes::ThemeI>. C<LaTeX::Table> also uses this shortcut to
+determine the column ids. So in this example,
 
   my $data = [ [' \multicolumn{2}{c}{A}', 'B' ], [ 'C:2c', 'D' ] ];
 
 'B' would have an column id of 1 and 'D' 2 ('A' and 'C' both 0). This is important 
 for callback functions and for the coldef calculation. 
 See L<"TABULAR ENVIRONMENT">.
-
-=head1 THEMES
-
-The theme can be selected with 
-
-  $table->set_theme($themename)
-
-Currently, following predefined main themes are available: I<Zurich>, I<plain>
-(no formatting), I<NYC> (for presentations), I<Berlin> and I<Paris>. Variants
-of these themes are also available, see the theme modules below. The script
-F<generate_examples.pl> in the I<examples> directory of this distributions
-generates some examples for all available themes. 
-
-The default theme, Zurich, is highly recommended. It requires
-C<\usepackage{booktabs}> in your LaTeX document.
-
-See L<LaTeX::Table::Themes::ThemeI> how to define custom themes.
-
-L<LaTeX::Table::Themes::Beamer>, L<LaTeX::Table::Themes::Booktabs>,
-L<LaTeX::Table::Themes::Classic>, L<LaTeX::Table::Themes::Modern>.
 
 =head1 EXAMPLES
 
@@ -1591,8 +1571,8 @@ file to LaTeX or even PDF.
 
 If you get a LaTeX error message, please check whether you have included all
 required packages. The packages we use are C<array>, C<booktabs>, C<colortbl>,
-C<ctable>, C<graphicx>, C<rotating>, C<tabularx>, C<tabulary>, C<xcolor> and
-C<xtab>. 
+C<ctable>, C<graphicx>, C<lscape>, C<rotating>, C<tabularx>, C<tabulary>,
+C<xcolor> and C<xtab>. 
 
 C<LaTeX::Table> may throw one of these errors and warnings:
 
@@ -1605,8 +1585,8 @@ C<filename>.
 
 =item C<Invalid usage of option ...> 
 
-See the examples in this document and in I<examples/examples.pdf> for the correct 
-usage of this option.
+See the examples in this document and in I<examples/examples.pdf> for the
+correct usage of this option.
 
 =item C<DEPRECATED. ...>  
 
@@ -1642,7 +1622,8 @@ L<Data::Table>, L<LaTeX::Encode>
 
 =over
 
-=item David Carlisle for the C<colortbl>, C<tabularx> and C<tabulary> LaTeX packages.
+=item David Carlisle for the C<colortbl>, C<longtable>, C<tabularx> and
+C<tabulary> LaTeX packages.
 
 =item Wybo Dekker for the C<ctable> LaTeX package.
 

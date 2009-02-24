@@ -14,6 +14,7 @@ examples/examples.pdf
 lib/LaTeX/Table.pm
 lib/LaTeX/Table/Types/TypeI.pm
 lib/LaTeX/Table/Types/Ctable.pm
+lib/LaTeX/Table/Types/Longtable.pm
 lib/LaTeX/Table/Types/Std.pm
 lib/LaTeX/Table/Types/Xtab.pm
 lib/LaTeX/Table/Themes/ThemeI.pm

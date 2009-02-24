@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-04 13:12:40 +0100 (Wed, 04 Feb 2009) $
-# $Revision: 1310 $
+#     $Date: 2009-02-04 16:33:40 +0100 (Wed, 04 Feb 2009) $
+# $Revision: 1312 $
 #############################################################################
 
 package LaTeX::Table::Themes::ThemeI;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Role;
 
 use version;
-our ($VERSION) = '$Revision: 1310 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1312 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 requires '_definition';
 
@@ -152,7 +152,7 @@ documentation.
  'RULES_WIDTH_GLOBAL' =>
      '\setlength\arrayrulewidth{1pt}\setlength\doublerulesep{0pt}',
 
-=item RULES_CMD
+=item C<RULES_CMD>
 
 A reference to an array with four LaTeX commands for the top, mid (between header and
 data), inner and bottom rules. 

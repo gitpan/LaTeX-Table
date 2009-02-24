@@ -11,6 +11,7 @@ my $test_data = [ [ '1', 'w', 'x' ], [], [ '2', 'y', 'z' ], ];
 my $table = LaTeX::Table->new({ tablepos => 'ht',
                                 table_environment => 'sidewaystable',
                                 tabledef  => 'lcc',
+                                theme     => 'Zurich',
                             });
 
 $table->generate_string($test_header, $test_data);
@@ -46,6 +47,7 @@ $table = LaTeX::Table->new({ tablepos => 'ht',
                             header => $test_header, 
                             data => [ [ '1', 'w', 'x' ], [], [ '2.1',
                             'y12345', 'z' ], ],
+                            theme => 'Zurich',
                             });
 
 $table->set_tabledef_strategy({

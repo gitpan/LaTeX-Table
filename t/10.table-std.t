@@ -208,6 +208,7 @@ $table = LaTeX::Table->new(
         caption           => 'test caption',
         header            => $test_header,
         data              => $test_data,
+        theme             => 'Zurich',
     }
 );
 
@@ -322,6 +323,7 @@ $table = LaTeX::Table->new(
         width             => '0.9\textwidth',
         width_environment => 'tabularx',
         position          => 'ht',
+        theme             => 'Zurich',
     }
 );
 $expected_output = <<'EOT'
@@ -381,6 +383,7 @@ $table = LaTeX::Table->new(
         width             => '0.9\textwidth',
         width_environment => 'tabularx',
         position          => 'ht',
+        theme             => 'Zurich',
     }
 );
 

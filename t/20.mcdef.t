@@ -7,6 +7,7 @@ my $table = LaTeX::Table->new({ filename => 'out.tex',
 							    label    => 'beercounter',
 								maincaption => 'Beer Counter',
 								caption   => 'Number of beers before and after 4pm.',
+                                theme             => 'Zurich',
                              });
 
 my $test_def = 'test:1c';
@@ -27,6 +28,7 @@ my $data   = [ [ 'D:3c'], ['D:2c', '1.2'], ['D', 'E', '1.3'], ];
 $table = LaTeX::Table->new(
     {   header   => $header,
         data     => $data,
+        theme    => 'Zurich',
     }
 );
 

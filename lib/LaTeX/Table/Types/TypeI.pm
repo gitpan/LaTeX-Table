@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-04 13:01:31 +0100 (Wed, 04 Feb 2009) $
-# $Revision: 1308 $
+#     $Date: 2009-02-23 19:50:18 +0100 (Mon, 23 Feb 2009) $
+# $Revision: 1321 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -13,7 +13,7 @@ use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1308 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1321 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 use Scalar::Util qw(reftype);
 
@@ -92,6 +92,7 @@ sub generate_latex_code {
         'COLDEF'               => $table_def,
         'LABEL'                => $tbl->get_label(),
         'HEADER_CODE'          => $header_code,
+        'TABLEHEADMSG'         => $tbl->get_tableheadmsg(),
         'TABLEHEAD'            => $self->_get_tablehead_code( $header_code ),
         'TABLETAIL'            => $self->_get_tabletail_code( $data, 0 ),
         'TABLETAIL_LAST'       => $self->_get_tabletail_code( $data, 1 ),

@@ -21,7 +21,7 @@ my $test_data = [
 
 my $test_data_large = [];
 
-for my $i ( 1 .. 6 ) {
+for my $i ( 1 .. 9 ) {
     $test_data_large = [ @$test_data_large, @$test_data ];
 }
 
@@ -103,6 +103,10 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
     $table->set_caption_top(
         '\setlength{\abovecaptionskip}{0pt}\setlength{\belowcaptionskip}{10pt}\topcaption'
     );
+    $table->generate();
+    $table->set_filename("${theme}multipage2.tex");
+    $table->set_type('longtable');
+    $table->set_maincaption("\\texttt{theme=$theme, type=longtable}");
     $table->generate();
 }
 
@@ -545,6 +549,7 @@ $table = LaTeX::Table->new(
     {   header      => $header,
         data        => $data,
         type        => 'xtab',
+        sideways    => 1,
         tabletail   => q{},
         label       => 'tbl:xtab',
         caption     => '\texttt{type=xtab}',
@@ -584,6 +589,7 @@ $table = LaTeX::Table->new(
     {   header      => $header,
         data        => $data,
         type        => 'xtab',
+        sideways    => 1,
         tabletail   => q{ },
         label       => 'tbl:xtab',
         caption     => '\texttt{type=xtab}',
@@ -981,9 +987,10 @@ $table = LaTeX::Table->new();
 
 my %section = ( std => '', 
                 ctable => 'ctable', 
+                longtable => 'multipage2', 
                 xtab => 'multipage',);
 
-for my $sect (qw(std ctable xtab)) {
+for my $sect (qw(std ctable xtab longtable)) {
 
     print $OUT "\\subsection{Type $sect}\n";
 for my $theme ( sort keys %{ $table->get_available_themes } ) {
@@ -1082,11 +1089,13 @@ __DATA__
 \usepackage{ctable}
 \usepackage{graphics, graphicx}
 \usepackage{xtab}
+\usepackage{lscape}
 \usepackage{booktabs}
 \usepackage{rotating}
 \usepackage{tabularx}
 \usepackage{tabulary}
 \usepackage{listings}
+\usepackage{longtable}
 %\usepackage{color}
 \usepackage{colortbl}
 \usepackage{xcolor}
@@ -1107,11 +1116,11 @@ __DATA__
 \file{LaTeX::Table} is a Perl module that provides functionality for an
 intuitive and easy generation of LaTeX tables. It ships with some predefined
 good looking table styles. This module supports multipage tables via the
-\texttt{xtab} package and publication quality tables with the
-\texttt{booktabs} package. It also supports the \texttt{tabularx} and
-\texttt{tabulary} packages for nicer fixed-width tables. Furthermore, it
-supports the \texttt{colortbl} package for colored tables optimized for
-presentations.
+\texttt{xtab} and the \texttt{longtable} package and publication quality
+tables with the \texttt{booktabs} package. It also supports the
+\texttt{tabularx} and \texttt{tabulary} packages for nicer fixed-width tables.
+Furthermore, it supports the \texttt{colortbl} package for colored tables
+optimized for presentations.
 
 \end{abstract}
 \tableofcontents

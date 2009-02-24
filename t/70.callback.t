@@ -64,6 +64,7 @@ $table = LaTeX::Table->new(
                 return uc $value;
             }
         },
+       theme     => 'Zurich',
     }
 );
 
@@ -111,6 +112,7 @@ $table = LaTeX::Table->new(
                 return 'Z' . $value;
             }
         },
+        theme   => 'Zurich',
     }
 );
 
