@@ -19,7 +19,6 @@ WriteMakefile(
         'Moose::Policy::FollowPBP'    => 0,
         'Module::Pluggable'    => 0,
         'Scalar::Util'   => 0,
-        'Text::Wrap'     => 0,
         'version'        => 0,
         'Template'       => 0,
     },

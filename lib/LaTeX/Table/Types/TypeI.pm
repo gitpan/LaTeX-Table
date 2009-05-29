@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-23 19:50:18 +0100 (Mon, 23 Feb 2009) $
-# $Revision: 1321 $
+#     $Date: 2009-05-28 18:46:45 +0200 (Thu, 28 May 2009) $
+# $Revision: 1612 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -13,7 +13,7 @@ use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1321 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1612 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 use Scalar::Util qw(reftype);
 
@@ -53,14 +53,13 @@ sub generate_latex_code {
     }
     else {
             $table_def = $tbl->_get_coldef_code($data);
-        }
+    }
 
     my $center = $tbl->get_center;
 
     if ( $tbl->get__default_align ) {
         $center = 1;
     }
-    
     my $header_code = $self->_get_header_columns_code($header);
 
     my $template_vars = {
@@ -410,7 +409,7 @@ sub _get_tabular_environment {
         if ( !$tbl->get_width_environment ) {
             $res .= q{*};
         }
-        else {
+        elsif ( $tbl->get_type ne 'longtable') { #want the ltxtable package?
             $res = $tbl->get_width_environment;
         }
     }
@@ -451,7 +450,6 @@ CENTER_ROW:
         my $j = 0;
 
         for my $col (@cols) {
-            
             if ( $tbl->get_header_sideways() ) {
                 my $col_def = $tbl->_get_mc_def($col);
                 $col_def->{value}
@@ -462,7 +460,6 @@ CENTER_ROW:
             if ( $tbl->get_callback ) {
                 $col = $tbl->_apply_callback( $i, $j, $col, 1 );
             }
-            
             $col = $tbl->_apply_header_formatting( $col, (!defined
                     $theme->{STUB_ALIGN} || $j > 0) );
             $j += $tbl->_extract_number_columns($col);

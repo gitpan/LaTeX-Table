@@ -1,5 +1,13 @@
 Revision history for LaTeX-Table
 
+0.9.15 Fri  May 29  10:00:00 2009
+        - MISSING_VALUE in coldef_strategy
+        - width and longtable
+        - removed deprecated feature textwrap
+        - changed optional requirement from Text::CSV_XS to Text::CSV
+        - csv2pdf: Meyrin default.
+        - POD cleanups
+        
 0.9.14 Tue  Feb 24  10:00:00 2009
         - Meyrin now default theme
         - sideways now works also with xtab (lscape package)

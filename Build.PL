@@ -15,7 +15,6 @@ my $builder = Module::Build->new(
         'Moose::Policy::FollowPBP'    => 0,
         'Module::Pluggable'    => 0,
         'Scalar::Util'   => 0,
-        'Text::Wrap'     => 0,
         'Carp'           => 0,
         'version'        => 0,
         'Template'       => 0,
@@ -26,7 +25,7 @@ my $builder = Module::Build->new(
         'File::Spec'       => 0,
     }, 
     recommends => {
-        'Text::CSV_XS'   => 0,
+        'Text::CSV'      => 0,
         'LaTeX::Driver'  => 0,
         'LaTeX::Encode'  => 0,
         'Getopt::Long'   => 0,

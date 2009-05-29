@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-24 10:23:12 +0100 (Tue, 24 Feb 2009) $
-# $Revision: 1324 $
+#     $Date: 2009-05-29 10:13:11 +0200 (Fri, 29 May 2009) $
+# $Revision: 1615 $
 #############################################################################
 
 package LaTeX::Table;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 
-use version; our $VERSION = qv('0.9.14');
+use version; our $VERSION = qv('0.9.15');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -28,8 +28,6 @@ use Module::Pluggable
     sub_name    => 'themes',
     except      => 'LaTeX::Table::Themes::ThemeI',
     instantiate => 'new';
-
-use Text::Wrap qw(wrap);
 
 for my $attr (
     qw(label maincaption shortcaption caption caption_top coldef coldef_strategy
@@ -243,7 +241,7 @@ sub _check_options {
         $self->invalid_option_usage( 'maincaption, shortcaption',
             'only one allowed.' );
     }
-    if ( !$self->get_width && $self->get_width_environment eq 'tabularx' ) {
+    if ( !$self->get_width && $self->get_type ne 'longtable' && $self->get_width_environment eq 'tabularx' ) {
         $self->invalid_option_usage( 'width_environment',
             'Is tabularx and width is unset' );
     }
@@ -291,21 +289,6 @@ sub _check_align {
     return;
 }
 
-sub _check_text_wrap {
-    my ($self) = @_;
-    if ( reftype $self->get_text_wrap ne 'ARRAY' ) {
-        $self->invalid_option_usage( 'text_wrap', 'Not an array reference' );
-    }
-    for my $value ( @{ $self->get_text_wrap } ) {
-        if ( defined $value && $value !~ m{\A \d+ \z}xms ) {
-            $self->invalid_option_usage( 'text_wrap',
-                'Not an integer: ' . $value );
-        }
-    }
-    carp('DEPRECATED: use for example tabularx instead.');
-    return;
-}
-
 sub _apply_callback {
     my ( $self, $i, $j, $value, $is_header ) = @_;
     my $col_cb = $self->_get_mc_def($value);
@@ -329,48 +312,7 @@ sub _examine_data {
             $data[$i] = \@row;
         }
     }
-    return @data if !$text_wrap;
-    $self->_check_text_wrap;
-
-    my @data_wrapped;
-    my $i = 0;
-    for my $row (@data) {
-        my $j = 0;
-        my @rows;
-        for my $col ( @{$row} ) {
-            if ( defined $text_wrap->[$j]
-                && length $col > $text_wrap->[$j] )
-            {
-                my $l = 0;
-                ## no critic (Variables::ProhibitPackageVars)
-                local ($Text::Wrap::columns) = $text_wrap->[$j];
-                ## use critic
-                my $lines = wrap( q{}, q{}, $col );
-                for my $wrapped_line ( split /\n/xms, $lines ) {
-                    $rows[$l][$j] = $wrapped_line;
-                    $l++;
-                }
-            }
-            else {
-                $rows[0][$j] = $col;
-            }
-            $j++;
-        }
-
-        for my $row_row (@rows) {
-            push @data_wrapped, [];
-            for my $row_i ( 0 .. ( scalar( @{$row} ) - 1 ) ) {
-                if ( defined $row_row->[$row_i] ) {
-                    $data_wrapped[-1]->[$row_i] = $row_row->[$row_i];
-                }
-                else {
-                    $data_wrapped[-1]->[$row_i] = q{};
-                }
-            }
-        }
-        $i += scalar @rows;
-    }
-    return @data_wrapped;
+    return @data
 }
 
 sub _ioerror {
@@ -393,6 +335,7 @@ sub generate {
 sub _default_coldef_strategy {
     my ($self) = @_;
     my $STRATEGY = {
+        MISSING_VALUE => qr{\A \s* \z}xms,
         NUMBER =>
             qr{\A\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*\z}xms,
         NUMBER_MUST_MATCH_ALL => 1,
@@ -500,7 +443,10 @@ ROW:
             $max_col_number = scalar @{$row};
         }
         my $i = 0;
+        COL:
         for my $col ( @{$row} ) {
+            next COL if $col =~ $strategy->{MISSING_VALUE};
+
             for my $coltype (@coltypes) {
                 if ( $col =~ $strategy->{$coltype} ) {
                     $matches{$i}{$coltype}++;
@@ -887,7 +833,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.14
+This document describes LaTeX::Table version 0.9.15
 
 =head1 SYNOPSIS
 
@@ -1193,6 +1139,8 @@ will generate
 
   \caption[Price List]{Price List. Try our special offer today!}
 
+Themes can set the font family of the maincaption. 
+
 Default 0. Requires C<environment>. 
 
 =item C<shortcaption>
@@ -1236,8 +1184,8 @@ I<std>.
 =item C<sideways>
 
 Rotates the environment by 90 degrees. Default 0. For tables of C<type> I<std>
-and I<ctable>, this requires the C<rotating> LaTeX package, for I<xtab> tables
-the C<lscape> package.
+and I<ctable>, this requires the C<rotating> LaTeX package, for I<xtab> or
+I<longtable> tables the C<lscape> package.
 
  $table->set_sideways(1);
 
@@ -1270,10 +1218,10 @@ a font size). Requires C<environment>.
 =item C<custom_tabular_environment>
 
 If get_custom_tabular_environment() returns a true value, then this specified
-environment is used instead of the standard environments 'tabular' (I<std>) or
-'xtabular' (I<xtab>). For I<xtab> tables, you can also use the 'mpxtabular'
-environment here if you need footnotes. See the documentation of the C<xtab>
-package.
+environment is used instead of the standard environments 'tabular' (I<std>)
+'longtable' (I<longtable>) or 'xtabular' (I<xtab>). For I<xtab> tables, you
+can also use the 'mpxtabular' environment here if you need footnotes. See the
+documentation of the C<xtab> package.
 
 See also the documentation of C<width> below for cases when a width is
 specified.
@@ -1343,6 +1291,11 @@ the attribute defined in C<TYPE_COL> is used.
 The C<coldef> attribute for columns that do not match any specified type.
 Default 'l' (left-justified).
 
+=item C<MISSING_VALUE>
+
+Column values that match the specified regular expression are omitted in the
+C<coldef> calculation. Default is C<qr{\A \s* \z}xms>.
+
 =back
 
 Examples:
@@ -1394,7 +1347,32 @@ To use for example the one provided by the C<tabularx> LaTeX package, write:
   $table->set_width_environment('tabularx');
 
 Note this will not add C<@{\extracolsep{\fill}}> and that this overwrites
-a C<custom_tabular_environment>. Default is 0 (see C<width>).
+a C<custom_tabular_environment>. 
+
+It is possible to use C<tabularx> together with tables of type I<longtable>.
+In this case, you have to generate a I<file> and then load the table with the
+C<LTXtable> command (C<ltxtable> package):
+
+  $table = LaTeX::Table->new(
+      {   header      => $header,
+          data        => $data,
+          filename    => 'mylongtable.tex'
+          type        => 'longtable',
+          ...
+          center      => 0,
+          width_environment => 'tabularx', 
+      }
+  );
+ 
+Then in LaTeX:
+  
+  \begin{center}
+  \LTXtable{0.8\textwidth}{mylongtable}
+  \end{center}
+  
+Note that we have to do the centering and specification of the width in LaTeX. 
+
+Default is 0 (see C<width>).
 
 =item C<maxwidth>
 
@@ -1493,17 +1471,16 @@ optimal. Requires a number as parameter. Default is 0 (does not use this option)
 
 =item C<theme>
 
-The name of the theme. Default is I<Meyrin>. See L<"THEMES">.
-
-  $table->set_theme('Zurich');
-
-The default theme, Meyrin, requires C<booktabs> LaTeX package.
+The name of the theme. Default is I<Meyrin> (requires C<booktabs> LaTeX
+package).
 
 See L<LaTeX::Table::Themes::ThemeI> how to define custom themes.
 
 The themes are defined in L<LaTeX::Table::Themes::Beamer>,
 L<LaTeX::Table::Themes::Booktabs>, L<LaTeX::Table::Themes::Classic>,
 L<LaTeX::Table::Themes::Modern>.
+
+  $table->set_theme('Zurich');
 
 =item C<predef_themes>
 
@@ -1571,8 +1548,8 @@ file to LaTeX or even PDF.
 
 If you get a LaTeX error message, please check whether you have included all
 required packages. The packages we use are C<array>, C<booktabs>, C<colortbl>,
-C<ctable>, C<graphicx>, C<lscape>, C<rotating>, C<tabularx>, C<tabulary>,
-C<xcolor> and C<xtab>. 
+C<ctable>, C<graphicx>, C<longtable>, C<lscape>, C<rotating>, C<tabularx>,
+C<tabulary>, C<xcolor> and C<xtab>. 
 
 C<LaTeX::Table> may throw one of these errors and warnings:
 
@@ -1592,6 +1569,9 @@ correct usage of this option.
 
 There were some minor API changes in C<LaTeX::Table> 0.1.0, 0.8.0, 0.9.0,
 0.9.3 and 0.9.12. Just apply the changes to the script or contact its author.
+
+B<Important Note:> 0.9.15 will be the last version that includes deprecated
+code.
 
 =back
 
@@ -1622,8 +1602,8 @@ L<Data::Table>, L<LaTeX::Encode>
 
 =over
 
-=item David Carlisle for the C<colortbl>, C<longtable>, C<tabularx> and
-C<tabulary> LaTeX packages.
+=item David Carlisle for the C<colortbl>, C<longtable>, <ltxtable>,
+C<tabularx> and C<tabulary> LaTeX packages.
 
 =item Wybo Dekker for the C<ctable> LaTeX package.
 

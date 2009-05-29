@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-07 13:45:34 +0100 (Sat, 07 Feb 2009) $
-# $Revision: 1313 $
+#     $Date: 2009-05-20 21:07:28 +0200 (Wed, 20 May 2009) $
+# $Revision: 1564 $
 #############################################################################
 
 package LaTeX::Table::Types::Xtab;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1313 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1564 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template =<<'EOT'
 {
@@ -93,7 +93,7 @@ sub _get_tabletail_code {
             . "}} \\\\\n";
     }
     if ($final_tabletail) {
-        return "\\tablelasttail{}";
+        return '\tablelasttail{}';
     }
     return "\\tabletail{$code$linecode2}";
 }

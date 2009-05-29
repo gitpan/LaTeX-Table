@@ -558,7 +558,32 @@ $table = LaTeX::Table->new(
 );
 \end{verbatim}
 See \tref{tbl:xtab}, which uses the \ctanpackage{xtab} package for spanning across
-multiple pages.
+multiple pages. You can also use the \ctanpackage{longtable} package here.
+This package can be used together with the \ctanpackage{ltxtable} package to
+define a table width. Here, you have to generate a \textit{file} and then load the
+file with the \texttt{LTXtable} command. See \tref{tbl:longtable}.
+\begin{verbatim}
+$table = LaTeX::Table->new(
+    {   header      => $header,
+        data        => $data,
+        type        => 'longtable',
+        tabletail   => q{},
+        label       => 'tbl:longtable',
+        caption     => '\texttt{type=longtable}',
+        caption_top => 1,
+        center      => 0,
+        # we don't define a width here!
+        width_environment => 'tabularx', 
+        filename    => 'longtable.tex'
+    }
+);
+
+%now in LaTeX:
+\begin{center}
+\LTXtable{0.8\textwidth}{longtable}
+\end{center}
+
+\end{verbatim}
 EOT
 my $line_number = 0;
 
@@ -599,7 +624,27 @@ $table = LaTeX::Table->new(
 );
 print $OUT $code . $table->generate_string();
 
+$table = LaTeX::Table->new(
+    {   header      => $header,
+        data        => $data,
+        type        => 'longtable',
+        tabletail   => q{},
+        label       => 'tbl:longtable',
+        caption     => '\texttt{type=longtable}',
+        caption_top => 1,
+        center      => 0,
+        # we don't define a width here!
+        width_environment => 'tabularx', 
+        filename    => 'longtable.tex',
+    });
+
+print $table->generate();
+
 $code = << 'EOT';
+\begin{center}
+\LTXtable{0.8\textwidth}{longtable}
+\end{center}
+
 \subsection{Automatic column definitions}
 We can easily provide regular expressions that define the alignment of
 columns. See \tref{tbl:coldef_strategy}.
@@ -1100,6 +1145,7 @@ __DATA__
 \usepackage{colortbl}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{ltxtable}
 \usepackage{multicol}
 \usepackage{array}% in the preamble
 %\usepackage[tableposition=top]{caption}

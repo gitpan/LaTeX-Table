@@ -1,6 +1,6 @@
 ---
 name: LaTeX-Table
-version: 0.9.14
+version: 0.9.15
 author:
   - 'Markus Riester <mriester@gmx.de>'
 abstract: Perl extension for the automatic generation of LaTeX tables.
@@ -15,7 +15,6 @@ requires:
   Moose::Policy::FollowPBP: 0
   Scalar::Util: 0
   Template: 0
-  Text::Wrap: 0
   perl: 5.8.0
   version: 0
 build_requires:
@@ -27,11 +26,11 @@ recommends:
   LaTeX::Driver: 0
   LaTeX::Encode: 0
   Number::Format: 0
-  Text::CSV_XS: 0
+  Text::CSV: 0
 provides:
   LaTeX::Table:
     file: lib/LaTeX/Table.pm
-    version: 0.9.14
+    version: 0.9.15
   LaTeX::Table::Themes::Beamer:
     file: lib/LaTeX/Table/Themes/Beamer.pm
     version: 1298
@@ -58,11 +57,11 @@ provides:
     version: 1307
   LaTeX::Table::Types::TypeI:
     file: lib/LaTeX/Table/Types/TypeI.pm
-    version: 1321
+    version: 1612
   LaTeX::Table::Types::Xtab:
     file: lib/LaTeX/Table/Types/Xtab.pm
-    version: 1313
-generated_by: Module::Build version 0.2808
+    version: 1564
+generated_by: Module::Build version 0.33
 meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4

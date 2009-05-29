@@ -1,4 +1,4 @@
-use Test::More tests => 20;
+use Test::More tests => 21;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -302,6 +302,46 @@ is_deeply(
     [ split( "\n", $expected_output ) ],
     'with coldef'
 );
+
+$test_data = [
+    [ 'Lisa',   '0', '0' ],
+    [ 'Marge',  '0', '1' ],
+    [ 'Wiggum', '0', '' ],
+    [ 'Otto',   '  ', '' ],
+    [ 'Homer',  '2', '6' ],
+    [ 'Barney', '8', '16' ],
+];
+
+$table = LaTeX::Table->new(
+    {   environment => 0,
+        header            => $test_header,
+        data              => $test_data,
+    }
+);
+
+$expected_output = <<'EOT'
+\begin{tabular}{lrr}
+\toprule
+Name & \multicolumn{2}{c}{Beers} \\
+     & before 4pm                & after 4pm \\
+\midrule
+Lisa   & 0 & 0  \\
+Marge  & 0 & 1  \\
+Wiggum & 0 &    \\
+Otto   &   &    \\
+Homer  & 2 & 6  \\
+Barney & 8 & 16 \\
+\bottomrule
+\end{tabular}
+EOT
+;
+
+$output = $table->generate_string();
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'missing values'
+) || diag $output;
 
 my $header = [ [ 'Character', 'Fullname', 'Voice' ], ];
 my $data = [

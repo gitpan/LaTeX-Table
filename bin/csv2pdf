@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-01-03 17:00:22 +0100 (Sat, 03 Jan 2009) $
-# $Revision: 1261 $
+#     $Date: 2009-05-29 10:38:31 +0200 (Fri, 29 May 2009) $
+# $Revision: 1616 $
 #############################################################################
 
 use strict;
@@ -27,7 +27,7 @@ use LaTeX::Driver;
 use version; our $VERSION = $LaTeX::Table::VERSION;
 
 Readonly my $DEFAULT_XENTRYSTRETCH => -0.05;
-Readonly my $DEFAULT_THEME         => 'Zurich';
+Readonly my $DEFAULT_THEME         => 'Meyrin';
 
 my ( $infile, $outfile, $help, $man, $version );
 
@@ -188,7 +188,7 @@ Output the PDF in landscape orientation.
 
 =item C<--theme>
 
-The table theme. See L<LaTeX::Table>. Default I<Zurich>.
+The table theme. See L<LaTeX::Table>. Default I<Meyrin>.
 
 =item C<--coldef>
 
