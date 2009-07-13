@@ -10,3 +10,6 @@ keywords = Date Author Revision
 
 [InputOutput::RequireBriefOpen]
 lines = 15
+
+[CodeLayout::RequireTidyCode]
+perltidyrc = t/perltidyrc

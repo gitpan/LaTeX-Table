@@ -49,7 +49,7 @@ sub _definition {
             'BOOKTABS'           => 0,
         },
         'plain' => {
-            'STUB_ALIGN'         => 'l',
+            'STUB_ALIGN'       => 'l',
             'VERTICAL_RULES'   => [ 0, 0, 0 ],
             'HORIZONTAL_RULES' => [ 0, 0, 0 ],
             'BOOKTABS'         => 0,

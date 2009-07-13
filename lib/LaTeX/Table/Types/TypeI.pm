@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-05-28 18:46:45 +0200 (Thu, 28 May 2009) $
-# $Revision: 1612 $
+#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
+# $Revision: 1741 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -13,7 +13,7 @@ use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1612 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1741 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 use Scalar::Util qw(reftype);
 
@@ -52,7 +52,7 @@ sub generate_latex_code {
         $table_def = $tbl->get_coldef;
     }
     else {
-            $table_def = $tbl->_get_coldef_code($data);
+        $table_def = $tbl->_get_coldef_code($data);
     }
 
     my $center = $tbl->get_center;
@@ -92,7 +92,7 @@ sub generate_latex_code {
         'LABEL'                => $tbl->get_label(),
         'HEADER_CODE'          => $header_code,
         'TABLEHEADMSG'         => $tbl->get_tableheadmsg(),
-        'TABLEHEAD'            => $self->_get_tablehead_code( $header_code ),
+        'TABLEHEAD'            => $self->_get_tablehead_code($header_code),
         'TABLETAIL'            => $self->_get_tabletail_code( $data, 0 ),
         'TABLETAIL_LAST'       => $self->_get_tabletail_code( $data, 1 ),
         'XENTRYSTRETCH_CODE'   => $self->_get_xentrystretch_code(),
@@ -104,7 +104,7 @@ sub generate_latex_code {
     my $template_obj = Template->new();
     my $template     = $self->_template;
 
-    if ($tbl->get_custom_template) {
+    if ( $tbl->get_custom_template ) {
         $template = $tbl->get_custom_template;
     }
 
@@ -133,7 +133,7 @@ ROW:
 
         # empty rows produce a horizontal line
         if ( !@{$row} ) {
-            push @code, $self->_get_hline_code( $self->_RULE_INNER_ID, 1);
+            push @code, $self->_get_hline_code( $self->_RULE_INNER_ID, 1 );
             next ROW;
         }
         else {
@@ -164,34 +164,34 @@ ROW:
         }
     }
 
-    return $self->_align_code(\@code);
+    return $self->_align_code( \@code );
 }
 
 sub _align_code {
     my ( $self, $code_ref ) = @_;
     my %max;
-    for my $row (@{$code_ref}) {
-       next if (!defined reftype $row);
-       for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
-           $row->[$i] =~ s{^\s+|\s+$}{}gxms;
-           my $l = length $row->[$i];
-           if (!defined $max{$i} || $max{$i} < $l) {
-               $max{$i} = $l;
-           }
-       }
+    for my $row ( @{$code_ref} ) {
+        next if ( !defined reftype $row);
+        for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
+            $row->[$i] =~ s{^\s+|\s+$}{}gxms;
+            my $l = length $row->[$i];
+            if ( !defined $max{$i} || $max{$i} < $l ) {
+                $max{$i} = $l;
+            }
+        }
     }
 
     my $code = q{};
-    ROW:
-    for my $row (@{$code_ref}) {
-       if (!defined reftype $row) {
-           $code .= $row;
-           next ROW;
-       }
-       for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
+ROW:
+    for my $row ( @{$code_ref} ) {
+        if ( !defined reftype $row) {
+            $code .= $row;
+            next ROW;
+        }
+        for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
             $row->[$i] = sprintf '%-*s', $max{$i}, $row->[$i];
-       }
-       $code .=  join( ' & ', @{$row} ) . " \\\\\n";
+        }
+        $code .= join( ' & ', @{$row} ) . " \\\\\n";
     }
     return $code;
 }
@@ -253,12 +253,12 @@ sub _get_end_resizebox_code {
 
 sub _get_caption {
     my ( $self, $header ) = @_;
-    my $caption = q{};
+    my $caption   = q{};
     my $s_caption = q{};
     my $tbl       = $self->_table_obj;
 
-    if ( !$tbl->get_caption) {
-        if (!$tbl->get_maincaption) {
+    if ( !$tbl->get_caption ) {
+        if ( !$tbl->get_maincaption ) {
             return 0;
         }
     }
@@ -295,7 +295,8 @@ sub _get_shortcaption {
 sub _get_extra_row_height_code {
     my ($self) = @_;
     if ( defined $self->_table_obj->get_theme_settings->{EXTRA_ROW_HEIGHT} ) {
-        return '\setlength{\extrarowheight}{'
+        return
+              '\setlength{\extrarowheight}{'
             . $self->_table_obj->get_theme_settings->{EXTRA_ROW_HEIGHT}
             . "}\n";
     }
@@ -304,7 +305,8 @@ sub _get_extra_row_height_code {
 
 sub _get_rules_color_global_code {
     my ($self) = @_;
-    if ( defined $self->_table_obj->get_theme_settings->{RULES_COLOR_GLOBAL} ) {
+    if ( defined $self->_table_obj->get_theme_settings->{RULES_COLOR_GLOBAL} )
+    {
         return $self->_table_obj->get_theme_settings->{RULES_COLOR_GLOBAL}
             . "\n";
     }
@@ -313,7 +315,8 @@ sub _get_rules_color_global_code {
 
 sub _get_rules_width_global_code {
     my ($self) = @_;
-    if ( defined $self->_table_obj->get_theme_settings->{RULES_WIDTH_GLOBAL} ) {
+    if ( defined $self->_table_obj->get_theme_settings->{RULES_WIDTH_GLOBAL} )
+    {
         return $self->_table_obj->get_theme_settings->{RULES_WIDTH_GLOBAL}
             . "\n";
     }
@@ -326,14 +329,17 @@ sub _get_hline_code {
     my $theme  = $tbl->get_theme_settings;
     my $hlines = $theme->{'HORIZONTAL_RULES'};
     my $line   = '\hline';
-    if ( defined $theme->{RULES_CMD} && reftype $theme->{RULES_CMD} eq 'ARRAY') {
+    if ( defined $theme->{RULES_CMD}
+        && reftype $theme->{RULES_CMD} eq 'ARRAY' )
+    {
         $line = $theme->{RULES_CMD}->[$id];
     }
     if ( $id == $self->_RULE_BOTTOM_ID ) {
         $id = 0;
     }
+
     # just one line?
-    if (defined $single && $single) {
+    if ( defined $single && $single ) {
         return "$line\n";
     }
     return "$line\n" x $hlines->[$id];
@@ -373,7 +379,6 @@ sub _get_fontsize_code {
     return "\\$size\n";
 }
 
-
 sub _get_fontfamily_code {
     my ($self) = @_;
     my %valid = (
@@ -409,7 +414,7 @@ sub _get_tabular_environment {
         if ( !$tbl->get_width_environment ) {
             $res .= q{*};
         }
-        elsif ( $tbl->get_type ne 'longtable') { #want the ltxtable package?
+        elsif ( $tbl->get_type ne 'longtable' ) {  #want the ltxtable package?
             $res = $tbl->get_width_environment;
         }
     }
@@ -439,7 +444,7 @@ CENTER_ROW:
     for my $row ( @{$header} ) {
         my @cols = @{$row};
         if ( scalar @cols == 0 ) {
-            push @code, $self->_get_hline_code( $self->_RULE_INNER_ID, 1);
+            push @code, $self->_get_hline_code( $self->_RULE_INNER_ID, 1 );
             next CENTER_ROW;
         }
         if ( $tbl->_row_is_latex_command($row) ) {
@@ -453,19 +458,23 @@ CENTER_ROW:
             if ( $tbl->get_header_sideways() ) {
                 my $col_def = $tbl->_get_mc_def($col);
                 $col_def->{value}
-                    = '\begin{sideways}' . $col_def->{value} . '\end{sideways}';
+                    = '\begin{sideways}'
+                    . $col_def->{value}
+                    . '\end{sideways}';
                 $col = $tbl->_get_mc_value($col_def);
             }
+
             #next if $col =~ m{\A \\ }xms;
             if ( $tbl->get_callback ) {
                 $col = $tbl->_apply_callback( $i, $j, $col, 1 );
             }
-            $col = $tbl->_apply_header_formatting( $col, (!defined
-                    $theme->{STUB_ALIGN} || $j > 0) );
+            $col = $tbl->_apply_header_formatting( $col,
+                ( !defined $theme->{STUB_ALIGN} || $j > 0 ) );
             $j += $tbl->_extract_number_columns($col);
         }
 
-        push @code, $tbl->_get_row_array( \@cols, $theme->{'HEADER_BG_COLOR'}, 1 );
+        push @code,
+            $tbl->_get_row_array( \@cols, $theme->{'HEADER_BG_COLOR'}, 1 );
         $i++;
     }
 
@@ -473,7 +482,7 @@ CENTER_ROW:
     if ($i) {
         push @code, $self->_get_hline_code( $self->_RULE_MID_ID );
     }
-    return $self->_align_code(\@code);
+    return $self->_align_code( \@code );
 }
 
 sub _get_tabletail_code     { return q{}; }
@@ -592,7 +601,8 @@ C<resizebox> option.
 L<LaTeX::Table>
 
 The predefined templates: L<LaTeX::Table::Types::Std>,
-L<LaTeX::Table::Types::Ctable>, L<LaTeX::Table::Types::Xtab>
+L<LaTeX::Table::Types::Ctable>, L<LaTeX::Table::Types::Longtable>,
+L<LaTeX::Table::Types::Xtab>
 
 =head1 AUTHOR
 

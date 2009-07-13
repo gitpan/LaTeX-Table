@@ -1,5 +1,11 @@
 Revision history for LaTeX-Table
 
+0.9.16 Mon  Jun 13  18:00:00 2009
+        - API change: header_sideways was kind of unnecessary.
+        - csv2pdf now uses templates and the longtable and ltxtable packages
+        - Perl::Critic passs with install Perl::Tidy (thanks Salvatore)
+        - removed Readonly dependency (thanks Wen)
+        . 
 0.9.15 Fri  May 29  10:00:00 2009
         - MISSING_VALUE in coldef_strategy
         - width and longtable

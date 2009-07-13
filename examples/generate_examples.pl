@@ -428,11 +428,9 @@ $code = << 'EOT';
 If you don't need headers, just leave them undefined (see
 \tref{tbl:noheader}). If you want that the first column looks like a header,
 you can define this with the \ltoption{columns\_like\_header} option
-(\tref{table:collikeheader} and \tref{table:collikeheader2}).  You
-can also rotate the header columns by 90 degrees
-(\tref{table:headersideways}) with \ltoption{header\_sideways}. If you do
-not want to rotate all header cells, use a callback function instead
-(\tref{table:headersideways2}).
+(\tref{table:collikeheader} and \tref{table:collikeheader2}).  If you want
+to rotate some header columns by 90 degrees, you can easily do that with a
+callback function (\tref{table:headersideways2}).
 \begin{verbatim}
 $table = LaTeX::Table->new(
     {
@@ -440,6 +438,20 @@ $table = LaTeX::Table->new(
     label       => 'tbl:noheader',
     caption     => 'Table without header.',
 });
+
+$table = LaTeX::Table->new(
+    {   header          => $header,
+        data            => $data,
+        callback        => sub {
+            my ( $row, $col, $value, $is_header ) = @_;
+            if ( $col != 0 && $is_header ) {
+                $value = '\begin{sideways}' . $value . '\end{sideways}';
+            }
+            return $value;
+        },
+        ...
+    }
+);
 \end{verbatim}
 EOT
 
@@ -485,25 +497,12 @@ $data = [
     [ '12.00', '', '', '', '', '', ],
 ];
 
-$table = LaTeX::Table->new(
-    {   header          => $header,
-        data            => $data,
-        header_sideways => 1,
-        left            => 1,
-        theme           => 'NYC',
-        label           => 'table:headersideways',
-        caption         => '\texttt{header\_sideways, left}',
-    }
-);
-
-print $OUT $table->generate_string();
 
 $table = LaTeX::Table->new(
     {   header          => $header,
         data            => $data,
         label           => 'table:headersideways2',
         caption         => '\texttt{callback, right}',
-        header_sideways => 0,
         right           => 1,
         callback        => sub {
             my ( $row, $col, $value, $is_header ) = @_;

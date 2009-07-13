@@ -18,6 +18,7 @@ my $builder = Module::Build->new(
         'Carp'           => 0,
         'version'        => 0,
         'Template'       => 0,
+        'Cwd'            => 0,
     },
     build_requires => {
         'Test::More'       => 0,
@@ -30,6 +31,7 @@ my $builder = Module::Build->new(
         'LaTeX::Encode'  => 0,
         'Getopt::Long'   => 0,
         'Number::Format' => 0,
+        'autodie'        => 0,
     },    
     script_files        => [ 'bin/csv2pdf', 'bin/ltpretty' ], 
     add_to_cleanup      => [ 'LaTeX-Table-*' ],

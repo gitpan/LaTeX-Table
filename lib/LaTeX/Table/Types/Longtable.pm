@@ -1,6 +1,6 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-23 20:05:36 +0100 (Mon, 23 Feb 2009) $
+#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
 # $Revision$
 #############################################################################
 
@@ -12,7 +12,7 @@ with 'LaTeX::Table::Types::TypeI';
 use version;
 our ($VERSION) = '$Revision: 1313 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
-my $template =<<'EOT'
+my $template = <<'EOT'
 {
 [% IF CONTINUED %]\addtocounter{table}{-1}[% END 
 %][% DEFINE_COLORS_CODE %][% EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL
@@ -41,10 +41,10 @@ END %][% IF LABEL %]\label{[% LABEL %]}[% END %]}\\
 SIDEWAYS %]\end{landscape}[% END %]
 }
 EOT
-;
+    ;
 
-has '+_tabular_environment' => (default => 'longtable');
-has '+_template'    => (default => $template);
+has '+_tabular_environment' => ( default => 'longtable' );
+has '+_template'            => ( default => $template );
 
 ###########################################################################
 # Usage      : $self->_get_tabletail_code(\@data, $final_tabletail);
@@ -60,8 +60,8 @@ sub _get_tabletail_code {
     my $code;
     my $hlines    = $tbl->get_theme_settings->{'HORIZONTAL_RULES'};
     my $vlines    = $tbl->get_theme_settings->{'VERTICAL_RULES'};
-    my $linecode1 = $self->_get_hline_code($self->_RULE_MID_ID);
-    my $linecode2 = $self->_get_hline_code($self->_RULE_BOTTOM_ID);
+    my $linecode1 = $self->_get_hline_code( $self->_RULE_MID_ID );
+    my $linecode2 = $self->_get_hline_code( $self->_RULE_BOTTOM_ID );
 
     # if custom table tail is defined, then return it
     if ( $tbl->get_tabletail ) {
@@ -72,7 +72,8 @@ sub _get_tabletail_code {
         my $nu_cols = scalar @cols;
 
         my $v0 = q{|} x $vlines->[0];
-        $code = "$linecode1\\multicolumn{$nu_cols}{${v0}r$v0}{{"
+        $code
+            = "$linecode1\\multicolumn{$nu_cols}{${v0}r$v0}{{"
             . $tbl->get_tabletailmsg
             . "}} \\\\\n";
     }
@@ -81,7 +82,6 @@ sub _get_tabletail_code {
     }
     return "$code$linecode2";
 }
-
 
 1;
 __END__

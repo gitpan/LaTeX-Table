@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-05-20 21:07:28 +0200 (Wed, 20 May 2009) $
-# $Revision: 1564 $
+#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
+# $Revision: 1741 $
 #############################################################################
 
 package LaTeX::Table::Types::Xtab;
@@ -10,9 +10,9 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1564 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1741 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
-my $template =<<'EOT'
+my $template = <<'EOT'
 {
 [%IF CONTINUED %]\addtocounter{table}{-1}[% END %][% DEFINE_COLORS_CODE %][%
 EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RULES_COLOR_GLOBAL %][%
@@ -33,20 +33,21 @@ FONTSIZE_CODE %][% FONTFAMILY_CODE %][%IF SIDEWAYS %]\begin{landscape}[% END %][
 SIDEWAYS %]\end{landscape}[% END %]
 } 
 EOT
-;
+    ;
 
-has '+_tabular_environment' => (default => 'xtabular');
-has '+_template'    => (default => $template);
+has '+_tabular_environment' => ( default => 'xtabular' );
+has '+_template'            => ( default => $template );
 
 sub _get_tablehead_code {
-    my ($self, $code) =@_;
+    my ( $self, $code ) = @_;
     my $tbl = $self->_table_obj;
 
     my $tablehead = q{};
     my @summary   = $tbl->_get_data_summary();
 
     if ( $tbl->get_caption_top && $tbl->get_tableheadmsg ) {
-        my $continued_caption = '\\multicolumn{'
+        my $continued_caption
+            = '\\multicolumn{'
             . scalar(@summary)
             . '}{c}{{ \normalsize \tablename\ \thetable: '
             . $tbl->get_tableheadmsg
@@ -76,8 +77,8 @@ sub _get_tabletail_code {
     my $code;
     my $hlines    = $tbl->get_theme_settings->{'HORIZONTAL_RULES'};
     my $vlines    = $tbl->get_theme_settings->{'VERTICAL_RULES'};
-    my $linecode1 = $self->_get_hline_code($self->_RULE_MID_ID);
-    my $linecode2 = $self->_get_hline_code($self->_RULE_BOTTOM_ID);
+    my $linecode1 = $self->_get_hline_code( $self->_RULE_MID_ID );
+    my $linecode2 = $self->_get_hline_code( $self->_RULE_BOTTOM_ID );
 
     # if custom table tail is defined, then return it
     if ( $tbl->get_tabletail ) {
@@ -88,7 +89,8 @@ sub _get_tabletail_code {
         my $nu_cols = scalar @cols;
 
         my $v0 = q{|} x $vlines->[0];
-        $code = "$linecode1\\multicolumn{$nu_cols}{${v0}r$v0}{{"
+        $code
+            = "$linecode1\\multicolumn{$nu_cols}{${v0}r$v0}{{"
             . $tbl->get_tabletailmsg
             . "}} \\\\\n";
     }
@@ -111,7 +113,6 @@ sub _get_xentrystretch_code {
     }
     return q{};
 }
-
 
 1;
 __END__

@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-04 16:33:40 +0100 (Wed, 04 Feb 2009) $
-# $Revision: 1312 $
+#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
+# $Revision: 1741 $
 #############################################################################
 
 package LaTeX::Table::Themes::ThemeI;
@@ -12,19 +12,21 @@ use warnings;
 use Moose::Role;
 
 use version;
-our ($VERSION) = '$Revision: 1312 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1741 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 requires '_definition';
 
 around '_definition' => sub {
     my $orig = shift;
     my $self = shift;
-    my $ret = $orig->($self, @_);
-    for my $theme (keys %{$ret}) {
-        if (defined $ret->{$theme}->{BOOKTABS} && $ret->{$theme}->{BOOKTABS}) {
-                $ret->{$theme}->{RULES_CMD} =
-                    [ '\toprule', '\midrule', '\midrule', '\bottomrule' ];
-       }
+    my $ret  = $orig->( $self, @_ );
+    for my $theme ( keys %{$ret} ) {
+        if ( defined $ret->{$theme}->{BOOKTABS}
+            && $ret->{$theme}->{BOOKTABS} )
+        {
+            $ret->{$theme}->{RULES_CMD}
+                = [ '\toprule', '\midrule', '\midrule', '\bottomrule' ];
+        }
     }
     return $ret;
 };

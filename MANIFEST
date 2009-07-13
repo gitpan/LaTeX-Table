@@ -38,5 +38,6 @@ t/90.combat.t
 t/lib/MyThemes/Custom.pm
 t/perlcritic.t
 t/perlcriticrc
+t/perltidyrc
 t/pod-coverage.t
 t/pod.t

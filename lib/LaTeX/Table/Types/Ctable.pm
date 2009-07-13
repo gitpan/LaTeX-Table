@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-04 12:25:08 +0100 (Wed, 04 Feb 2009) $
-# $Revision: 1307 $
+#     $Date: 2009-07-13 13:47:11 +0200 (Mon, 13 Jul 2009) $
+# $Revision: 1738 $
 #############################################################################
 
 package LaTeX::Table::Types::Ctable;
@@ -10,9 +10,9 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1307 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1738 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
-my $template =<<'EOT'
+my $template = <<'EOT'
 {[% DEFINE_COLORS_CODE %][% FONTSIZE_CODE %][% FONTFAMILY_CODE %][%
 EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RESIZEBOX_BEGIN_CODE %]
 \ctable[[% IF CAPTION %]caption = {[% CAPTION %]},
@@ -32,10 +32,10 @@ EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RESIZEBOX_BEGIN_CODE %]
 [% RULES_COLOR_GLOBAL %][% HEADER_CODE %][% DATA_CODE %]}
 [% RESIZEBOX_END_CODE %]}
 EOT
-;
+    ;
 
-has '+_tabular_environment' => (default => 'tabular');
-has '+_template'    => (default => $template);
+has '+_tabular_environment' => ( default => 'tabular' );
+has '+_template'            => ( default => $template );
 
 1;
 

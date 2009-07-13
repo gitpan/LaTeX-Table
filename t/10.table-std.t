@@ -1,4 +1,4 @@
-use Test::More tests => 21;
+use Test::More tests => 20;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -627,51 +627,6 @@ is_deeply(
     [ split( "\n", $output ) ],
     [ split( "\n", $expected_output ) ],
     'theme with colordef and resizebox'
-) || diag $output;
-
-$header = [ ['Time', 'Weekdays:5c'], [], [ '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ] ];
-
-$data = [ 
-[ '9.00', '','', '', '', '', ],
-[ '12.00', '','', '', '', '', ],
-];
-
-$table = LaTeX::Table->new(
-    {   
-        header            => $header,
-        data              => $data,
-        header_sideways   => 1,
-        sideways          => 1,
-        theme             => 'NYC',
-    }
-);
-
-$expected_output = <<'EOT'
-\definecolor{latextbl}{RGB}{78,130,190}
-\begin{sidewaystable}
-\centering
-\setlength{\extrarowheight}{1pt}
-\begin{tabular}{|rlllll|}
-\hline
-\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Time\end{sideways}}} & \multicolumn{5}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{\begin{sideways}Weekdays\end{sideways}}} \\
-\hline
-\rowcolor{latextbl}\multicolumn{1}{|>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}\end{sideways}}}     & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Monday\end{sideways}}}    & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Tuesday\end{sideways}}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Wednesday\end{sideways}}} & \multicolumn{1}{>{\columncolor{latextbl}}c}{\color{white}\textbf{\begin{sideways}Thursday\end{sideways}}} & \multicolumn{1}{>{\columncolor{latextbl}}c|}{\color{white}\textbf{\begin{sideways}Friday\end{sideways}}} \\
-\hline
-\rowcolor{latextbl!25}9.00  &  &  &  &  &  \\
-\rowcolor{latextbl!10}12.00 &  &  &  &  &  \\
-\hline
-\end{tabular}
-\end{sidewaystable}
-EOT
-    ;
-
-
-$output = $table->generate_string();
-
-is_deeply(
-    [ split( "\n", $output ) ],
-    [ split( "\n", $expected_output ) ],
-    'NYC header sideways'
 ) || diag $output;
 
 

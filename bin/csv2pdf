@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-05-29 10:38:31 +0200 (Fri, 29 May 2009) $
-# $Revision: 1616 $
+#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
+# $Revision: 1741 $
 #############################################################################
 
 use strict;
@@ -11,14 +11,16 @@ use warnings;
 
 use utf8;
 
-use Fatal qw(open close);
+use autodie qw(open close);
 use Getopt::Long;
 use Pod::Usage;
 use Carp;
 
 use Text::CSV;
 use File::Basename;
-use Readonly;
+use Cwd;
+
+use Template;
 
 use LaTeX::Table;
 use LaTeX::Encode;
@@ -26,16 +28,13 @@ use LaTeX::Driver;
 
 use version; our $VERSION = $LaTeX::Table::VERSION;
 
-Readonly my $DEFAULT_XENTRYSTRETCH => -0.05;
-Readonly my $DEFAULT_THEME         => 'Meyrin';
-
-my ( $infile, $outfile, $help, $man, $version );
+my ( $infile, $outfile, $outfiletex, $help, $man, $version );
 
 my $sep_char     = q{,};
 my $latex_encode = 0;
 my $landscape    = 0;
 my $outputlatex  = 0;
-my $theme        = $DEFAULT_THEME;
+my $theme        = 0;
 my $title        = 0;
 my $coldef       = 0;
 my $header       = 0;
@@ -68,7 +67,8 @@ if ( $help || !defined $infile ) {
     pod2usage(1);
 }
 if ( !defined $outfile ) {
-    $outfile = q{./} . fileparse( $infile, qw(csv txt dat) ) . '.pdf';
+    $outfile = q{./} . fileparse( $infile, qw(csv txt dat) ) . 'pdf';
+    $outfiletex = fileparse( $infile, qw(csv txt dat) ) . 'tex';
 }
 
 my $csv = Text::CSV->new(
@@ -103,16 +103,16 @@ while ( my $line = <$IN> ) {
 close $IN;
 
 my $table = LaTeX::Table->new(
-    {   header        => \@header,
-        data          => \@data,
-        type          => 'xtab',
-        xentrystretch => $DEFAULT_XENTRYSTRETCH,
-        tabletail     => q{ },
-        theme         => $theme,
-
-        #    width     => '\textwidth',
-        coldef   => $coldef,
-        callback => sub {
+    {   header    => \@header,
+        data      => \@data,
+        type      => 'longtable',
+        tabletail => q{ },
+        ( $theme ? ( theme => $theme ) : () ),
+        filename          => $outfiletex,
+        center            => 0,
+        width_environment => 'tabularx',
+        coldef            => $coldef,
+        callback          => sub {
             my ( $row, $col, $value, $is_header ) = @_;
             if ($latex_encode) {
                 return latex_encode($value);
@@ -122,42 +122,65 @@ my $table = LaTeX::Table->new(
     }
 );
 
-my $ls = q{};
-my $lg = q{};
-if ($landscape) {
-    $ls = '[landscape]';
-    $lg = '\usepackage[landscape]{geometry}';
-}
-my $tc  = q{};
-my $mtc = q{};
+$table->generate;
 
-if ($title) {
-    $tc  = '\title{' . $title . '}';
-    $mtc = '\maketitle';
+my $latex_code = create_latex_code();
+
+if ($outputlatex) {
+    print $latex_code or croak q{Can't print to stdout.};
 }
-my $code = '\documentclass' . $ls
-    . '{article}\usepackage{xtab}'
-    . $lg
-    . '\usepackage{booktabs}'
-    . '\usepackage{xcolor}'
-    . '\usepackage{colortbl}'
-    . '\usepackage{array}'
-    . '\usepackage{helvet}'
-    . $tc
-    . '\begin{document}'
-    . $mtc . "\n"
-    . $table->generate_string
-    . '\end{document}';
 
 my $drv = LaTeX::Driver->new(
-    source => \$code,
+    source => \$latex_code,
     output => $outfile,
     format => 'pdf',
 );
+
 my $ok = $drv->run;
 
-if ($outputlatex) {
-    print "$code" or croak q{Can't print to stdout.};
+sub create_latex_code {
+
+    my $template_obj = Template->new();
+
+    my %template_vars = (
+        LANDSCAPE => 0,
+        TITLE     => 0,
+        TABLECODE => '\LTXtable{\textwidth}{'
+            . getcwd() . q{/}
+            . $outfiletex . '}',
+    );
+
+    if ($landscape) {
+        $template_vars{LANDSCAPE} = '[landscape]';
+    }
+
+    if ($title) {
+        $template_vars{TITLE} = '\title{' . $title . '}';
+    }
+
+    my $template = << 'EOT'
+\documentclass[%IF LANDSCAPE %][% LANDSCAPE %][% END %]{article}
+[% IF LANDSCAPE %]\usepackage[landscape]{geometry}
+[% END %]\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{ltxtable}
+\usepackage{longtable}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{helvet}
+[% IF TITLE %][% TITLE %][% END %]
+\begin{document}
+[% IF TITLE %]\maketitle
+[% END %][% TABLECODE %]
+\end{document};
+EOT
+        ;
+    my $code;
+
+    $template_obj->process( \$template, \%template_vars, \$code )
+        or croak $template_obj->error;
+
+    return $code;
 }
 
 __END__
@@ -225,6 +248,10 @@ Print version number of this software.
 
 Converts a CSV file to PDF. Requires LaTeX. 
 
+=head1 EXAMPLE
+
+  csv2pdf --landscape  --theme Redmond --in examples/imdbtop40.dat
+  
 =head1 CONFIGURATION AND ENVIRONMENT
 
 C<csv2pdf> does not support configuration files or environment variables.

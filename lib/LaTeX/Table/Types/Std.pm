@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-04 12:25:08 +0100 (Wed, 04 Feb 2009) $
-# $Revision: 1307 $
+#     $Date: 2009-07-13 13:47:11 +0200 (Mon, 13 Jul 2009) $
+# $Revision: 1738 $
 #############################################################################
 
 package LaTeX::Table::Types::Std;
@@ -10,9 +10,9 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1307 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1738 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
-my $template =<<'EOT'
+my $template = <<'EOT'
 [%IF CONTINUED %]\addtocounter{table}{-1}[% END %][% DEFINE_COLORS_CODE %][% IF ENVIRONMENT %]\begin{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% IF POSITION %][[% POSITION %]][% END %]
 [% FONTSIZE_CODE %][% FONTFAMILY_CODE %][% RULES_WIDTH_GLOBAL %][% IF CENTER %]\centering
 [% END %][% IF LEFT %]\raggedright
@@ -25,10 +25,10 @@ TABULAR_ENVIRONMENT %]}[% RESIZEBOX_END_CODE %][% IF ENVIRONMENT %][% UNLESS CAP
 \label{[% LABEL %]}[% END %]
 \end{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% END %]
 EOT
-;
+    ;
 
-has '+_tabular_environment' => (default => 'tabular');
-has '+_template'    => (default => $template);
+has '+_tabular_environment' => ( default => 'tabular' );
+has '+_template'            => ( default => $template );
 
 1;
 

@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-02-03 17:09:45 +0100 (Tue, 03 Feb 2009) $
-# $Revision: 1298 $
+#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
+# $Revision: 1741 $
 #############################################################################
 
 package LaTeX::Table::Themes::Modern;
@@ -10,33 +10,31 @@ use Moose;
 with 'LaTeX::Table::Themes::ThemeI';
 
 use version;
-our ($VERSION) = '$Revision: 1298 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1741 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
     my $themes = {
-            'Paris' => {
-                'HEADER_FONT_STYLE'  => 'bf',
-                'HEADER_CENTERED'    => 1,
-                'HEADER_BG_COLOR'    => 'latextblgray',
-                'DEFINE_COLORS'      =>
-                '\definecolor{latextblgray}{gray}{0.7}',
-                'CAPTION_FONT_STYLE' => 'bf',
-                'VERTICAL_RULES'     => [ 1, 1, 1 ],
-                'HORIZONTAL_RULES'   => [ 1, 1, 0 ],
-                'BOOKTABS'           => 0,
-            },
-            'Muenchen' => {
-                'HEADER_FONT_STYLE'  => 'bf',
-                'STUB_ALIGN'    => 'l',
-                'DEFINE_COLORS'      =>
-                '\definecolor{latexttbl}{RGB}{78,130,190}',
-                'CAPTION_FONT_STYLE' => 'bf',
-                'DATA_BG_COLOR_EVEN' => 'latextbl!20',
-                'VERTICAL_RULES'     => [ 0, 0, 0 ],
-                'HORIZONTAL_RULES'   => [ 0, 0, 0 ],
-                'BOOKTABS'           => 1,
-                'EXTRA_ROW_HEIGHT'   => '1pt',
-            },
+        'Paris' => {
+            'HEADER_FONT_STYLE'  => 'bf',
+            'HEADER_CENTERED'    => 1,
+            'HEADER_BG_COLOR'    => 'latextblgray',
+            'DEFINE_COLORS'      => '\definecolor{latextblgray}{gray}{0.7}',
+            'CAPTION_FONT_STYLE' => 'bf',
+            'VERTICAL_RULES'     => [ 1, 1, 1 ],
+            'HORIZONTAL_RULES'   => [ 1, 1, 0 ],
+            'BOOKTABS'           => 0,
+        },
+        'Muenchen' => {
+            'HEADER_FONT_STYLE' => 'bf',
+            'STUB_ALIGN'        => 'l',
+            'DEFINE_COLORS'     => '\definecolor{latexttbl}{RGB}{78,130,190}',
+            'CAPTION_FONT_STYLE' => 'bf',
+            'DATA_BG_COLOR_EVEN' => 'latextbl!20',
+            'VERTICAL_RULES'     => [ 0, 0, 0 ],
+            'HORIZONTAL_RULES'   => [ 0, 0, 0 ],
+            'BOOKTABS'           => 1,
+            'EXTRA_ROW_HEIGHT'   => '1pt',
+        },
     };
     return $themes;
 }

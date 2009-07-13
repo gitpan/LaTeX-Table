@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-05-29 10:13:11 +0200 (Fri, 29 May 2009) $
-# $Revision: 1615 $
+#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
+# $Revision: 1741 $
 #############################################################################
 
 package LaTeX::Table;
@@ -12,7 +12,7 @@ use warnings;
 use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 
-use version; our $VERSION = qv('0.9.15');
+use version; our $VERSION = qv('0.9.16');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -31,7 +31,7 @@ use Module::Pluggable
 
 for my $attr (
     qw(label maincaption shortcaption caption caption_top coldef coldef_strategy
-    columns_like_header continued text_wrap header_sideways width maxwidth width_environment
+    columns_like_header continued text_wrap width maxwidth width_environment
     custom_tabular_environment position fontsize fontfamily callback tabletail xentrystretch
     resizebox sideways star _data_summary)
     )
@@ -44,8 +44,8 @@ has 'filename'  => ( is => 'rw', isa => 'Str', default => 'latextable.tex' );
 has 'foottable' => ( is => 'rw', isa => 'Str', default => q{} );
 has 'type' => ( is => 'rw', default => 'std' );
 has '_type_obj' => ( is => 'rw' );
-has 'header' => ( is => 'rw', default => sub { [] } );
-has 'data'   => ( is => 'rw', default => sub { [] } );
+has 'header'    => ( is => 'rw', default => sub { [] } );
+has 'data'      => ( is => 'rw', default => sub { [] } );
 has 'environment'   => ( is => 'rw', default => 1 );
 has 'theme'         => ( is => 'rw', default => 'Meyrin' );
 has 'predef_themes' => ( is => 'rw', default => sub { {} } );
@@ -66,6 +66,7 @@ has 'tabledef'          => ( is => 'rw', default => 'deprecated' );
 has 'tabledef_strategy' => ( is => 'rw', default => 'deprecated' );
 has 'tablepos'          => ( is => 'rw', default => 'deprecated' );
 has 'size'              => ( is => 'rw', default => 'deprecated' );
+has 'header_sideways'   => ( is => 'rw', default => '0' );
 
 __PACKAGE__->meta->make_immutable;
 
@@ -145,6 +146,10 @@ sub _compatibility_layer {
     if ( $self->get_size ne 'deprecated' ) {
         carp('DEPRECATED: size was renamed to fontsize.');
         $self->set_fontsize( $self->get_size );
+    }
+    if ( $self->get_header_sideways ) {
+        carp(     'DEPRECATED: header_sideways was removed. '
+                . 'Use a callback function instead.' );
     }
     my $cs = $self->get_coldef_strategy();
 
@@ -241,7 +246,10 @@ sub _check_options {
         $self->invalid_option_usage( 'maincaption, shortcaption',
             'only one allowed.' );
     }
-    if ( !$self->get_width && $self->get_type ne 'longtable' && $self->get_width_environment eq 'tabularx' ) {
+    if (  !$self->get_width
+        && $self->get_type ne 'longtable'
+        && $self->get_width_environment eq 'tabularx' )
+    {
         $self->invalid_option_usage( 'width_environment',
             'Is tabularx and width is unset' );
     }
@@ -312,7 +320,7 @@ sub _examine_data {
             $data[$i] = \@row;
         }
     }
-    return @data
+    return @data;
 }
 
 sub _ioerror {
@@ -397,8 +405,8 @@ sub _get_coldef_types {
     my ($self) = @_;
 
     # everything that does not contain an underscore is a coltype
-    my @coltypes =
-        sort grep {m{ \A [^_]+ \z }xms} keys %{ $self->get_coldef_strategy };
+    my @coltypes = sort grep {m{ \A [^_]+ \z }xms}
+        keys %{ $self->get_coldef_strategy };
 
     return @coltypes;
 }
@@ -443,7 +451,7 @@ ROW:
             $max_col_number = scalar @{$row};
         }
         my $i = 0;
-        COL:
+    COL:
         for my $col ( @{$row} ) {
             next COL if $col =~ $strategy->{MISSING_VALUE};
 
@@ -461,7 +469,7 @@ ROW:
         my $type_of_this_col = 'DEFAULT';
         for my $coltype (@coltypes) {
             if (defined $matches{$i}{$coltype}
-                && ( !$strategy->{"${coltype}_MUST_MATCH_ALL"}
+                && (  !$strategy->{"${coltype}_MUST_MATCH_ALL"}
                     || $cells{$i} == $matches{$i}{$coltype} )
                 )
             {
@@ -534,6 +542,7 @@ sub _get_row_array {
     my $j         = 0;
     my $col_id    = 0;
     for my $col_def (@cols_defs) {
+
         if ( !$is_header && $self->get_columns_like_header ) {
         HEADER_COLUMN:
             for my $i ( @{ $self->get_columns_like_header } ) {
@@ -579,7 +588,7 @@ sub _get_row_array {
             }
 
             push @cols,
-                '\\multicolumn{'
+                  '\\multicolumn{'
                 . $col_def->{cols} . '}{'
                 . $vl_pre
                 . $color_code
@@ -833,7 +842,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.15
+This document describes LaTeX::Table version 0.9.16
 
 =head1 SYNOPSIS
 
@@ -1291,7 +1300,7 @@ the attribute defined in C<TYPE_COL> is used.
 The C<coldef> attribute for columns that do not match any specified type.
 Default 'l' (left-justified).
 
-=item C<MISSING_VALUE>
+=item C<MISSING_VALUE =E<gt> $regex>
 
 Column values that match the specified regular expression are omitted in the
 C<coldef> calculation. Default is C<qr{\A \s* \z}xms>.
@@ -1392,6 +1401,7 @@ C<$is_header>.
   use Number::Format qw(:subs);  
   ...
   
+  # rotate header (not the first column),
   # use LaTeX::Encode to encode LaTeX special characters,
   # format the third column with Format::Number (only the data)
   my $table = LaTeX::Table->new(
@@ -1399,7 +1409,10 @@ C<$is_header>.
           data     => $data,
           callback => sub {
               my ( $row, $col, $value, $is_header ) = @_;
-              if ( $col == 2 && !$is_header ) {
+              if ( $col != 0 && $is_header ) {
+                    $value = '\begin{sideways}' . $value . '\end{sideways}';
+              }
+              elsif ( $col == 2 && !$is_header ) {
                   $value = format_price($value, 2, '');
               }
               else {
@@ -1501,24 +1514,6 @@ with 0). These columns are formatted like header columns.
           columns_like_header => [ 0 ], }
   );
 
-=item C<header_sideways>
-
-If get_header_sideways() returns a true value, then the header columns will
-be rotated by 90 degrees. Requires the C<rotating> LaTeX package. Does not
-affect data columns specified in columns_like_header(). If you do not want to
-rotate all headers, use a callback function B<instead>:
-
-  ...
-  header_sideways => 0,
-  callback => sub {  
-      my ( $row, $col, $value, $is_header ) = @_;
-      if ( $col != 0 && $is_header ) {
-          $value = '\begin{sideways}' . $value . '\end{sideways}';
-      }
-      return $value;
-  }
-  ...
-  
 =back
 
 =head1 MULTICOLUMNS 
@@ -1568,9 +1563,9 @@ correct usage of this option.
 =item C<DEPRECATED. ...>  
 
 There were some minor API changes in C<LaTeX::Table> 0.1.0, 0.8.0, 0.9.0,
-0.9.3 and 0.9.12. Just apply the changes to the script or contact its author.
+0.9.3, 0.9.12 and 0.9.16. Just apply the changes to the script or contact its author.
 
-B<Important Note:> 0.9.15 will be the last version that includes deprecated
+B<Important Note:> 0.9.16 will be the last version that includes old deprecated
 code.
 
 =back
@@ -1582,7 +1577,7 @@ C<LaTeX::Table> requires no configuration files or environment variables.
 =head1 DEPENDENCIES
 
 L<Carp>, L<Module::Pluggable>, L<Moose>, L<English>, L<Scalar::Util>,
-L<Template>, L<Text::Wrap>
+L<Template>
 
 =head1 BUGS AND LIMITATIONS
 
@@ -1602,7 +1597,7 @@ L<Data::Table>, L<LaTeX::Encode>
 
 =over
 
-=item David Carlisle for the C<colortbl>, C<longtable>, <ltxtable>,
+=item David Carlisle for the C<colortbl>, C<longtable>, C<ltxtable>,
 C<tabularx> and C<tabulary> LaTeX packages.
 
 =item Wybo Dekker for the C<ctable> LaTeX package.

@@ -9,3 +9,4 @@ after 1.0
 
 - code cleanup (use more Moose features, e.g. validation)
 - shortcut for multirows
+- csvpdf should support all LT options
