@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
-# $Revision: 1741 $
+#     $Date: 2009-07-26 00:10:02 +0200 (Sun, 26 Jul 2009) $
+# $Revision: 1793 $
 #############################################################################
 
 package LaTeX::Table;
@@ -11,8 +11,9 @@ use warnings;
 
 use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
+use Moose::Util::TypeConstraints;
 
-use version; our $VERSION = qv('0.9.16');
+use version; our $VERSION = qv('0.9.17');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -29,44 +30,75 @@ use Module::Pluggable
     except      => 'LaTeX::Table::Themes::ThemeI',
     instantiate => 'new';
 
+# Scalar options:
+
+# Str
 for my $attr (
-    qw(label maincaption shortcaption caption caption_top coldef coldef_strategy
-    columns_like_header continued text_wrap width maxwidth width_environment
-    custom_tabular_environment position fontsize fontfamily callback tabletail xentrystretch
-    resizebox sideways star _data_summary)
+    qw(label maincaption shortcaption caption caption_top coldef custom_template text_wrap width maxwidth width_environment custom_tabular_environment position tabletail star)
     )
 {
-    has $attr => ( is => 'rw', default => 0 );
+    has $attr => ( is => 'rw', isa => 'Str', default => 0 );
 }
 
-has 'custom_template' => ( is => 'rw', isa => 'Str', default => 0 );
 has 'filename'  => ( is => 'rw', isa => 'Str', default => 'latextable.tex' );
 has 'foottable' => ( is => 'rw', isa => 'Str', default => q{} );
-has 'type' => ( is => 'rw', default => 'std' );
-has '_type_obj' => ( is => 'rw' );
-has 'header'    => ( is => 'rw', default => sub { [] } );
-has 'data'      => ( is => 'rw', default => sub { [] } );
-has 'environment'   => ( is => 'rw', default => 1 );
-has 'theme'         => ( is => 'rw', default => 'Meyrin' );
-has 'predef_themes' => ( is => 'rw', default => sub { {} } );
-has 'custom_themes' => ( is => 'rw', default => sub { {} } );
+has 'environment'  => ( is => 'rw', isa => 'Str', default => 1 );
+has 'theme'        => ( is => 'rw', isa => 'Str', default => 'Meyrin' );
+has 'continuedmsg' => ( is => 'rw', isa => 'Str', default => '(continued)' );
+has 'tabletailmsg' =>
+    ( is => 'rw', isa => 'Str', default => 'Continued on next page' );
+has 'tableheadmsg' =>
+    ( is => 'rw', isa => 'Str', default => 'Continued from previous page' );
+has 'tablelasttail' => ( is => 'rw', isa => 'Str', default => q{} );
 
-for my $attr (qw(center left right _default_align)) {
+# Num
+has 'xentrystretch' => ( is => 'rw', isa => 'Num', default => 0 );
+
+# Bool
+for my $attr (qw(center left right _default_align continued sideways)) {
     has $attr => ( is => 'rw', isa => 'Bool', predicate => "has_$attr" );
 }
 
-has 'continuedmsg' => ( is => 'rw', default => '(continued)' );
-has 'tabletailmsg' => ( is => 'rw', default => 'Continued on next page' );
-has 'tableheadmsg' =>
-    ( is => 'rw', default => 'Continued from previous page' );
+# enum
+has 'type' => (
+    is      => 'rw',
+    isa     => enum( [qw( std ctable xtab longtable )] ),
+    default => 'std',
+);
+has 'fontfamily' => (
+    is      => 'rw',
+    isa     => enum( [qw( 0 rm sf tt )] ),
+    default => 0,
+);
+has 'fontsize' => (
+    is  => 'rw',
+    isa => enum(
+        [   qw(0 tiny scriptsize footnotesize
+                small normal large Large LARGE huge Huge)
+        ]
+    ),
+    default => 0,
+);
+
+# Reference/Object options
+has 'coldef_strategy'     => ( is => 'rw', isa => 'HashRef' );
+has 'callback'            => ( is => 'rw', isa => 'CodeRef' );
+has 'resizebox'           => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has '_data_summary'       => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'columns_like_header' => ( is => 'rw', isa => 'ArrayRef[Int]' );
+has 'header' =>
+    ( is => 'rw', isa => 'ArrayRef[ArrayRef[Value]]', default => sub { [] } );
+has 'data' =>
+    ( is => 'rw', isa => 'ArrayRef[ArrayRef[Value]]', default => sub { [] } );
+has 'predef_themes' =>
+    ( is => 'rw', isa => 'HashRef[HashRef]', default => sub { {} } );
+has 'custom_themes' =>
+    ( is => 'rw', isa => 'HashRef[HashRef]', default => sub { {} } );
+has '_type_obj' => ( is => 'rw', isa => 'LaTeX::Table::Types::TypeI' );
 
 # deprecated
-has 'table_environment' => ( is => 'rw', default => 'deprecated' );
-has 'tabledef'          => ( is => 'rw', default => 'deprecated' );
-has 'tabledef_strategy' => ( is => 'rw', default => 'deprecated' );
-has 'tablepos'          => ( is => 'rw', default => 'deprecated' );
-has 'size'              => ( is => 'rw', default => 'deprecated' );
-has 'header_sideways'   => ( is => 'rw', default => '0' );
+has 'size'            => ( is => 'rw', default => 'deprecated' );
+has 'header_sideways' => ( is => 'rw', default => '0' );
 
 __PACKAGE__->meta->make_immutable;
 
@@ -82,7 +114,7 @@ __PACKAGE__->meta->make_immutable;
 sub generate_string {
     my ( $self, @args ) = @_;
 
-    # support for < 0.9.3 API
+    # support for < 0.9.16 API
     $self->_compatibility_layer(@args);
 
     # are the user provided options ok?
@@ -91,22 +123,11 @@ sub generate_string {
     # analyze the data
     $self->_calc_data_summary( $self->get_data );
 
-    if ( $self->get_type eq 'xtab' ) {
-        $self->set__type_obj(
-            LaTeX::Table::Types::Xtab->new( _table_obj => $self ) );
-    }
-    elsif ( $self->get_type eq 'longtable' ) {
-        $self->set__type_obj(
-            LaTeX::Table::Types::Longtable->new( _table_obj => $self ) );
-    }
-    elsif ( $self->get_type eq 'ctable' ) {
-        $self->set__type_obj(
-            LaTeX::Table::Types::Ctable->new( _table_obj => $self ) );
-    }
-    else {
-        $self->set__type_obj(
-            LaTeX::Table::Types::Std->new( _table_obj => $self ) );
-    }
+    my $type_obj_name
+        = 'LaTeX::Table::Types::'
+        . uc( substr $self->get_type, 0, 1 )
+        . substr $self->get_type, 1;
+    $self->set__type_obj( $type_obj_name->new( _table_obj => $self ) );
 
     my $code = $self->get__type_obj->generate_latex_code( $self->get_header,
         $self->get_data );
@@ -114,35 +135,19 @@ sub generate_string {
     return $code;
 }
 
-sub _load_themes {
-    my ($self) = @_;
-    my %defs;
-
-    for my $theme_obj ( $self->themes ) {
-        %defs = ( %defs, %{ $theme_obj->_definition } );
-    }
-    $self->set_predef_themes( \%defs );
-    return;
+sub generate {
+    my ( $self, $header, $data ) = @_;
+    open my $LATEX, '>', $self->get_filename
+        or $self->_ioerror( 'open', $OS_ERROR );
+    print {$LATEX} $self->generate_string( $header, $data )
+        or $self->_ioerror( 'write', $OS_ERROR );
+    close $LATEX
+        or $self->_ioerror( 'close', $OS_ERROR );
+    return 1;
 }
 
 sub _compatibility_layer {
-    my ( $self, @args ) = @_;
-    if ( $self->get_tablepos ne 'deprecated' ) {
-        carp('DEPRECATED: Use position instead of tablepos.');
-        $self->set_position( $self->get_tablepos );
-    }
-    if ( $self->get_table_environment ne 'deprecated' ) {
-        carp('DEPRECATED: Use environment instead of table_environment.');
-        $self->set_environment( $self->get_table_environment );
-    }
-    if ( $self->get_tabledef ne 'deprecated' ) {
-        carp('DEPRECATED: Use coldef instead of tabledef.');
-        $self->set_coldef( $self->get_tabledef );
-    }
-    if ( $self->get_tabledef_strategy ne 'deprecated' ) {
-        carp('DEPRECATED: Use coldef_strategy instead of tabledef_strategy.');
-        $self->set_coldef_strategy( $self->get_tabledef_strategy );
-    }
+    my ($self) = @_;
     if ( $self->get_size ne 'deprecated' ) {
         carp('DEPRECATED: size was renamed to fontsize.');
         $self->set_fontsize( $self->get_size );
@@ -153,7 +158,7 @@ sub _compatibility_layer {
     }
     my $cs = $self->get_coldef_strategy();
 
-    if ( $cs && defined reftype $cs && reftype $cs eq 'HASH' ) {
+    if ($cs) {
         if ( defined $cs->{'DEFAULT'} ) {
             carp(     'DEPRECATED: DEFAULT in coldef_strategy was renamed to '
                     . 'DEFAULT_COL.' );
@@ -180,14 +185,6 @@ sub _compatibility_layer {
         }
         $self->set_coldef_strategy($cs);
     }
-    return if !defined $args[0];
-    if ( reftype $args[0] eq 'ARRAY' ) {
-        carp('DEPRECATED. Use options header and data instead.');
-        $self->set_header( $args[0] );
-        if ( reftype $args[1] eq 'ARRAY' ) {
-            $self->set_data( $args[1] );
-        }
-    }
     return;
 }
 
@@ -212,27 +209,15 @@ sub _check_options {
         $self->set_environment('table');
     }
 
-    # check header and data
-    $self->_check_2d_array( $self->get_header, 'header' );
-    $self->_check_2d_array( $self->get_data,   'data' );
-
-    if ( $self->get_callback && reftype $self->get_callback ne 'CODE' ) {
-        $self->invalid_option_usage( 'callback', 'Not a code reference' );
-    }
-    if ( $self->get_columns_like_header ) {
-        $self->_check_1d_array( $self->get_columns_like_header,
-            q{}, 'columns_like_header' );
-    }
-    if ( $self->get_resizebox ) {
-        $self->_check_1d_array( $self->get_resizebox, q{}, 'resizebox' );
-    }
-    if ( $self->get_type eq 'xtab' && !$self->get_environment ) {
-        $self->invalid_option_usage( 'environment',
-            'xtab requires an environment' );
-    }
-    if ( $self->get_type eq 'xtab' && $self->get_position ) {
-        $self->invalid_option_usage( 'position',
-            'xtab does not support position' );
+    if ( $self->get_type eq 'xtab' || $self->get_type eq 'longtable' ) {
+        if ( !$self->get_environment ) {
+            $self->invalid_option_usage( 'environment',
+                'xtab/longtable requires an environment' );
+        }
+        if ( $self->get_position ) {
+            $self->invalid_option_usage( 'position',
+                'xtab/longtable does not support position' );
+        }
     }
 
     # handle default values by ourselves
@@ -306,9 +291,8 @@ sub _apply_callback {
 }
 
 sub _examine_data {
-    my ($self)    = @_;
-    my $text_wrap = $self->get_text_wrap;
-    my @data      = @{ $self->get_data };
+    my ($self) = @_;
+    my @data = @{ $self->get_data };
     if ( $self->get_callback ) {
         for my $i ( 0 .. $#data ) {
             my @row = @{ $data[$i] };
@@ -326,18 +310,6 @@ sub _examine_data {
 sub _ioerror {
     my ( $self, $function, $error ) = @_;
     croak "IO error: Can't $function '" . $self->get_filename . "': $error";
-}
-
-sub generate {
-    my ( $self, $header, $data ) = @_;
-    my $code = $self->generate_string( $header, $data );
-    open my $LATEX, '>', $self->get_filename
-        or $self->_ioerror( 'open', $OS_ERROR );
-    print {$LATEX} $code
-        or $self->_ioerror( 'write', $OS_ERROR );
-    close $LATEX
-        or $self->_ioerror( 'close', $OS_ERROR );
-    return 1;
 }
 
 sub _default_coldef_strategy {
@@ -363,11 +335,6 @@ sub _default_coldef_strategy {
 
 sub _check_coldef_strategy {
     my ( $self, $strategy ) = @_;
-    my $rt_strategy = reftype $strategy;
-    if ( !defined $rt_strategy || $rt_strategy ne 'HASH' ) {
-        $self->invalid_option_usage( 'coldef_strategy',
-            'Not a hash reference' );
-    }
     my $default = $self->_default_coldef_strategy;
     for my $key ( keys %{$default} ) {
         if ( !defined $strategy->{$key} ) {
@@ -393,12 +360,7 @@ sub _check_coldef_strategy {
 sub _extract_number_columns {
     my ( $self, $col ) = @_;
     my $def = $self->_get_mc_def($col);
-    if ( defined $def->{cols} ) {
-        return $def->{cols};
-    }
-    else {
-        return 1;
-    }
+    return defined $def->{cols} ? $def->{cols} : 1;
 }
 
 sub _get_coldef_types {
@@ -415,17 +377,6 @@ sub _get_data_summary {
     my ($self) = @_;
     return @{ $self->get__data_summary() };
 }
-
-###########################################################################
-# Usage      : $self->_get_data_summary(\@data);
-# Purpose    : find out how many columns we need and if column consists of
-#              numbers only
-# Returns    : an array with one entry for every column. Entry is either 1
-#              (column is numerical) or 0.
-# Parameters : data columns
-# Throws     :
-# Comments   : n/a
-# See also   :
 
 sub _calc_data_summary {
     my ( $self, $data ) = @_;
@@ -783,39 +734,6 @@ sub get_theme_settings {
     return;
 }
 
-sub _check_1d_array {
-    my ( $self, $arr_ref_1d, $desc, $option ) = @_;
-    if ( !defined reftype $arr_ref_1d || reftype $arr_ref_1d ne 'ARRAY' ) {
-        $self->invalid_option_usage( $option,
-            "${desc}Not an array reference" );
-    }
-    return;
-}
-
-sub _check_2d_array {
-    my ( $self, $arr_ref_2d, $desc ) = @_;
-    $self->_check_1d_array( $arr_ref_2d, q{}, $desc );
-    my $i = 0;
-    for my $arr_ref ( @{$arr_ref_2d} ) {
-        $self->_check_1d_array( $arr_ref, "$desc\[$i\] ", $desc );
-        my $j = 0;
-        for my $scalar ( @{$arr_ref} ) {
-            my $rt_scalar = reftype $scalar;
-            if ( defined $rt_scalar ) {
-                $self->invalid_option_usage( $desc,
-                    "$desc\[$i\]\[$j\] not a scalar" );
-            }
-            if ( !defined $scalar ) {
-                $self->invalid_option_usage( $desc,
-                    "Undefined value in $desc\[$i\]\[$j\]" );
-            }
-            $j++;
-        }
-        $i++;
-    }
-    return;
-}
-
 ###########################################################################
 # Usage      : $self->get_available_themes();
 # Purpose    : return an hash reference with all available themes
@@ -827,11 +745,17 @@ sub _check_2d_array {
 
 sub get_available_themes {
     my ($self) = @_;
-    $self->_load_themes();
+    my %defs;
+
+    for my $theme_obj ( $self->themes ) {
+        %defs = ( %defs, %{ $theme_obj->_definition } );
+    }
+    $self->set_predef_themes( \%defs );
     return {
         ( %{ $self->get_predef_themes }, %{ $self->get_custom_themes } ) };
 }
 
+no Moose::Util::TypeConstraints;
 no Moose;
 1;    # Magic true value required at end of module
 __END__
@@ -842,7 +766,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.16
+This document describes LaTeX::Table version 0.9.17
 
 =head1 SYNOPSIS
 
@@ -990,10 +914,9 @@ The name of the LaTeX output file. Default is 'latextable.tex'.
 
 =item C<type>
 
-Can be 'std' for standard LaTeX tables, 'ctable' for tables using the
-C<ctable> package or 'xtab' and 'longtable' for multipage tables 
-(requires the C<xtab> and C<longtable> LaTeX
-packages, respectively). 
+Can be 'std' (default) for standard LaTeX tables, 'ctable' for tables using
+the C<ctable> package or 'xtab' and 'longtable' for multipage tables (requires
+the C<xtab> and C<longtable> LaTeX packages, respectively). 
 
 =item C<header>
 
@@ -1096,9 +1019,9 @@ generated. For I<std> tables, the default environment is 'table'. A true value d
 from '1' will be used as environment name. Default is 1 (use a 'table'
 environment).
 
-The non-floating I<xtab> environment is mandatory (get_environment() must
-return a true value here) and supports all options in this section except
-for C<position>.
+The non-floating I<xtab> and I<longtable> environments are mandatory
+(get_environment() must return a true value here) and support all options in
+this section except for C<position>.
 
 The I<ctable> type automatically adds an environment when any of the
 following options are set.
@@ -1434,7 +1357,7 @@ See the documentation of the C<ctable> LaTeX package.
 
 If get_resizebox() returns a true value, then the resizebox command is used to
 resize the table. Takes as argument a reference to an array. The first element
-is the desired width. If a second element is not given, then the hight is set to
+is the desired width. If a second element is not given, then the height is set to
 a value so that the aspect ratio is still the same. Requires the C<graphicx>
 LaTeX package. Default 0.
 
@@ -1468,6 +1391,11 @@ right-justified.
   
   # don't add any tabletail code:
   $table->set_tabletail(q{});
+
+=item C<tablelasttail>
+
+Same as C<tabletail>, but defines only the bottom of the last page ('lastfoot'
+in the C<longtable> package). Default C<''>.
 
 =item C<xentrystretch>
 
@@ -1557,15 +1485,20 @@ C<filename>.
 
 =item C<Invalid usage of option ...> 
 
-See the examples in this document and in I<examples/examples.pdf> for the
-correct usage of this option.
+In method generate() or generate_string(). See the examples in this document
+and in I<examples/examples.pdf> for the correct usage of this option.
+
+=item C<Attribute (option) ... >
+
+In method new() or set_option(). You passed a wrong type to the option. See
+this document or I<examples/examples.pdf> for the correct usage of this option.
 
 =item C<DEPRECATED. ...>  
 
-There were some minor API changes in C<LaTeX::Table> 0.1.0, 0.8.0, 0.9.0,
-0.9.3, 0.9.12 and 0.9.16. Just apply the changes to the script or contact its author.
+There were some minor API changes in C<LaTeX::Table> 0.9.0, 0.9.3, 0.9.12 and
+0.9.16. Just apply the changes to the script or contact its author.
 
-B<Important Note:> 0.9.16 will be the last version that includes old deprecated
+B<Important Note:> 0.9.17 will be the last version that includes deprecated
 code.
 
 =back

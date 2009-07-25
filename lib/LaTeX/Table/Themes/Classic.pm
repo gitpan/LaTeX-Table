@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2008-11-04 22:44:22 +0100 (Tue, 04 Nov 2008) $
-# $Revision: 1151 $
+#     $Date: 2009-07-25 19:15:39 +0200 (Sat, 25 Jul 2009) $
+# $Revision: 1780 $
 #############################################################################
 
 package LaTeX::Table::Themes::Classic;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Themes::ThemeI';
 
 use version;
-our ($VERSION) = '$Revision: 1151 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1780 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 sub _definition {
     my $themes = {

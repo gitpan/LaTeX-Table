@@ -1,10 +1,11 @@
-use Test::More tests => 32;
+use Test::More tests => 35;
 use Test::NoWarnings;
 
 use LaTeX::Table;
 use English qw( -no_match_vars );
 
 my $table = LaTeX::Table->new();
+
 # font family test 1
 eval { $table->_add_font_family( { value => 'test' }, 'test' ) };
 ok( $EVAL_ERROR, 'unknown font family' );
@@ -17,17 +18,17 @@ ok( !$EVAL_ERROR, 'known font family' );
 my $header = [ [ 'a', 'b' ] ];
 my $data   = [ [ '1', '2' ] ];
 
-$table = LaTeX::Table->new(
-    {   header   => $header,
-        data     => $data,
-        callback => [],
-    }
-);
-
-eval { $table->generate_string; };
+eval {
+    $table = LaTeX::Table->new(
+        {   header   => $header,
+            data     => $data,
+            callback => [],
+        }
+    );
+};
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option callback: Not a code reference\.},
+    $EVAL_ERROR,
+    qr{Attribute \(callback\)},
     'callback not a code reference'
 ) || diag $EVAL_ERROR;
 
@@ -37,20 +38,20 @@ $table->set_callback( sub { return 'a'; } );
 eval { $table->generate_string; };
 ok( !$EVAL_ERROR, 'no error with valid callback' ) || diag $EVAL_ERROR;
 
-
 # xentrystretch test 1
+eval {
 $table = LaTeX::Table->new(
-    {   header       => $header,
-        data         => $data,
-        type         => 'xtab',
+    {   header        => $header,
+        data          => $data,
+        type          => 'xtab',
         xentrystretch => 'a',
     }
 );
+};
 
-eval { $table->generate_string; };
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option xentrystretch: Not a number: a\.},
+    $EVAL_ERROR,
+    qr{Attribute \(xentrystretch\)},
     'xentrystretch not a number'
 ) || diag $EVAL_ERROR;
 
@@ -62,15 +63,15 @@ ok( !$EVAL_ERROR, 'no error with valid xentrystretch' ) || diag $EVAL_ERROR;
 # theme test 1
 # xentrystretch test 1
 $table = LaTeX::Table->new(
-    {   header  => $header,
-        data    => $data,
-        theme   => 'Leipzig',
+    {   header => $header,
+        data   => $data,
+        theme  => 'Leipzig',
     }
 );
 
 eval { $table->generate_string; };
 like(
-    $EVAL_ERROR, 
+    $EVAL_ERROR,
     qr{Invalid usage of option theme: Not known: Leipzig\.},
     'unknown theme'
 ) || diag $EVAL_ERROR;
@@ -81,262 +82,234 @@ ok( !$EVAL_ERROR, 'no error with valid theme' ) || diag $EVAL_ERROR;
 
 # size tests
 
-$table = LaTeX::Table->new(
-    {   header   => $header,
-        data     => $data,
-        fontsize => 'HUGE',
-    }
-);
+eval {
+    $table = LaTeX::Table->new(
+        {   header   => $header,
+            data     => $data,
+            fontsize => 'HUGE',
+        }
+    );
+};
+like( $EVAL_ERROR, qr{^Attribute \(fontsize\)}, 'unknown size' )
+    || diag $EVAL_ERROR;
 
-eval { $table->generate_string; };
-like(
-    $EVAL_ERROR, 
-    qr{^Invalid usage of option custom_themes: Size not known: HUGE. Valid sizes},
-    'unknown size'
-) || diag $EVAL_ERROR;
-$table->set_fontsize('Huge');
-
-eval { $table->generate_string; };
+eval { $table->set_fontsize('Huge'); };
 ok( !$EVAL_ERROR, 'no error with valid size' ) || diag $EVAL_ERROR;
 
 # header tests
-$table = LaTeX::Table->new(
-    {   header  => 'A, B',
-        data    => $data,
-    }
-);
-
-eval { $table->generate_string; };
+eval { $table = LaTeX::Table->new( { header => 'A, B', data => $data, } ); };
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option header: Not an array reference\.},
+    $EVAL_ERROR,
+    qr{Attribute \(header\)},
     'header is not an array reference'
 ) || diag $EVAL_ERROR;
-$table->set_header([ 'A', 'B' ]);
-eval { $table->generate_string; };
+eval { $table->set_header( [ 'A', 'B' ] ); };
 like(
-    $EVAL_ERROR, 
-    qr{\QInvalid usage of option header: header[0] Not an array reference.},
+    $EVAL_ERROR,
+    qr{Attribute \(header\)},
     'header[0] is not an array reference'
 ) || diag $EVAL_ERROR;
 
-$table->set_header([ [ 'A', ['B'] ] ]);
-eval { $table->generate_string; };
-like(
-    $EVAL_ERROR, 
-    qr{\QInvalid usage of option header: header[0][1] not a scalar.},
-    'header[0][1] is not a scalar'
-) || diag $EVAL_ERROR;
+eval { $table->set_header( [ [ 'A', ['B'] ] ] ); };
+like( $EVAL_ERROR, qr{Attribute \(header\)}, 'header[0][1] is not a scalar' )
+    || diag $EVAL_ERROR;
 
 # data tests
-$table = LaTeX::Table->new(
-    {   header  => $header,
-        data    =>  { 'A' => 1, 'B' => 1 },
-    }
-);
+eval {
+    $table = LaTeX::Table->new(
+        {   header => $header,
+            data   => { 'A' => 1, 'B' => 1 },
+        }
+    );
+};
+like( $EVAL_ERROR, qr{Attribute \(data\)}, 'data is not an array reference' )
+    || diag $EVAL_ERROR;
 
-eval { $table->generate_string; };
+eval { $table->set_data( [ [ 'A', 'B' ], { 'A' => 1, 'B' => 1 } ] ); };
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option data: Not an array reference\.},
-    'data is not an array reference'
-) || diag $EVAL_ERROR;
-
-$table->set_data([ [ 'A', 'B'], { 'A' => 1, 'B' => 1 } ]);
-eval { $table->generate_string; };
-like(
-    $EVAL_ERROR, 
-    qr{\QInvalid usage of option data: data[1] Not an array reference.},
+    $EVAL_ERROR,
+    qr{Attribute \(data\)},
     'data[1] is not an array reference'
 ) || diag $EVAL_ERROR;
 
-$table->set_data([ [ 'A', 'B'], [ 'A', undef ] ]);
-eval { $table->generate_string; };
-like(
-    $EVAL_ERROR, 
-    qr{Undefined value in data\[1\]\[1\].},
-    'undef value'
-) || diag $EVAL_ERROR;
+eval { $table->set_data( [ [ 'A', 'B' ], [ 'A', undef ] ] ); };
+like( $EVAL_ERROR, qr{Attribute \(data\)}, 'undef value' )
+    || diag $EVAL_ERROR;
 
 $table->set_data($data);
-$table->set_coldef_strategy(1);
-
-eval { $table->generate_string; };
+eval { $table->set_coldef_strategy(1); };
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option coldef_strategy: Not a hash reference\.},
+    $EVAL_ERROR,
+    qr{Attribute \(coldef_strategy\)},
     'coldef_strategy not a hash'
 ) || diag $EVAL_ERROR;
 
-$table->set_coldef_strategy(['a', 'b']);
-
-eval { $table->generate_string; };
+eval { $table->set_coldef_strategy( [ 'a', 'b' ] ); };
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option coldef_strategy: Not a hash reference\.},
+    $EVAL_ERROR,
+    qr{Attribute \(coldef_strategy\)},
     'coldef_strategy not a hash'
 ) || diag $EVAL_ERROR;
 
-$table->set_coldef_strategy({
-        URL => qr{ \A \s* http }xms,
-});
+$table->set_coldef_strategy( { URL => qr{ \A \s* http }xms, } );
 
 eval { $table->generate_string; };
 like(
-    $EVAL_ERROR, 
+    $EVAL_ERROR,
     qr{^Invalid usage of option coldef_strategy: Missing column attribute URL_COL for URL\.},
     'Missing column attribute URL_COL for URL.'
 ) || diag $EVAL_ERROR;
 
 $table = LaTeX::Table->new(
-    {   header  => $header,
-        data    => $data,
+    {   header            => $header,
+        data              => $data,
         width_environment => 'tabularx',
     }
 );
 
 eval { $table->generate_string; };
 like(
-    $EVAL_ERROR, 
+    $EVAL_ERROR,
     qr{Invalid usage of option width_environment: Is tabularx and width is unset\. },
     'unknown width environment'
 ) || diag $EVAL_ERROR;
 
 $table = LaTeX::Table->new(
-    {   header  => $header,
-        data    => $data,
+    {   header            => $header,
+        data              => $data,
         width_environment => 'tabulary',
     }
 );
 
 eval { $table->generate_string; };
 like(
-    $EVAL_ERROR, 
+    $EVAL_ERROR,
     qr{Invalid usage of option width_environment: Is tabulary and width is unset\. },
     'unknown width environment'
 ) || diag $EVAL_ERROR;
 
-$table = LaTeX::Table->new(
-    {   header              => $header,
-        data                => $data,
-        columns_like_header => 2,
-    }
-);
-
-eval { $table->generate_string; };
+eval {
+    $table = LaTeX::Table->new(
+        {   header              => $header,
+            data                => $data,
+            columns_like_header => 2,
+        }
+    );
+};
 like(
-    $EVAL_ERROR, 
-    qr{^Invalid usage of option columns_like_header: Not an array reference\.},
+    $EVAL_ERROR,
+    qr{Attribute \(columns_like_header\)},
     'columns_like_header not an array reference'
 ) || diag $EVAL_ERROR;
 
-$table = LaTeX::Table->new(
-    {   header              => $header,
-        data                => $data,
-        columns_like_header => { 1 => 2 },
-    }
-);
+eval {
+    $table = LaTeX::Table->new(
+        {   header              => $header,
+            data                => $data,
+            columns_like_header => { 1 => 2 },
+        }
+    );
+};
 
-eval { $table->generate_string; };
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option columns_like_header: Not an array reference\.},
+    $EVAL_ERROR,
+    qr{Attribute \(columns_like_header\)},
     'columns_like_header not an array reference'
 ) || diag $EVAL_ERROR;
 
-$table = LaTeX::Table->new(
-    {   header              => $header,
-        data                => $data,
-        columns_like_header => 0,
-    }
-);
-
-eval { $table->generate_string; };
-ok(
-    !$EVAL_ERROR, 
-    'columns_like_header 0 is ok'
-) || diag $EVAL_ERROR;
+eval { $table = LaTeX::Table->new( { header => $header, data => $data, } ); };
+ok( !$EVAL_ERROR, 'columns_like_header 0 is ok' ) || diag $EVAL_ERROR;
 
 ## resizebox
 
-$table = LaTeX::Table->new(
-    {   header              => $header,
-        data                => $data,
-        resizebox => 2,
-    }
-);
-eval { $table->generate_string; };
+eval {
+    $table = LaTeX::Table->new(
+        {   header    => $header,
+            data      => $data,
+            resizebox => 2,
+        }
+    );
+};
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option resizebox: Not an array reference\.},
+    $EVAL_ERROR,
+    qr{Attribute \(resizebox\)},
+    'resizebox not an array reference'
+) || diag $EVAL_ERROR;
+
+eval {
+    $table = LaTeX::Table->new(
+        {   header    => $header,
+            data      => $data,
+            resizebox => { 1 => 2 },
+        }
+    );
+};
+like(
+    $EVAL_ERROR,
+    qr{Attribute \(resizebox\)},
     'resizebox not an array reference'
 ) || diag $EVAL_ERROR;
 
 $table = LaTeX::Table->new(
-    {   header              => $header,
-        data                => $data,
-        resizebox => { 1 => 2 },
+    {   header => $header,
+        data   => $data,
     }
 );
 
 eval { $table->generate_string; };
-like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option resizebox: Not an array reference\.},
-    'resizebox not an array reference'
-) || diag $EVAL_ERROR;
+ok( !$EVAL_ERROR, 'no resizeboxis ok' ) || diag $EVAL_ERROR;
 
 $table = LaTeX::Table->new(
-    {   header              => $header,
-        data                => $data,
-        resizebox => 0,
+    {   header      => $header,
+        data        => $data,
+        environment => 0,
+        type        => 'xtab',
     }
 );
-
-eval { $table->generate_string; };
-ok(
-    !$EVAL_ERROR, 
-    'resizebox 0 is ok'
-) || diag $EVAL_ERROR;
-
-$table = LaTeX::Table->new(
-    {   header       => $header,
-        data         => $data,
-        environment  => 0,
-        type         => 'xtab',
-    }
-);
-
 
 eval { $table->generate_string; };
 
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option environment: xtab requires an environment\.},
+    $EVAL_ERROR,
+    qr{Invalid usage of option environment: xtab/longtable requires an environment\.},
     'xtab requires environment'
 ) || diag $EVAL_ERROR;
 
 $table = LaTeX::Table->new(
-    {   header       => $header,
-        data         => $data,
-        position     => 'htb',
-        type         => 'xtab',
+    {   header      => $header,
+        data        => $data,
+        environment => 0,
+        type        => 'longtable',
     }
 );
-
 
 eval { $table->generate_string; };
 
 like(
-    $EVAL_ERROR, 
-    qr{Invalid usage of option position: xtab does not support position\.},
-    'xtab does not support position'
+    $EVAL_ERROR,
+    qr{Invalid usage of option environment: xtab/longtable requires an environment\.},
+    'xtab requires environment'
+) || diag $EVAL_ERROR;
+$table = LaTeX::Table->new(
+    {   header   => $header,
+        data     => $data,
+        position => 'htb',
+        type     => 'xtab',
+    }
+);
+
+eval { $table->generate_string; };
+
+like(
+    $EVAL_ERROR,
+    qr{Invalid usage of option position: xtab/longtable does not support position\.},
+    'xtab/longtable does not support position'
 ) || diag $EVAL_ERROR;
 
 $table = LaTeX::Table->new(
-    {   header       => $header,
-        data         => $data,
-        left => 1,
+    {   header => $header,
+        data   => $data,
+        left   => 1,
         center => 1,
     }
 );
@@ -344,7 +317,7 @@ $table = LaTeX::Table->new(
 eval { $table->generate_string; };
 
 like(
-    $EVAL_ERROR, 
+    $EVAL_ERROR,
     qr{Invalid usage of option center, left, right},
     'only one allowed'
 ) || diag $EVAL_ERROR;
@@ -353,14 +326,37 @@ $table = LaTeX::Table->new(
     {   header       => $header,
         data         => $data,
         shortcaption => 'short',
-        maincaption   => 'main',
+        maincaption  => 'main',
     }
 );
 
 eval { $table->generate_string; };
 
 like(
-    $EVAL_ERROR, 
+    $EVAL_ERROR,
     qr{Invalid usage of option maincaption, shortcaption},
     'only one allowed'
 ) || diag $EVAL_ERROR;
+
+eval {
+    $table = LaTeX::Table->new(
+        {   header     => $header,
+            data       => $data,
+            fontfamily => 'Roman',
+        }
+    );
+};
+
+like( $EVAL_ERROR, qr{Attribute \(fontfamily\)}, 'wrong fontfamily' )
+    || diag $EVAL_ERROR;
+
+eval {
+    $table = LaTeX::Table->new(
+        {   header     => $header,
+            data       => $data,
+            fontfamily => 'rm',
+        }
+    );
+};
+ok( !$EVAL_ERROR, 'correct fontfamily' ) || diag $EVAL_ERROR;
+

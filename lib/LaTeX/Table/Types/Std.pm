@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-13 13:47:11 +0200 (Mon, 13 Jul 2009) $
-# $Revision: 1738 $
+#     $Date: 2009-07-20 17:02:38 +0200 (Mon, 20 Jul 2009) $
+# $Revision: 1764 $
 #############################################################################
 
 package LaTeX::Table::Types::Std;
@@ -10,16 +10,18 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1738 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1764 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template = <<'EOT'
 [%IF CONTINUED %]\addtocounter{table}{-1}[% END %][% DEFINE_COLORS_CODE %][% IF ENVIRONMENT %]\begin{[% IF SIDEWAYS %]sidewaystable[% ELSE %][% ENVIRONMENT %][% END %][% IF STAR %]*[% END %]}[% IF POSITION %][[% POSITION %]][% END %]
-[% FONTSIZE_CODE %][% FONTFAMILY_CODE %][% RULES_WIDTH_GLOBAL %][% IF CENTER %]\centering
+[% IF FONTSIZE %]\[% FONTSIZE %]
+[% END %][% IF FONTFAMILY %]\[% FONTFAMILY %]family
+[% END %][% RULES_WIDTH_GLOBAL_CODE %][% IF CENTER %]\centering
 [% END %][% IF LEFT %]\raggedright
 [% END %][% IF RIGHT %]\raggedleft
 [% END %][% IF CAPTION_TOP %][% IF CAPTION %]\[% CAPTION_CMD %][% IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][% END %]}
-[% END %][% END %][% END %][% EXTRA_ROW_HEIGHT %][% RESIZEBOX_BEGIN_CODE %]\begin{[% TABULAR_ENVIRONMENT %]}[% IF WIDTH %]{[% WIDTH %]}[% END %]{[% COLDEF %]}
-[% RULES_COLOR_GLOBAL %][% HEADER_CODE %][% DATA_CODE %]\end{[%
+[% END %][% END %][% END %][% EXTRA_ROW_HEIGHT_CODE %][% RESIZEBOX_BEGIN_CODE %]\begin{[% TABULAR_ENVIRONMENT %]}[% IF WIDTH %]{[% WIDTH %]}[% END %]{[% COLDEF %]}
+[% RULES_COLOR_GLOBAL_CODE %][% HEADER_CODE %][% DATA_CODE %]\end{[%
 TABULAR_ENVIRONMENT %]}[% RESIZEBOX_END_CODE %][% IF ENVIRONMENT %][% UNLESS CAPTION_TOP %][% IF CAPTION %]
 \[% CAPTION_CMD %][% IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][% END %]}[% END %][% END %][%IF LABEL %]
 \label{[% LABEL %]}[% END %]

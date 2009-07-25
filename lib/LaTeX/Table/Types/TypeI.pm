@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
-# $Revision: 1741 $
+#     $Date: 2009-07-25 23:29:40 +0200 (Sat, 25 Jul 2009) $
+# $Revision: 1792 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -13,7 +13,7 @@ use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1741 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1792 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 use Scalar::Util qw(reftype);
 
@@ -30,8 +30,6 @@ has '_RULE_INNER_ID' => ( is => 'ro', default => 2 );
 has '_RULE_BOTTOM_ID' => ( is => 'ro', default => 3 );
 ## use critic
 
-1;
-
 ###########################################################################
 # Usage      : $self->_header(\@header,\@data);
 # Purpose    : create the LaTeX header
@@ -44,69 +42,78 @@ has '_RULE_BOTTOM_ID' => ( is => 'ro', default => 3 );
 sub generate_latex_code {
     my ( $self, $header, $data ) = @_;
 
-    my $tbl = $self->_table_obj;
+    my $tbl   = $self->_table_obj;
+    my $theme = $tbl->get_theme_settings;
 
-    # if specified, use coldef, otherwise guess a good definition
-    my $table_def;
-    if ( $tbl->get_coldef ) {
-        $table_def = $tbl->get_coldef;
+    if ( !$tbl->get_tabletail() ) {
+        $tbl->set_tabletail( $self->_get_default_tabletail_code() );
     }
-    else {
-        $table_def = $tbl->_get_coldef_code($data);
-    }
-
-    my $center = $tbl->get_center;
-
-    if ( $tbl->get__default_align ) {
-        $center = 1;
-    }
-    my $header_code = $self->_get_header_columns_code($header);
 
     my $template_vars = {
-        'CENTER'               => $center,
-        'LEFT'                 => $tbl->get_left(),
-        'RIGHT'                => $tbl->get_right(),
-        'ENVIRONMENT'          => $tbl->get_environment,
-        'FONTFAMILY'           => $tbl->get_fontfamily(),
-        'FONTFAMILY_CODE'      => $self->_get_fontfamily_code(),
-        'FONTSIZE'             => $tbl->get_fontsize(),
-        'FONTSIZE_CODE'        => $self->_get_fontsize_code(),
-        'FOOTTABLE'            => $tbl->get_foottable(),
-        'POSITION'             => $tbl->get_position(),
-        'CAPTION_TOP'          => $tbl->get_caption_top(),
-        'CAPTION'              => $self->_get_caption(),
-        'CAPTION_CMD'          => $self->_get_caption_command(),
-        'CONTINUED'            => $tbl->get_continued(),
-        'CONTINUEDMSG'         => $tbl->get_continuedmsg(),
-        'SHORTCAPTION'         => $self->_get_shortcaption(),
-        'SIDEWAYS'             => $tbl->get_sideways(),
-        'STAR'                 => $tbl->get_star(),
-        'EXTRA_ROW_HEIGHT'     => $self->_get_extra_row_height_code(),
-        'RULES_COLOR_GLOBAL'   => $self->_get_rules_color_global_code(),
-        'RULES_WIDTH_GLOBAL'   => $self->_get_rules_width_global_code(),
+        'CENTER' => $tbl->get__default_align ? 1 : $tbl->get_center,
+        'LEFT'   => $tbl->get_left(),
+        'RIGHT'  => $tbl->get_right(),
+        'ENVIRONMENT'  => $tbl->get_environment,
+        'FONTFAMILY'   => $tbl->get_fontfamily(),
+        'FONTSIZE'     => $tbl->get_fontsize(),
+        'FOOTTABLE'    => $tbl->get_foottable(),
+        'POSITION'     => $tbl->get_position(),
+        'CAPTION_TOP'  => $tbl->get_caption_top(),
+        'CAPTION'      => $self->_get_caption(),
+        'CAPTION_CMD'  => $self->_get_caption_command(),
+        'CONTINUED'    => $tbl->get_continued(),
+        'CONTINUEDMSG' => $tbl->get_continuedmsg(),
+        'SHORTCAPTION' => $self->_get_shortcaption(),
+        'SIDEWAYS'     => $tbl->get_sideways(),
+        'STAR'         => $tbl->get_star(),
+        'WIDTH'        => $tbl->get_width(),
+        'MAXWIDTH'     => $tbl->get_maxwidth(),
+        'COLDEF'       => $tbl->get_coldef ? $tbl->get_coldef
+        : $tbl->_get_coldef_code($data),
+        'LABEL'                 => $tbl->get_label(),
+        'HEADER_CODE'           => $self->_get_header_columns_code($header),
+        'TABLEHEADMSG'          => $tbl->get_tableheadmsg(),
+        'TABLETAIL'             => $tbl->get_tabletail(),
+        'TABLELASTTAIL'         => $tbl->get_tablelasttail(),
+        'XENTRYSTRETCH'         => $tbl->get_xentrystretch(),
+        'DATA_CODE'             => $self->_get_data_code(),
+        'TABULAR_ENVIRONMENT'   => $self->_get_tabular_environment(),
+        'EXTRA_ROW_HEIGHT_CODE' => (
+            defined $theme->{EXTRA_ROW_HEIGHT}
+            ? '\setlength{\extrarowheight}{'
+                . $theme->{EXTRA_ROW_HEIGHT} . "}\n"
+            : q{}
+        ),
+        'RULES_COLOR_GLOBAL_CODE' => (
+            defined $theme->{RULES_COLOR_GLOBAL}
+            ? $theme->{RULES_COLOR_GLOBAL} . "\n"
+            : q{}
+        ),
+        'RULES_WIDTH_GLOBAL_CODE' => (
+            defined $theme->{RULES_WIDTH_GLOBAL}
+            ? $theme->{RULES_WIDTH_GLOBAL} . "\n"
+            : q{}
+        ),
         'RESIZEBOX_BEGIN_CODE' => $self->_get_begin_resizebox_code(),
-        'RESIZEBOX_END_CODE'   => $self->_get_end_resizebox_code(),
-        'WIDTH'                => $tbl->get_width(),
-        'MAXWIDTH'             => $tbl->get_maxwidth(),
-        'COLDEF'               => $table_def,
-        'LABEL'                => $tbl->get_label(),
-        'HEADER_CODE'          => $header_code,
-        'TABLEHEADMSG'         => $tbl->get_tableheadmsg(),
-        'TABLEHEAD'            => $self->_get_tablehead_code($header_code),
-        'TABLETAIL'            => $self->_get_tabletail_code( $data, 0 ),
-        'TABLETAIL_LAST'       => $self->_get_tabletail_code( $data, 1 ),
-        'XENTRYSTRETCH_CODE'   => $self->_get_xentrystretch_code(),
-        'DATA_CODE'            => $self->_get_data_code(),
-        'TABULAR_ENVIRONMENT'  => $self->_get_tabular_environment(),
-        'DEFINE_COLORS_CODE'   => $self->_get_colordef_code,
+        'RESIZEBOX_END_CODE'   => (
+            $self->_table_obj->get_resizebox ? "}\n"
+            : q{}
+        ),
+        'DEFINE_COLORS_CODE' => (
+            defined $tbl->get_theme_settings->{DEFINE_COLORS}
+            ? $tbl->get_theme_settings->{DEFINE_COLORS} . "\n"
+            : q{}
+        ),
+        'LT_NUM_COLUMNS' => scalar( $tbl->_get_data_summary() ),
+        'LT_BOTTOM_RULE_CODE' =>
+            $self->_get_hline_code( $self->_RULE_BOTTOM_ID ),
     };
 
     my $template_obj = Template->new();
-    my $template     = $self->_template;
-
-    if ( $tbl->get_custom_template ) {
-        $template = $tbl->get_custom_template;
-    }
+    my $template
+        = $tbl->get_custom_template
+        ? $tbl->get_custom_template
+        : $self->_template;
 
     my $template_output;
 
@@ -210,16 +217,6 @@ sub _get_caption_command {
     return $c_caption;
 }
 
-sub _get_colordef_code {
-    my ($self)   = @_;
-    my $tbl      = $self->_table_obj;
-    my $colordef = q{};
-    if ( defined $tbl->get_theme_settings->{DEFINE_COLORS} ) {
-        $colordef = $tbl->get_theme_settings->{DEFINE_COLORS} . "\n";
-    }
-    return $colordef;
-}
-
 sub _get_begin_resizebox_code {
     my ($self) = @_;
     if ( $self->_table_obj->get_resizebox ) {
@@ -232,24 +229,6 @@ sub _get_begin_resizebox_code {
     }
     return q{};
 }
-
-sub _get_end_resizebox_code {
-    my ($self) = @_;
-    my $end_resizebox = q{};
-    if ( $self->_table_obj->get_resizebox ) {
-        $end_resizebox = "}\n";
-    }
-    return $end_resizebox;
-}
-
-###########################################################################
-# Usage      : $self->_get_caption_code($header);
-# Purpose    : generates the LaTeX code of the caption
-# Returns    : LaTeX code
-# Parameters : called from _header?
-# Comments   : header specifies whether this function has been called in
-#              the header or footer. ignored for xtab, because there it
-#              is always placed on top
 
 sub _get_caption {
     my ( $self, $header ) = @_;
@@ -292,37 +271,6 @@ sub _get_shortcaption {
     return 0;
 }
 
-sub _get_extra_row_height_code {
-    my ($self) = @_;
-    if ( defined $self->_table_obj->get_theme_settings->{EXTRA_ROW_HEIGHT} ) {
-        return
-              '\setlength{\extrarowheight}{'
-            . $self->_table_obj->get_theme_settings->{EXTRA_ROW_HEIGHT}
-            . "}\n";
-    }
-    return q{};
-}
-
-sub _get_rules_color_global_code {
-    my ($self) = @_;
-    if ( defined $self->_table_obj->get_theme_settings->{RULES_COLOR_GLOBAL} )
-    {
-        return $self->_table_obj->get_theme_settings->{RULES_COLOR_GLOBAL}
-            . "\n";
-    }
-    return q{};
-}
-
-sub _get_rules_width_global_code {
-    my ($self) = @_;
-    if ( defined $self->_table_obj->get_theme_settings->{RULES_WIDTH_GLOBAL} )
-    {
-        return $self->_table_obj->get_theme_settings->{RULES_WIDTH_GLOBAL}
-            . "\n";
-    }
-    return q{};
-}
-
 sub _get_hline_code {
     my ( $self, $id, $single ) = @_;
     my $tbl    = $self->_table_obj;
@@ -345,71 +293,15 @@ sub _get_hline_code {
     return "$line\n" x $hlines->[$id];
 }
 
-###########################################################################
-# Usage      : $self->_get_fontsize_code();
-# Purpose    : generates the LaTeX code of the fontsize (e.g. \small, \large)
-# Returns    : LaTeX code
-# Parameters : none
-# Throws     : exception if fontsize is not valid
-
-sub _get_fontsize_code {
-    my ($self) = @_;
-    my %valid = (
-        'tiny'         => 1,
-        'scriptsize'   => 1,
-        'footnotesize' => 1,
-        'small'        => 1,
-        'normal'       => 1,
-        'large'        => 1,
-        'Large'        => 1,
-        'LARGE'        => 1,
-        'huge'         => 1,
-        'Huge'         => 1,
-    );
-    my $size = $self->_table_obj->get_fontsize;
-    return q{} if !$size;
-
-    if ( !defined $valid{$size} ) {
-        $self->_table_obj->invalid_option_usage(
-            'custom_themes',
-            "Size not known: $size. Valid sizes are: " . join ', ',
-            sort keys %valid
-        );
-    }
-    return "\\$size\n";
-}
-
-sub _get_fontfamily_code {
-    my ($self) = @_;
-    my %valid = (
-        'rm' => 1,
-        'sf' => 1,
-        'tt' => 1,
-    );
-    my $family = $self->_table_obj->get_fontfamily;
-    return q{} if !$family;
-
-    if ( !defined $valid{$family} ) {
-        $self->_table_obj->invalid_option_usage(
-            'fontfamily',
-            "Family not known: $family. Valid families are: " . join ', ',
-            sort keys %valid
-        );
-    }
-    return "\\${family}family\n";
-}
-
 sub _get_tabular_environment {
     my ($self) = @_;
-    my $res;
     my $tbl = $self->_table_obj;
 
-    if ( $tbl->get_custom_tabular_environment ) {
-        $res = $tbl->get_custom_tabular_environment;
-    }
-    else {
-        $res = $self->_tabular_environment;
-    }
+    my $res
+        = $tbl->get_custom_tabular_environment
+        ? $tbl->get_custom_tabular_environment
+        : $self->_tabular_environment;
+
     if ( $tbl->get_width ) {
         if ( !$tbl->get_width_environment ) {
             $res .= q{*};
@@ -420,15 +312,6 @@ sub _get_tabular_environment {
     }
     return $res;
 }
-
-###########################################################################
-# Usage      : $self->_get_header_columns_code(\@header);
-# Purpose    : generate the header LaTeX code
-# Returns    : LaTeX code
-# Parameters : header columns
-# Throws     :
-# Comments   : n/a
-# See also   : _get_row_code
 
 sub _get_header_columns_code {
     my ( $self, $header ) = @_;
@@ -464,7 +347,6 @@ CENTER_ROW:
                 $col = $tbl->_get_mc_value($col_def);
             }
 
-            #next if $col =~ m{\A \\ }xms;
             if ( $tbl->get_callback ) {
                 $col = $tbl->_apply_callback( $i, $j, $col, 1 );
             }
@@ -485,9 +367,20 @@ CENTER_ROW:
     return $self->_align_code( \@code );
 }
 
-sub _get_tabletail_code     { return q{}; }
-sub _get_xentrystretch_code { return q{}; }
-sub _get_tablehead_code     { return q{}; }
+sub _get_default_tabletail_code {
+    my ($self) = @_;
+
+    my $tbl = $self->_table_obj;
+    my $v0  = q{|} x $tbl->get_theme_settings->{'VERTICAL_RULES'}->[0];
+
+    return
+          $self->_get_hline_code( $self->_RULE_MID_ID )
+        . '\multicolumn{'
+        . $tbl->_get_data_summary()
+        . "}{${v0}r$v0}{{"
+        . $tbl->get_tabletailmsg
+        . "}} \\\\\n";
+}
 
 1;
 __END__
@@ -495,8 +388,6 @@ __END__
 =head1 NAME
 
 LaTeX::Table::Types::TypeI - Interface for LaTeX table types.
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -515,9 +406,6 @@ also use the template variables defined here to build custom templates.
 =back
 
 =head1 TEMPLATE VARIABLES
-
-CAUTION: This API is not stable. If you build custom templates, they might not
-work in future versions!
 
 Most options are accessable here:
 
@@ -560,6 +448,22 @@ These three options define the tabular environment:
 
   \begin{[% TABULAR_ENVIRONMENT %]}[% IF WIDTH %]{[% WIDTH %]}[% END %]{[% COLDEF %]}
 
+=item C<FONTFAMILY, FONTSIZE>
+
+Example: 
+
+  [% IF FONTSIZE %]\[% FONTSIZE %]
+  [% END %][% IF FONTFAMILY %]\[% FONTFAMILY %]family
+  [% END %]
+
+=item C<TABLEHEADMSG, TABLETAIL, TABLELASTTAIL, XENTRYSTRETCH>
+
+For the multi-page tables.
+
+=item C<MAXWIDTH, FOOTTABLE>
+
+Currently only used by <LaTeX::Table::Types::Ctable>.
+
 =back
 
 In addition, some variables already contain formatted LaTeX code:
@@ -587,14 +491,37 @@ The formatted data:
   Armadillo & frozen   & 8.99  \\
   \bottomrule
 
-=item C<FONTFAMILY_CODE, FONTSIZE_CODE>
-
 =item C<RESIZEBOX_BEGIN_CODE, RESIZEBOX_END_CODE>
 
 Everything between these two template variables is resized according the
 C<resizebox> option.
 
+=item C<EXTRA_ROW_HEIGHT_CODE, DEFINE_COLORS_CODE, RULES_COLOR_GLOBAL_CODE, RULES_WIDTH_GLOBAL_CODE>
+
+Specified by the theme. EXTRA_ROW_HEIGHT_CODE will contain the
+corresponding LaTeX extrarowheight command, e.g for '1pt':
+
+    \setlength{\extrarowheight}{1pt}
+
+Otherwise it will contain the empty string. The other template variables will
+contain the command specified by the corresponding theme option.
+
 =back
+
+Finally, some variables allow access to internal C<LaTeX::Table> variables:
+
+=over
+
+=item C<LT_NUM_COLUMNS>
+
+Contains the number of columns of the table.
+
+=item C<LT_BOTTOM_RULE_CODE>
+
+Code that draws the rules at the bottom of the table according the theme
+options.
+
+=back 
 
 =head1 SEE ALSO
 

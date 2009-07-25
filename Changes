@@ -1,11 +1,24 @@
 Revision history for LaTeX-Table
 
-0.9.16 Mon  Jun 13  18:00:00 2009
+0.9.17 Sat  Jul 26  12:00:00 2009
+        - new option tablelasttail
+        - Template variables documented in TypeI.pm
+        - Code cleanup: * type, colums_like_header, resize, callback,
+                          fontfamily, fontsize, xentrystretch now checked via Moose
+                        * fontfamily, fontsize, table*, xentrystretch now generated 
+                          via Template
+                        * csv2pdf
+                        * Removed old deprecated code from 0.1.0 and 0.8.0
+                          (in the next release - probably 1.0 - I will remove all 
+                          deprecated code!)
+        - Bugfix: csv2pdf --out option broken
+
+0.9.16 Mon  Jul 13  18:00:00 2009
         - API change: header_sideways was kind of unnecessary.
         - csv2pdf now uses templates and the longtable and ltxtable packages
-        - Perl::Critic passs with install Perl::Tidy (thanks Salvatore)
+        - Perl::Critic passes with installed Perl::Tidy (thanks Salvatore)
         - removed Readonly dependency (thanks Wen)
-        . 
+         
 0.9.15 Fri  May 29  10:00:00 2009
         - MISSING_VALUE in coldef_strategy
         - width and longtable

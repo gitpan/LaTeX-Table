@@ -1,4 +1,4 @@
-use Test::More tests => 20;
+use Test::More tests => 21;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -453,7 +453,55 @@ is_deeply(
     'with coldef'
 );
 
-$table->set_width_environment('tabular*');
+## fontsize test
+$table = LaTeX::Table->new(
+    {   header            => $header,
+        data              => $data,
+        fontsize          => 'Huge',
+        fontfamily        => 'sf',
+        position          => 'ht',
+    }
+);
+
+$expected_output = <<'EOT'
+\begin{table}[ht]
+\Huge
+\sffamily
+\centering
+\begin{tabular}{lp{5cm}p{5cm}}
+\toprule
+Character & Fullname & Voice \\
+\midrule
+Homer  & Homer Jay Simpson              & Dan Castellaneta                                                                   \\
+\midrule
+Marge  & Marjorie Simpson (nee Bouvier) & Julie Kavner                                                                       \\
+Bart   & Bartholomew Jojo Simpson       & Nancy Cartwright                                                                   \\
+Lisa   & Elizabeth Marie Simpson        & Yeardley Smith                                                                     \\
+Maggie & Margaret Simpson               & Elizabeth Taylor, Nancy Cartwright, James Earl Jones,Yeardley Smith, Harry Shearer \\
+\bottomrule
+\end{tabular}
+\end{table}
+EOT
+    ;
+
+$output = $table->generate_string();
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'fontsize'
+) || diag $output;
+
+
+## fontsize test
+$table = LaTeX::Table->new(
+    {   header            => $header,
+        data              => $data,
+        position          => 'ht',
+        width             => '0.9\textwidth',
+        width_environment => 'tabular*',
+        theme             => 'Zurich',
+    }
+);
 
 $expected_output = <<'EOT'
 \begin{table}[ht]

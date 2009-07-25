@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-13 13:47:11 +0200 (Mon, 13 Jul 2009) $
-# $Revision: 1738 $
+#     $Date: 2009-07-20 17:02:38 +0200 (Mon, 20 Jul 2009) $
+# $Revision: 1764 $
 #############################################################################
 
 package LaTeX::Table::Types::Ctable;
@@ -10,11 +10,12 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1738 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1764 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template = <<'EOT'
-{[% DEFINE_COLORS_CODE %][% FONTSIZE_CODE %][% FONTFAMILY_CODE %][%
-EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RESIZEBOX_BEGIN_CODE %]
+{[% DEFINE_COLORS_CODE %][% IF FONTSIZE %]\[% FONTSIZE %]
+[% END %][% IF FONTFAMILY %]\[% FONTFAMILY %]family
+[% END %][% EXTRA_ROW_HEIGHT_CODE %][% RULES_WIDTH_GLOBAL_CODE %][% RESIZEBOX_BEGIN_CODE %]
 \ctable[[% IF CAPTION %]caption = {[% CAPTION %]},
 [% IF SHORTCAPTION %]cap = {[% SHORTCAPTION %]},
 [% END %][% UNLESS CAPTION_TOP %]botcap,
@@ -29,7 +30,7 @@ EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RESIZEBOX_BEGIN_CODE %]
 [% END %][% IF STAR %]star,
 [% END %][% IF CONTINUED %]continued = {[% CONTINUEDMSG %]},
 [% END %]]{[% COLDEF %]}{[% FOOTTABLE %]}{
-[% RULES_COLOR_GLOBAL %][% HEADER_CODE %][% DATA_CODE %]}
+[% RULES_COLOR_GLOBAL_CODE %][% HEADER_CODE %][% DATA_CODE %]}
 [% RESIZEBOX_END_CODE %]}
 EOT
     ;

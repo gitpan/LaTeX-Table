@@ -1,4 +1,4 @@
-LaTeX-Table version 0.9.15
+LaTeX-Table version 0.9.17
 
 This module supports multipage tables via the xtab and the longtable package.
 For publication quality tables it utilizes the booktabs package. It also
@@ -56,11 +56,11 @@ reports, but also saves a lot of typing work in creating custom tables.
 DEPENDENCIES
 
 Carp
-Class::Std
+Module::Pluggable
+Moose
 English
-Readonly
 Scalar::Util
-Text::Wrap
+Template
 
 COPYRIGHT AND LICENCE
 

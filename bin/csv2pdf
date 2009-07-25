@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
-# $Revision: 1741 $
+#     $Date: 2009-07-19 14:52:43 +0200 (Sun, 19 Jul 2009) $
+# $Revision: 1753 $
 #############################################################################
 
 use strict;
@@ -69,6 +69,9 @@ if ( $help || !defined $infile ) {
 if ( !defined $outfile ) {
     $outfile = q{./} . fileparse( $infile, qw(csv txt dat) ) . 'pdf';
     $outfiletex = fileparse( $infile, qw(csv txt dat) ) . 'tex';
+}
+else {
+    $outfiletex = fileparse( $outfile, qw(pdf) ) . 'tex';
 }
 
 my $csv = Text::CSV->new(
@@ -143,20 +146,12 @@ sub create_latex_code {
     my $template_obj = Template->new();
 
     my %template_vars = (
-        LANDSCAPE => 0,
-        TITLE     => 0,
+        LANDSCAPE => $landscape ? '[landscape]'            : 0,
+        TITLE     => $title     ? '\title{' . $title . '}' : 0,
         TABLECODE => '\LTXtable{\textwidth}{'
             . getcwd() . q{/}
             . $outfiletex . '}',
     );
-
-    if ($landscape) {
-        $template_vars{LANDSCAPE} = '[landscape]';
-    }
-
-    if ($title) {
-        $template_vars{TITLE} = '\title{' . $title . '}';
-    }
 
     my $template = << 'EOT'
 \documentclass[%IF LANDSCAPE %][% LANDSCAPE %][% END %]{article}
@@ -260,8 +255,7 @@ C<csv2pdf> does not support configuration files or environment variables.
 
 LaTeX.
 
-L<Fatal>, L<File::Basename>, L<Getopt::Long>, L<LaTeX::Driver>, L<LaTeX::Encode>, L<LaTeX::Table>, 
-L<Pod::Usage>, L<Readonly>, L<Text::CSV>
+L<autodie>, L<Carp>, L<Cwd>, L<File::Basename>, L<Getopt::Long>, L<LaTeX::Driver>, L<LaTeX::Encode>, L<LaTeX::Table>, L<Pod::Usage>, L<Template>, L<Text::CSV>
 
 =head1 BUGS AND LIMITATIONS
 

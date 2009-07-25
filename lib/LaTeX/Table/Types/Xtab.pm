@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
-# $Revision: 1741 $
+#     $Date: 2009-07-25 19:09:05 +0200 (Sat, 25 Jul 2009) $
+# $Revision: 1778 $
 #############################################################################
 
 package LaTeX::Table::Types::Xtab;
@@ -10,19 +10,25 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1741 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1778 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template = <<'EOT'
 {
 [%IF CONTINUED %]\addtocounter{table}{-1}[% END %][% DEFINE_COLORS_CODE %][%
-EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL %][% RULES_COLOR_GLOBAL %][%
-FONTSIZE_CODE %][% FONTFAMILY_CODE %][%IF SIDEWAYS %]\begin{landscape}[% END %][% IF CAPTION %][%IF CAPTION_TOP
+EXTRA_ROW_HEIGHT_CODE %][% RULES_WIDTH_GLOBAL_CODE %][% RULES_COLOR_GLOBAL_CODE %][%
+ IF FONTSIZE %]\[% FONTSIZE %]
+[% END %][% IF FONTFAMILY %]\[% FONTFAMILY %]family
+[% END %][% IF SIDEWAYS %]\begin{landscape}[% END %][% IF CAPTION %][%IF CAPTION_TOP
 %]\topcaption[% ELSE %]\bottomcaption[% END %][%IF SHORTCAPTION %][[% SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][% END %]}
-[% END %][% XENTRYSTRETCH %][% IF LABEL %]\label{[% LABEL %]}
+[% END %][% IF XENTRYSTRETCH %]\xentrystretch{[% XENTRYSTRETCH %]}
+[% END %][% IF LABEL %]\label{[% LABEL %]}
 [% END %]
-[% TABLEHEAD %]
-[% TABLETAIL %]
-[% TABLETAIL_LAST %]
+[% IF CAPTION_TOP && TABLEHEADMSG %]\tablefirsthead{[% HEADER_CODE %]}
+\tablehead{\multicolumn{[% LT_NUM_COLUMNS %]}{c}{{ \normalsize \tablename\ \thetable: [% TABLEHEADMSG %]}}\\[\abovecaptionskip]
+[% HEADER_CODE %]}
+[% ELSE %]\tablehead{[% HEADER_CODE %]}
+[% END %]\tabletail{[% TABLETAIL %][% LT_BOTTOM_RULE_CODE %]}
+\tablelasttail{[% TABLELASTTAIL %]}
 [% IF CENTER %]\begin{center}
 [% END %][% IF LEFT %]\begin{flushleft}
 [% END %][% IF RIGHT %]\begin{flushright}
@@ -37,82 +43,6 @@ EOT
 
 has '+_tabular_environment' => ( default => 'xtabular' );
 has '+_template'            => ( default => $template );
-
-sub _get_tablehead_code {
-    my ( $self, $code ) = @_;
-    my $tbl = $self->_table_obj;
-
-    my $tablehead = q{};
-    my @summary   = $tbl->_get_data_summary();
-
-    if ( $tbl->get_caption_top && $tbl->get_tableheadmsg ) {
-        my $continued_caption
-            = '\\multicolumn{'
-            . scalar(@summary)
-            . '}{c}{{ \normalsize \tablename\ \thetable: '
-            . $tbl->get_tableheadmsg
-            . "}}\\\\[\\abovecaptionskip]\n";
-        $tablehead
-            = "\\tablefirsthead{$code}\n\\tablehead{$continued_caption$code}\n";
-
-        #                $tablehead = "\\tablehead{$code}";
-    }
-    else {
-        $tablehead = "\\tablehead{$code}";
-    }
-    return $tablehead;
-}
-
-###########################################################################
-# Usage      : $self->_get_tabletail_code(\@data, $final_tabletail);
-# Purpose    : generates the LaTeX code of the xtab tabletail
-# Returns    : LaTeX code
-# Parameters : the data columns and a flag indicating whether it is the
-#              code for the final tail (1).
-
-sub _get_tabletail_code {
-    my ( $self, $data, $final_tabletail ) = @_;
-
-    my $tbl = $self->_table_obj;
-    my $code;
-    my $hlines    = $tbl->get_theme_settings->{'HORIZONTAL_RULES'};
-    my $vlines    = $tbl->get_theme_settings->{'VERTICAL_RULES'};
-    my $linecode1 = $self->_get_hline_code( $self->_RULE_MID_ID );
-    my $linecode2 = $self->_get_hline_code( $self->_RULE_BOTTOM_ID );
-
-    # if custom table tail is defined, then return it
-    if ( $tbl->get_tabletail ) {
-        $code = $tbl->get_tabletail;
-    }
-    elsif ( !$final_tabletail ) {
-        my @cols    = $tbl->_get_data_summary();
-        my $nu_cols = scalar @cols;
-
-        my $v0 = q{|} x $vlines->[0];
-        $code
-            = "$linecode1\\multicolumn{$nu_cols}{${v0}r$v0}{{"
-            . $tbl->get_tabletailmsg
-            . "}} \\\\\n";
-    }
-    if ($final_tabletail) {
-        return '\tablelasttail{}';
-    }
-    return "\\tabletail{$code$linecode2}";
-}
-
-sub _get_xentrystretch_code {
-    my ($self) = @_;
-    my $tbl = $self->_table_obj;
-    if ( $tbl->get_xentrystretch ) {
-        my $xs = $tbl->get_xentrystretch();
-        if ( $xs !~ /\A-?(?:\d+(?:\.\d*)?|\.\d+)\z/xms ) {
-            $tbl->invalid_option_usage( 'xentrystretch',
-                'Not a number: ' . $tbl->get_xentrystretch );
-        }
-        return "\\xentrystretch{$xs}\n";
-    }
-    return q{};
-}
 
 1;
 __END__

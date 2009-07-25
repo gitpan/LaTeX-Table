@@ -545,14 +545,15 @@ while ( my $line = <$IN> ) {
 close $IN;
 
 $table = LaTeX::Table->new(
-    {   header      => $header,
-        data        => $data,
-        type        => 'xtab',
-        sideways    => 1,
-        tabletail   => q{},
-        label       => 'tbl:xtab',
-        caption     => '\texttt{type=xtab}',
-        caption_top => 1,
+    {   header        => $header,
+        data          => $data,
+        type          => 'xtab',
+        sideways      => 1,
+        tabletail     => q{},
+        label         => 'tbl:xtab',
+        caption       => '\texttt{type=xtab}',
+        tablelasttail => '\tiny{www.imdb.com}',
+        caption_top   => 1,
     }
 );
 \end{verbatim}
@@ -563,17 +564,18 @@ define a table width. Here, you have to generate a \textit{file} and then load t
 file with the \texttt{LTXtable} command. See \tref{tbl:longtable}.
 \begin{verbatim}
 $table = LaTeX::Table->new(
-    {   header      => $header,
-        data        => $data,
-        type        => 'longtable',
-        tabletail   => q{},
-        label       => 'tbl:longtable',
-        caption     => '\texttt{type=longtable}',
-        caption_top => 1,
-        center      => 0,
+    {   header        => $header,
+        data          => $data,
+        type          => 'longtable',
+        tabletail     => q{},
+        label         => 'tbl:longtable',
+        caption       => '\texttt{type=longtable}',
+        tablelasttail => '\tiny{www.imdb.com}',
+        caption_top   => 1,
+        center        => 0,
         # we don't define a width here!
         width_environment => 'tabularx', 
-        filename    => 'longtable.tex'
+        filename       => 'longtable.tex'
     }
 );
 
@@ -617,6 +619,7 @@ $table = LaTeX::Table->new(
         tabletail   => q{ },
         label       => 'tbl:xtab',
         caption     => '\texttt{type=xtab}',
+        tablelasttail => '\tiny{www.imdb.com}',
         caption_top => 
         '\setlength{\abovecaptionskip}{0pt}\setlength{\belowcaptionskip}{10pt}\topcaption',
     }
@@ -630,6 +633,7 @@ $table = LaTeX::Table->new(
         tabletail   => q{},
         label       => 'tbl:longtable',
         caption     => '\texttt{type=longtable}',
+        tablelasttail => '\tiny{www.imdb.com}',
         caption_top => 1,
         center      => 0,
         # we don't define a width here!

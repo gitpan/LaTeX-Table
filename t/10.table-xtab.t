@@ -116,7 +116,6 @@ $expected_output =<<'EOT'
 \hline
 \hline
 }
-
 \tabletail{ \hline
 }
 \tablelasttail{}
@@ -137,7 +136,7 @@ EOT
 $output = $table->generate_string();
 
 is_deeply([ split("\n",$output) ], [split("\n",$expected_output)], 
-    'without table environment, topcaption custom tabletail');
+    'without table environment, topcaption custom tabletail') || diag $output;
 
 $table->set_caption_top('topcaption');
 
@@ -159,7 +158,6 @@ $expected_output =<<'EOT'
 \hline
 \hline
 }
-
 \tabletail{ \hline
 }
 \tablelasttail{}

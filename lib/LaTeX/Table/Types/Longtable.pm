@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
-# $Revision$
+#     $Date: 2009-07-25 19:14:21 +0200 (Sat, 25 Jul 2009) $
+# $Revision: 1779 $
 #############################################################################
 
 package LaTeX::Table::Types::Longtable;
@@ -10,14 +10,15 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1313 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1779 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template = <<'EOT'
 {
 [% IF CONTINUED %]\addtocounter{table}{-1}[% END 
-%][% DEFINE_COLORS_CODE %][% EXTRA_ROW_HEIGHT %][% RULES_WIDTH_GLOBAL
-%][% RULES_COLOR_GLOBAL %][% FONTSIZE_CODE %][% FONTFAMILY_CODE 
-%][%IF SIDEWAYS %]\begin{landscape}[% END 
+%][% DEFINE_COLORS_CODE %][% EXTRA_ROW_HEIGHT_CODE %][%
+RULES_WIDTH_GLOBAL_CODE %][% RULES_COLOR_GLOBAL_CODE %][% IF FONTSIZE %]\[% FONTSIZE %]
+[% END %][% IF FONTFAMILY %]\[% FONTFAMILY %]family
+[% END %][% IF SIDEWAYS %]\begin{landscape}[% END 
 %][% IF CENTER %]\begin{center}
 [% END %][% IF LEFT %]\begin{flushleft}
 [% END %][% IF RIGHT %]\begin{flushright}
@@ -29,8 +30,8 @@ END %][% IF LABEL %]\label{[% LABEL %]}[% END %]}\\
 [% IF CAPTION %][% IF CAPTION_TOP %][% IF TABLEHEADMSG %]\caption[]{[% TABLEHEADMSG %]}\\
 [% END %][% END %][% END %]
 [% HEADER_CODE %]\endhead
-[% TABLETAIL %]\endfoot
-[% TABLETAIL_LAST %]
+[% TABLETAIL %][% LT_BOTTOM_RULE_CODE %]\endfoot
+[% TABLELASTTAIL %]
 [% IF CAPTION %][% UNLESS CAPTION_TOP %]\caption[%IF SHORTCAPTION %][[%
 SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][%
 END %][% IF LABEL %]\label{[% LABEL %]}[% END %]}\\
@@ -45,43 +46,6 @@ EOT
 
 has '+_tabular_environment' => ( default => 'longtable' );
 has '+_template'            => ( default => $template );
-
-###########################################################################
-# Usage      : $self->_get_tabletail_code(\@data, $final_tabletail);
-# Purpose    : generates the LaTeX code of the xtab tabletail
-# Returns    : LaTeX code
-# Parameters : the data columns and a flag indicating whether it is the
-#              code for the final tail (1).
-
-sub _get_tabletail_code {
-    my ( $self, $data, $final_tabletail ) = @_;
-
-    my $tbl = $self->_table_obj;
-    my $code;
-    my $hlines    = $tbl->get_theme_settings->{'HORIZONTAL_RULES'};
-    my $vlines    = $tbl->get_theme_settings->{'VERTICAL_RULES'};
-    my $linecode1 = $self->_get_hline_code( $self->_RULE_MID_ID );
-    my $linecode2 = $self->_get_hline_code( $self->_RULE_BOTTOM_ID );
-
-    # if custom table tail is defined, then return it
-    if ( $tbl->get_tabletail ) {
-        $code = $tbl->get_tabletail;
-    }
-    elsif ( !$final_tabletail ) {
-        my @cols    = $tbl->_get_data_summary();
-        my $nu_cols = scalar @cols;
-
-        my $v0 = q{|} x $vlines->[0];
-        $code
-            = "$linecode1\\multicolumn{$nu_cols}{${v0}r$v0}{{"
-            . $tbl->get_tabletailmsg
-            . "}} \\\\\n";
-    }
-    if ($final_tabletail) {
-        return q{};
-    }
-    return "$code$linecode2";
-}
 
 1;
 __END__
