@@ -1,11 +1,5 @@
-before 1.0
-
 - nicer examples.pdf (started)
-- remove deprecated code (release candidate 1)
-
-after 1.0
-
 - fine tune default parameters
-- code cleanup (started)
 - shortcut for multirows
-- csvpdf should support all LT options
+- csvpdf should support all LT options 
+- ltpretty and csv2pdf should support a config file

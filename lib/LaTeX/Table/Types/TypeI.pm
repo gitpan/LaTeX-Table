@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-25 23:29:40 +0200 (Sat, 25 Jul 2009) $
-# $Revision: 1792 $
+#     $Date: 2009-08-08 17:30:27 +0200 (Sat, 08 Aug 2009) $
+# $Revision: 1823 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -13,9 +13,7 @@ use Moose::Role;
 use Template;
 
 use version;
-our ($VERSION) = '$Revision: 1792 $' =~ m{ \$Revision: \s+ (\S+) }xms;
-
-use Scalar::Util qw(reftype);
+our ($VERSION) = '$Revision: 1823 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 use Carp;
 
@@ -23,24 +21,8 @@ has '_table_obj' => ( is => 'rw', isa => 'LaTeX::Table', required => 1 );
 has '_tabular_environment' => ( is => 'ro', required => 1 );
 has '_template'            => ( is => 'ro', required => 1 );
 
-has '_RULE_TOP_ID'   => ( is => 'ro', default => 0 );
-has '_RULE_MID_ID'   => ( is => 'ro', default => 1 );
-has '_RULE_INNER_ID' => ( is => 'ro', default => 2 );
-## no critic (ValuesAndExpressions::ProhibitMagicNumbers)
-has '_RULE_BOTTOM_ID' => ( is => 'ro', default => 3 );
-## use critic
-
-###########################################################################
-# Usage      : $self->_header(\@header,\@data);
-# Purpose    : create the LaTeX header
-# Returns    : LaTeX code
-# Parameters : header and data columns
-# Throws     :
-# Comments   : n/a
-# See also   : _footer
-
 sub generate_latex_code {
-    my ( $self, $header, $data ) = @_;
+    my ($self) = @_;
 
     my $tbl   = $self->_table_obj;
     my $theme = $tbl->get_theme_settings;
@@ -63,20 +45,24 @@ sub generate_latex_code {
         'CAPTION_CMD'  => $self->_get_caption_command(),
         'CONTINUED'    => $tbl->get_continued(),
         'CONTINUEDMSG' => $tbl->get_continuedmsg(),
-        'SHORTCAPTION' => $self->_get_shortcaption(),
-        'SIDEWAYS'     => $tbl->get_sideways(),
-        'STAR'         => $tbl->get_star(),
-        'WIDTH'        => $tbl->get_width(),
-        'MAXWIDTH'     => $tbl->get_maxwidth(),
-        'COLDEF'       => $tbl->get_coldef ? $tbl->get_coldef
-        : $tbl->_get_coldef_code($data),
-        'LABEL'                 => $tbl->get_label(),
-        'HEADER_CODE'           => $self->_get_header_columns_code($header),
-        'TABLEHEADMSG'          => $tbl->get_tableheadmsg(),
-        'TABLETAIL'             => $tbl->get_tabletail(),
-        'TABLELASTTAIL'         => $tbl->get_tablelasttail(),
-        'XENTRYSTRETCH'         => $tbl->get_xentrystretch(),
-        'DATA_CODE'             => $self->_get_data_code(),
+        'SHORTCAPTION' => (
+              $tbl->get_maincaption  ? $tbl->get_maincaption
+            : $tbl->get_shortcaption ? $tbl->get_shortcaption
+            : 0
+        ),
+        'SIDEWAYS' => $tbl->get_sideways(),
+        'STAR'     => $tbl->get_star(),
+        'WIDTH'    => $tbl->get_width(),
+        'MAXWIDTH' => $tbl->get_maxwidth(),
+        'COLDEF'   => $tbl->get_coldef ? $tbl->get_coldef
+        : $tbl->_get_coldef_code( $tbl->get_data ),
+        'LABEL'         => $tbl->get_label(),
+        'TABLEHEADMSG'  => $tbl->get_tableheadmsg(),
+        'TABLETAIL'     => $tbl->get_tabletail(),
+        'TABLELASTTAIL' => $tbl->get_tablelasttail(),
+        'XENTRYSTRETCH' => $tbl->get_xentrystretch(),
+        'HEADER_CODE' => $tbl->_get_matrix_latex_code( $tbl->get_header, 1 ),
+        'DATA_CODE' => $tbl->_get_matrix_latex_code( $tbl->get_data, 0 ),
         'TABULAR_ENVIRONMENT'   => $self->_get_tabular_environment(),
         'EXTRA_ROW_HEIGHT_CODE' => (
             defined $theme->{EXTRA_ROW_HEIGHT}
@@ -104,9 +90,9 @@ sub generate_latex_code {
             ? $tbl->get_theme_settings->{DEFINE_COLORS} . "\n"
             : q{}
         ),
-        'LT_NUM_COLUMNS' => scalar( $tbl->_get_data_summary() ),
+        'LT_NUM_COLUMNS' => scalar( @{ $tbl->get__data_summary() } ),
         'LT_BOTTOM_RULE_CODE' =>
-            $self->_get_hline_code( $self->_RULE_BOTTOM_ID ),
+            $tbl->_get_hline_code( $tbl->get__RULE_BOTTOM_ID ),
     };
 
     my $template_obj = Template->new();
@@ -122,97 +108,13 @@ sub generate_latex_code {
     return $template_output;
 }
 
-sub _get_data_code {
-    my ($self) = @_;
-    my $code   = q{};
-    my $tbl    = $self->_table_obj;
-
-    my $theme  = $tbl->get_theme_settings;
-    my $i      = 0;
-    my $row_id = 0;
-
-    # check the data and apply callback function
-    my @data = $tbl->_examine_data;
-    my @code;
-ROW:
-    for my $row (@data) {
-        $i++;
-
-        # empty rows produce a horizontal line
-        if ( !@{$row} ) {
-            push @code, $self->_get_hline_code( $self->_RULE_INNER_ID, 1 );
-            next ROW;
-        }
-        else {
-
-            # single column rows that start with a backslash are just
-            # printed out
-            if ( $tbl->_row_is_latex_command($row) ) {
-                push @code, $row->[0] . "\n";
-                next ROW;
-            }
-
-            $row_id++;
-
-            # now print the row LaTeX code
-            my $bgcolor = $theme->{'DATA_BG_COLOR_EVEN'};
-            if ( ( $row_id % 2 ) == 1 ) {
-                $bgcolor = $theme->{'DATA_BG_COLOR_ODD'};
-            }
-            push @code, $tbl->_get_row_array( $row, $bgcolor, 0 );
-
-            # do we have to draw a horizontal line?
-            if ( $i == scalar @data ) {
-                push @code, $self->_get_hline_code( $self->_RULE_BOTTOM_ID );
-            }
-            else {
-                push @code, $self->_get_hline_code( $self->_RULE_INNER_ID );
-            }
-        }
-    }
-
-    return $self->_align_code( \@code );
-}
-
-sub _align_code {
-    my ( $self, $code_ref ) = @_;
-    my %max;
-    for my $row ( @{$code_ref} ) {
-        next if ( !defined reftype $row);
-        for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
-            $row->[$i] =~ s{^\s+|\s+$}{}gxms;
-            my $l = length $row->[$i];
-            if ( !defined $max{$i} || $max{$i} < $l ) {
-                $max{$i} = $l;
-            }
-        }
-    }
-
-    my $code = q{};
-ROW:
-    for my $row ( @{$code_ref} ) {
-        if ( !defined reftype $row) {
-            $code .= $row;
-            next ROW;
-        }
-        for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
-            $row->[$i] = sprintf '%-*s', $max{$i}, $row->[$i];
-        }
-        $code .= join( ' & ', @{$row} ) . " \\\\\n";
-    }
-    return $code;
-}
-
 sub _get_caption_command {
     my ($self)    = @_;
     my $tbl       = $self->_table_obj;
     my $c_caption = 'caption';
-    if ( $tbl->get_caption_top ) {
+    if ( $tbl->get_caption_top && $tbl->get_caption_top ne '1' ) {
         $c_caption = $tbl->get_caption_top;
         $c_caption =~ s{ \A \\ }{}xms;
-        if ( $c_caption eq '1' ) {
-            $c_caption = 'caption';
-        }
     }
     return $c_caption;
 }
@@ -231,10 +133,9 @@ sub _get_begin_resizebox_code {
 }
 
 sub _get_caption {
-    my ( $self, $header ) = @_;
-    my $caption   = q{};
-    my $s_caption = q{};
-    my $tbl       = $self->_table_obj;
+    my ($self)  = @_;
+    my $caption = q{};
+    my $tbl     = $self->_table_obj;
 
     if ( !$tbl->get_caption ) {
         if ( !$tbl->get_maincaption ) {
@@ -245,52 +146,16 @@ sub _get_caption {
         $caption = $tbl->get_caption;
     }
 
-    my $theme = $tbl->get_theme_settings;
-
     my $tmp = q{};
     if ( $tbl->get_maincaption ) {
         $tmp = $tbl->get_maincaption . '. ';
-        if ( defined $theme->{CAPTION_FONT_STYLE} ) {
+        if ( defined $tbl->get_theme_settings->{CAPTION_FONT_STYLE} ) {
             $tmp = $tbl->_add_font_family( $tmp,
-                $theme->{CAPTION_FONT_STYLE} );
+                $tbl->get_theme_settings->{CAPTION_FONT_STYLE} );
         }
     }
 
     return $tmp . $caption;
-}
-
-sub _get_shortcaption {
-    my ($self) = @_;
-    my $tbl = $self->_table_obj;
-    if ( $tbl->get_maincaption ) {
-        return $tbl->get_maincaption;
-    }
-    if ( $tbl->get_shortcaption ) {
-        return $tbl->get_shortcaption;
-    }
-    return 0;
-}
-
-sub _get_hline_code {
-    my ( $self, $id, $single ) = @_;
-    my $tbl    = $self->_table_obj;
-    my $theme  = $tbl->get_theme_settings;
-    my $hlines = $theme->{'HORIZONTAL_RULES'};
-    my $line   = '\hline';
-    if ( defined $theme->{RULES_CMD}
-        && reftype $theme->{RULES_CMD} eq 'ARRAY' )
-    {
-        $line = $theme->{RULES_CMD}->[$id];
-    }
-    if ( $id == $self->_RULE_BOTTOM_ID ) {
-        $id = 0;
-    }
-
-    # just one line?
-    if ( defined $single && $single ) {
-        return "$line\n";
-    }
-    return "$line\n" x $hlines->[$id];
 }
 
 sub _get_tabular_environment {
@@ -313,60 +178,6 @@ sub _get_tabular_environment {
     return $res;
 }
 
-sub _get_header_columns_code {
-    my ( $self, $header ) = @_;
-    my $tbl   = $self->_table_obj;
-    my $code  = q{};
-    my $theme = $tbl->get_theme_settings;
-
-    my $i = 0;
-
-    my @code = ( $self->_get_hline_code( $self->_RULE_TOP_ID ) );
-
-CENTER_ROW:
-    for my $row ( @{$header} ) {
-        my @cols = @{$row};
-        if ( scalar @cols == 0 ) {
-            push @code, $self->_get_hline_code( $self->_RULE_INNER_ID, 1 );
-            next CENTER_ROW;
-        }
-        if ( $tbl->_row_is_latex_command($row) ) {
-            push @code, $cols[0] . "\n";
-            next CENTER_ROW;
-        }
-
-        my $j = 0;
-
-        for my $col (@cols) {
-            if ( $tbl->get_header_sideways() ) {
-                my $col_def = $tbl->_get_mc_def($col);
-                $col_def->{value}
-                    = '\begin{sideways}'
-                    . $col_def->{value}
-                    . '\end{sideways}';
-                $col = $tbl->_get_mc_value($col_def);
-            }
-
-            if ( $tbl->get_callback ) {
-                $col = $tbl->_apply_callback( $i, $j, $col, 1 );
-            }
-            $col = $tbl->_apply_header_formatting( $col,
-                ( !defined $theme->{STUB_ALIGN} || $j > 0 ) );
-            $j += $tbl->_extract_number_columns($col);
-        }
-
-        push @code,
-            $tbl->_get_row_array( \@cols, $theme->{'HEADER_BG_COLOR'}, 1 );
-        $i++;
-    }
-
-    # without header, just draw the topline, not this midline
-    if ($i) {
-        push @code, $self->_get_hline_code( $self->_RULE_MID_ID );
-    }
-    return $self->_align_code( \@code );
-}
-
 sub _get_default_tabletail_code {
     my ($self) = @_;
 
@@ -374,9 +185,9 @@ sub _get_default_tabletail_code {
     my $v0  = q{|} x $tbl->get_theme_settings->{'VERTICAL_RULES'}->[0];
 
     return
-          $self->_get_hline_code( $self->_RULE_MID_ID )
+          $tbl->_get_hline_code( $tbl->get__RULE_MID_ID )
         . '\multicolumn{'
-        . $tbl->_get_data_summary()
+        . @{ $tbl->get__data_summary() }
         . "}{${v0}r$v0}{{"
         . $tbl->get_tabletailmsg
         . "}} \\\\\n";
@@ -407,7 +218,7 @@ also use the template variables defined here to build custom templates.
 
 =head1 TEMPLATE VARIABLES
 
-Most options are accessable here:
+Most options are accessible here:
 
 =over
 
@@ -462,7 +273,7 @@ For the multi-page tables.
 
 =item C<MAXWIDTH, FOOTTABLE>
 
-Currently only used by <LaTeX::Table::Types::Ctable>.
+Currently only used by L<LaTeX::Table::Types::Ctable>.
 
 =back
 
@@ -498,7 +309,7 @@ C<resizebox> option.
 
 =item C<EXTRA_ROW_HEIGHT_CODE, DEFINE_COLORS_CODE, RULES_COLOR_GLOBAL_CODE, RULES_WIDTH_GLOBAL_CODE>
 
-Specified by the theme. EXTRA_ROW_HEIGHT_CODE will contain the
+Specified by the theme. C<EXTRA_ROW_HEIGHT_CODE> will contain the
 corresponding LaTeX extrarowheight command, e.g for '1pt':
 
     \setlength{\extrarowheight}{1pt}

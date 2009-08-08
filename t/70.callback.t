@@ -1,4 +1,4 @@
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -52,7 +52,7 @@ is_deeply(
     [ split( "\n", $output ) ],
     [ split( "\n", $expected_output ) ],
     'callback seems to work with words',
-);
+) || diag $output;
 
 $header = [ [ 'A:2c', 'C' ], [ 'a', 'b', 'c' ] ];
 $table = LaTeX::Table->new(
@@ -60,11 +60,11 @@ $table = LaTeX::Table->new(
         data     => $data,
         callback => sub {
             my ( $row, $col, $value, $is_header ) = @_;
-            if ( $is_header ) {
+            if ($is_header) {
                 return uc $value;
             }
         },
-       theme     => 'Zurich',
+        theme => 'Zurich',
     }
 );
 
@@ -93,30 +93,27 @@ is_deeply(
     'callback seems to work with uc headers and shortcuts',
 );
 
-
-$header = [ [ 'A:3c'], ['A:2c', 'B'], ['A', 'B', 'C'], ];
-$data   = [ [ 'D:3c'], ['D:2c', 'E'], ['D', 'E', 'F'], ];
+$header = [ ['A:3c'], [ 'A:2c', 'B' ], [ 'A', 'B', 'C' ], ];
+$data   = [ ['D:3c'], [ 'D:2c', 'E' ], [ 'D', 'E', 'F' ], ];
 
 $table = LaTeX::Table->new(
     {   header   => $header,
         data     => $data,
         callback => sub {
             my ( $row, $col, $value, $is_header ) = @_;
-            if ( $col == 0) {
+            if ( $col == 0 ) {
                 return 'X' . $value;
-            }    
-            elsif ( $col == 1) {
+            }
+            elsif ( $col == 1 ) {
                 return 'Y' . $value;
             }
             else {
                 return 'Z' . $value;
             }
         },
-        theme   => 'Zurich',
+        theme => 'Zurich',
     }
 );
-
-$output = $table->generate_string;
 
 $expected_output = <<'EOT'
 \begin{table}
@@ -144,3 +141,48 @@ is_deeply(
     [ split( "\n", $expected_output ) ],
     'callback works with complicated shortcutted headers and data',
 );
+
+$header = [ [ 'A', 'B:2c' ], [], [ 'a:2c', 'b' ] ];
+$data = [
+    [ 'Marge', 'Homer', 'Bart' ],
+    [ 'Marge', 'Homer:2c' ],
+    [],
+    [ 'Marge:2c', 'Homer' ],
+];
+
+$table = LaTeX::Table->new(
+    {   header   => $header,
+        data     => $data,
+        callback => sub {
+            my ( $row, $col, $value, $is_header ) = @_;
+            return "$is_header $row $col";
+        },
+    }
+);
+
+$expected_output = <<'EOT'
+\begin{table}
+\centering
+\begin{tabular}{lll}
+\toprule
+1 0 0                     & \multicolumn{2}{c}{1 0 1} \\
+\midrule
+\multicolumn{2}{c}{1 1 0} & 1 1 2                     \\
+\midrule
+0 0 0                     & 0 0 1                     & 0 0 2 \\
+0 1 0                     & \multicolumn{2}{c}{0 1 1} \\
+\midrule
+\multicolumn{2}{c}{0 2 0} & 0 2 2                     \\
+\bottomrule
+\end{tabular}
+\end{table}
+EOT
+    ;
+
+$output = $table->generate_string;
+
+is_deeply(
+    [ split( "\n", $output ) ],
+    [ split( "\n", $expected_output ) ],
+    'callback works with complicated shortcutted headers and data',
+) || diag $output;

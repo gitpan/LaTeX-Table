@@ -63,7 +63,7 @@ close $FH;
 
 is_deeply( \@filecontent, [@expected_output],
     'without table environment, generate()' )
-    or die;
+    or diag join("\n",@filecontent);
 
 unlink 't/tmp/out.tex';
 rmdir 't/tmp';

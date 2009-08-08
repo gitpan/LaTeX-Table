@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-26 00:10:02 +0200 (Sun, 26 Jul 2009) $
-# $Revision: 1793 $
+#     $Date: 2009-08-08 17:30:27 +0200 (Sat, 08 Aug 2009) $
+# $Revision: 1823 $
 #############################################################################
 
 package LaTeX::Table;
@@ -13,7 +13,7 @@ use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 use Moose::Util::TypeConstraints;
 
-use version; our $VERSION = qv('0.9.17');
+use version; our $VERSION = qv('0.99_1');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -84,7 +84,6 @@ has 'fontsize' => (
 has 'coldef_strategy'     => ( is => 'rw', isa => 'HashRef' );
 has 'callback'            => ( is => 'rw', isa => 'CodeRef' );
 has 'resizebox'           => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has '_data_summary'       => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'columns_like_header' => ( is => 'rw', isa => 'ArrayRef[Int]' );
 has 'header' =>
     ( is => 'rw', isa => 'ArrayRef[ArrayRef[Value]]', default => sub { [] } );
@@ -94,28 +93,21 @@ has 'predef_themes' =>
     ( is => 'rw', isa => 'HashRef[HashRef]', default => sub { {} } );
 has 'custom_themes' =>
     ( is => 'rw', isa => 'HashRef[HashRef]', default => sub { {} } );
-has '_type_obj' => ( is => 'rw', isa => 'LaTeX::Table::Types::TypeI' );
 
-# deprecated
-has 'size'            => ( is => 'rw', default => 'deprecated' );
-has 'header_sideways' => ( is => 'rw', default => '0' );
+# private
+has '_data_summary' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has '_type_obj'     => ( is => 'rw', isa => 'LaTeX::Table::Types::TypeI' );
+has '_RULE_TOP_ID'   => ( is => 'ro', default => 0 );
+has '_RULE_MID_ID'   => ( is => 'ro', default => 1 );
+has '_RULE_INNER_ID' => ( is => 'ro', default => 2 );
+## no critic (ValuesAndExpressions::ProhibitMagicNumbers)
+has '_RULE_BOTTOM_ID' => ( is => 'ro', default => 3 );
+## use critic
 
 __PACKAGE__->meta->make_immutable;
 
-###########################################################################
-# Usage      : $table->generate_string();
-# Purpose    : generates LaTex data
-# Returns    : code
-# Parameters : node
-# Throws     :
-# Comments   : n/a
-# See also   :
-
 sub generate_string {
     my ( $self, @args ) = @_;
-
-    # support for < 0.9.16 API
-    $self->_compatibility_layer(@args);
 
     # are the user provided options ok?
     $self->_check_options();
@@ -129,10 +121,7 @@ sub generate_string {
         . substr $self->get_type, 1;
     $self->set__type_obj( $type_obj_name->new( _table_obj => $self ) );
 
-    my $code = $self->get__type_obj->generate_latex_code( $self->get_header,
-        $self->get_data );
-
-    return $code;
+    return $self->get__type_obj->generate_latex_code();
 }
 
 sub generate {
@@ -146,165 +135,21 @@ sub generate {
     return 1;
 }
 
-sub _compatibility_layer {
+sub get_available_themes {
     my ($self) = @_;
-    if ( $self->get_size ne 'deprecated' ) {
-        carp('DEPRECATED: size was renamed to fontsize.');
-        $self->set_fontsize( $self->get_size );
-    }
-    if ( $self->get_header_sideways ) {
-        carp(     'DEPRECATED: header_sideways was removed. '
-                . 'Use a callback function instead.' );
-    }
-    my $cs = $self->get_coldef_strategy();
+    my %defs;
 
-    if ($cs) {
-        if ( defined $cs->{'DEFAULT'} ) {
-            carp(     'DEPRECATED: DEFAULT in coldef_strategy was renamed to '
-                    . 'DEFAULT_COL.' );
-            $cs->{'DEFAULT_COL'} = $cs->{'DEFAULT'};
-            delete $cs->{'DEFAULT'};
-        }
-        if ( defined $cs->{'DEFAULT_X'} ) {
-            carp( 'DEPRECATED: DEFAULT_X in coldef_strategy was renamed to '
-                    . 'DEFAULT_COL_X.' );
-            $cs->{'DEFAULT_COL_X'} = $cs->{'DEFAULT_X'};
-            delete $cs->{'DEFAULT_X'};
-        }
-        if ( defined $cs->{'IS_A_NUMBER'} ) {
-            carp( 'DEPRECATED: IS_A_NUMBER in coldef_strategy was renamed to '
-                    . 'NUMBER.' );
-            $cs->{'NUMBER'} = $cs->{'IS_A_NUMBER'};
-            delete $cs->{'IS_A_NUMBER'};
-        }
-        if ( defined $cs->{'IS_LONG'} ) {
-            carp(     'DEPRECATED: IS_LONG in coldef_strategy was renamed to '
-                    . 'LONG and is now a regex. Converting it.' );
-            $cs->{'LONG'} = qr{\A \s* .{$cs->{'IS_LONG'},}? \s* \z}xms;
-            delete $cs->{'IS_LONG'};
-        }
-        $self->set_coldef_strategy($cs);
+    for my $theme_obj ( $self->themes ) {
+        %defs = ( %defs, %{ $theme_obj->_definition } );
     }
-    return;
+    $self->set_predef_themes( \%defs );
+    return {
+        ( %{ $self->get_predef_themes }, %{ $self->get_custom_themes } ) };
 }
 
-sub _row_is_latex_command {
-    my ( $self, $row ) = @_;
-    if ( scalar( @{$row} ) == 1 && $row->[0] =~ m{\A \s* \\ }xms ) {
-        return 1;
-    }
-    return 0;
-}
-
-sub invalid_option_usage {
+sub _invalid_option_usage {
     my ( $self, $option, $msg ) = @_;
     croak "Invalid usage of option $option: $msg.";
-}
-
-sub _check_options {
-    my ($self) = @_;
-
-    # default floating enviromnent is table
-    if ( $self->get_environment eq '1' ) {
-        $self->set_environment('table');
-    }
-
-    if ( $self->get_type eq 'xtab' || $self->get_type eq 'longtable' ) {
-        if ( !$self->get_environment ) {
-            $self->invalid_option_usage( 'environment',
-                'xtab/longtable requires an environment' );
-        }
-        if ( $self->get_position ) {
-            $self->invalid_option_usage( 'position',
-                'xtab/longtable does not support position' );
-        }
-    }
-
-    # handle default values by ourselves
-    if ( $self->get_width_environment eq 'tabular*' ) {
-        $self->set_width_environment(0);
-    }
-
-    $self->_check_align;
-
-    if ( $self->get_maincaption && $self->get_shortcaption ) {
-        $self->invalid_option_usage( 'maincaption, shortcaption',
-            'only one allowed.' );
-    }
-    if (  !$self->get_width
-        && $self->get_type ne 'longtable'
-        && $self->get_width_environment eq 'tabularx' )
-    {
-        $self->invalid_option_usage( 'width_environment',
-            'Is tabularx and width is unset' );
-    }
-    if ( !$self->get_width && $self->get_width_environment eq 'tabulary' ) {
-        $self->invalid_option_usage( 'width_environment',
-            'Is tabulary and width is unset' );
-    }
-    return;
-}
-
-sub _check_align {
-    my ($self)              = @_;
-    my $cnt_def_alignments  = 0;
-    my $cnt_true_alignments = 0;
-
-    if ( $self->has_center ) {
-        $cnt_def_alignments++;
-    }
-    if ( $self->has_right ) {
-        $cnt_def_alignments++;
-    }
-    if ( $self->has_left ) {
-        $cnt_def_alignments++;
-    }
-    if ( $self->get_center ) {
-        $cnt_true_alignments++;
-    }
-    if ( $self->get_right ) {
-        $cnt_true_alignments++;
-    }
-    if ( $self->get_left ) {
-        $cnt_true_alignments++;
-    }
-
-    if ( $cnt_true_alignments > 1 ) {
-        $self->invalid_option_usage( 'center, left, right',
-            'only one allowed.' );
-    }
-    if ( $cnt_def_alignments == 0 ) {
-        $self->set__default_align(1);
-    }
-    else {
-        $self->set__default_align(0);
-    }
-    return;
-}
-
-sub _apply_callback {
-    my ( $self, $i, $j, $value, $is_header ) = @_;
-    my $col_cb = $self->_get_mc_def($value);
-    $col_cb->{value}
-        = &{ $self->get_callback }( $i, $j, $col_cb->{value}, $is_header );
-    return $self->_get_mc_value($col_cb);
-}
-
-sub _examine_data {
-    my ($self) = @_;
-    my @data = @{ $self->get_data };
-    if ( $self->get_callback ) {
-        for my $i ( 0 .. $#data ) {
-            my @row = @{ $data[$i] };
-            my $k   = 0;
-            for my $j ( 0 .. ( scalar @{ $data[$i] } - 1 ) ) {
-                $row[$j] = $self->_apply_callback( $i, $k, $data[$i][$j], 0 );
-                $k += $self->_extract_number_columns( $data[$i][$j] );
-            }
-            $data[$i] = \@row;
-        }
-    }
-    return @data;
 }
 
 sub _ioerror {
@@ -333,6 +178,16 @@ sub _default_coldef_strategy {
     return $STRATEGY;
 }
 
+sub _get_coldef_types {
+    my ($self) = @_;
+
+    # everything that does not contain an underscore is a coltype
+    my @coltypes = sort grep {m{ \A [^_]+ \z }xms}
+        keys %{ $self->get_coldef_strategy };
+
+    return @coltypes;
+}
+
 sub _check_coldef_strategy {
     my ( $self, $strategy ) = @_;
     my $default = $self->_default_coldef_strategy;
@@ -347,7 +202,7 @@ sub _check_coldef_strategy {
     my @coltypes = $self->_get_coldef_types();
     for my $type (@coltypes) {
         if ( !defined $strategy->{"${type}_COL"} ) {
-            $self->invalid_option_usage( 'coldef_strategy',
+            $self->_invalid_option_usage( 'coldef_strategy',
                 "Missing column attribute ${type}_COL for $type" );
         }
         if ( !defined $strategy->{"${type}_MUST_MATCH_ALL"} ) {
@@ -363,19 +218,12 @@ sub _extract_number_columns {
     return defined $def->{cols} ? $def->{cols} : 1;
 }
 
-sub _get_coldef_types {
-    my ($self) = @_;
-
-    # everything that does not contain an underscore is a coltype
-    my @coltypes = sort grep {m{ \A [^_]+ \z }xms}
-        keys %{ $self->get_coldef_strategy };
-
-    return @coltypes;
-}
-
-sub _get_data_summary {
-    my ($self) = @_;
-    return @{ $self->get__data_summary() };
+sub _row_is_latex_command {
+    my ( $self, $row ) = @_;
+    if ( scalar( @{$row} ) == 1 && $row->[0] =~ m{\A \s* \\ }xms ) {
+        return 1;
+    }
+    return 0;
 }
 
 sub _calc_data_summary {
@@ -433,6 +281,138 @@ ROW:
     return;
 }
 
+sub _apply_callback_cell {
+    my ( $self, $i, $j, $value, $is_header ) = @_;
+    my $col_cb = $self->_get_mc_def($value);
+    $col_cb->{value}
+        = &{ $self->get_callback }( $i, $j, $col_cb->{value}, $is_header );
+    return $self->_get_mc_value($col_cb);
+}
+
+# formats the data/header as latex code
+sub _get_matrix_latex_code {
+    my ( $self, $data_ref, $is_header ) = @_;
+
+    my $theme  = $self->get_theme_settings;
+    my $i      = 0;
+    my $row_id = 0;
+
+    my @code
+        = $is_header
+        ? ( $self->_get_hline_code( $self->get__RULE_TOP_ID ) )
+        : ();
+ROW:
+    for my $row ( @{$data_ref} ) {
+        $i++;
+        my @cols = @{$row};
+
+        # empty rows produce a horizontal line
+        if ( !@cols ) {
+            push @code,
+                $self->_get_hline_code( $self->get__RULE_INNER_ID, 1 );
+            next ROW;
+        }
+
+        # single column rows that start with a backslash are just
+        # printed out
+        if ( $self->_row_is_latex_command($row) ) {
+            push @code, $cols[0] . "\n";
+            next ROW;
+        }
+        if ( $self->get_callback ) {
+            my $k = 0;
+            for my $col (@cols) {
+                $col = $self->_apply_callback_cell( $row_id, $k, $col,
+                    $is_header );
+                $k += $self->_extract_number_columns($col);
+            }
+        }
+        if ($is_header) {
+            my $j = 0;
+            for my $col (@cols) {
+                $col = $self->_apply_header_formatting( $col,
+                    ( !defined $theme->{STUB_ALIGN} || $j > 0 ) );
+                $j += $self->_extract_number_columns($col);
+            }
+        }
+        $row_id++;
+
+        # now print the row LaTeX code
+        my $bgcolor
+            = $is_header      ? $theme->{'HEADER_BG_COLOR'}
+            : ( $row_id % 2 ) ? $theme->{'DATA_BG_COLOR_ODD'}
+            :                   $theme->{'DATA_BG_COLOR_EVEN'};
+        push @code, $self->_get_row_array( \@cols, $bgcolor, $is_header );
+
+        next ROW if $is_header;
+
+        # do we have to draw a horizontal line?
+        if ( $i == scalar @{$data_ref} ) {
+            push @code, $self->_get_hline_code( $self->get__RULE_BOTTOM_ID );
+        }
+        else {
+            push @code, $self->_get_hline_code( $self->get__RULE_INNER_ID );
+        }
+    }
+
+    # without header, just draw the topline, not this midline
+    if ( $is_header && $i ) {
+        push @code, $self->_get_hline_code( $self->get__RULE_MID_ID );
+    }
+
+    return $self->_align_code( \@code );
+}
+
+sub _align_code {
+    my ( $self, $code_ref ) = @_;
+    my %max;
+    for my $row ( @{$code_ref} ) {
+        next if ( !defined reftype $row);
+        for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
+            $row->[$i] =~ s{^\s+|\s+$}{}gxms;
+            my $l = length $row->[$i];
+            if ( !defined $max{$i} || $max{$i} < $l ) {
+                $max{$i} = $l;
+            }
+        }
+    }
+
+    my $code = q{};
+ROW:
+    for my $row ( @{$code_ref} ) {
+        if ( !defined reftype $row) {
+            $code .= $row;
+            next ROW;
+        }
+        for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
+            $row->[$i] = sprintf '%-*s', $max{$i}, $row->[$i];
+        }
+        $code .= join( ' & ', @{$row} ) . " \\\\\n";
+    }
+    return $code;
+}
+
+sub _get_hline_code {
+    my ( $self, $id, $single ) = @_;
+    my $theme  = $self->get_theme_settings;
+    my $hlines = $theme->{'HORIZONTAL_RULES'};
+    my $line   = '\hline';
+    if ( defined $theme->{RULES_CMD}
+        && reftype $theme->{RULES_CMD} eq 'ARRAY' )
+    {
+        $line = $theme->{RULES_CMD}->[$id];
+    }
+    if ( $id == $self->get__RULE_BOTTOM_ID ) {
+        $id = 0;
+    }
+
+    # just one line?
+    if ( defined $single && $single ) {
+        return "$line\n";
+    }
+    return "$line\n" x $hlines->[$id];
+}
+
 sub _apply_header_formatting {
     my ( $self, $col, $aligning ) = @_;
     my $theme = $self->get_theme_settings;
@@ -472,21 +452,11 @@ sub _get_cell_bg_color {
     return $cell_bg_color;
 }
 
-###########################################################################
-# Usage      : $self->_get_row_code($cols_ref);
-# Purpose    : generate the LaTeX code of a row
-# Returns    : LaTeX code
-# Parameters : the columns
-# Throws     :
-# Comments   : n/a
-# See also   :
-
 sub _get_row_array {
     my ( $self, $cols_ref, $bgcolor, $is_header ) = @_;
+    my @cols;
     my @cols_defs = map { $self->_get_mc_def($_) } @{$cols_ref};
-    my @cols      = ();
-    my $theme     = $self->get_theme_settings;
-    my $vlines    = $theme->{'VERTICAL_RULES'};
+    my $vlines    = $self->get_theme_settings->{'VERTICAL_RULES'};
     my $v0        = q{|} x $vlines->[0];
     my $v1        = q{|} x $vlines->[1];
     my $v2        = q{|} x $vlines->[2];
@@ -504,7 +474,7 @@ sub _get_row_array {
                     )
                 );
                 if ( !defined $col_def->{cols} ) {
-                    my @summary = $self->_get_data_summary();
+                    my @summary = @{ $self->get__data_summary() };
                     $col_def->{cols} = 1;
                     $col_def->{align}
                         = $self->get_coldef_strategy->{ $summary[$col_id]
@@ -513,22 +483,9 @@ sub _get_row_array {
             }
         }
         if ( defined $col_def->{cols} ) {
-            my $vl_pre  = q{};
-            my $vl_post = q{};
-
-            if ( $j == 0 ) {
-                $vl_pre = $v0;
-            }
-
-            if ( $j == ( scalar(@cols_defs) - 1 ) ) {
-                $vl_post = $v0;
-            }
-            elsif ( $j == 0 && $col_def->{cols} == 1 ) {
-                $vl_post = $v1;
-            }
-            else {
-                $vl_post = $v2;
-            }
+            my $vl_pre  = $j == 0           ? $v0 : q{};
+            my $vl_post = $j == $#cols_defs ? $v0 : $j == 0
+                && $col_def->{cols} == 1 ? $v1 : $v2;
 
             my $color_code = q{};
 
@@ -563,55 +520,38 @@ sub _get_row_array {
     return \@cols;
 }
 
-sub _get_row_code {
-    my ( $self, $cols_ref, $bgcolor, $is_header ) = @_;
-    my $cols = $self->_get_row_array( $cols_ref, $bgcolor, $is_header );
-    return join( ' & ', @{$cols} ) . "\\\\\n";
-}
-
 sub _add_mc_def {
     my ( $self, $arg_ref ) = @_;
     my $def = $self->_get_mc_def( $arg_ref->{value} );
-    if ( defined $def->{cols} ) {
-        return $arg_ref->{value};
-    }
-    else {
-        return $self->_get_mc_value($arg_ref);
-    }
+    return defined $def->{cols}
+        ? $arg_ref->{value}
+        : $self->_get_mc_value($arg_ref);
 }
 
 sub _get_mc_value {
     my ( $self, $def ) = @_;
-    if ( defined $def->{cols} ) {
-        return $def->{value} . q{:} . $def->{cols} . $def->{align};
-    }
-    else {
-        return $def->{value};
-    }
+    return
+        defined $def->{cols}
+        ? $def->{value} . q{:} . $def->{cols} . $def->{align}
+        : $def->{value};
 }
 
 sub _get_mc_def {
     my ( $self, $value ) = @_;
-    if ( $value =~ m{ \A (.*)\:(\d)([clr]) \z }xms ) {
-        return { value => $1, cols => $2, align => $3 };
-    }
-    else {
-        return { value => $value };
-    }
+    return $value =~ m{ \A (.*)\:(\d)([clr]) \z }xms
+        ? {
+        value => $1,
+        cols  => $2,
+        align => $3
+        }
+        : { value => $value };
 }
-
-###############################################################################
-# Usage      : $self->_add_font_family($col, 'bf');
-# Purpose    : add font family to column value
-# Returns    : new column value
-# Parameters : column value and family (tt, bf, it, sc)
-# Throws     : exception when family is not known
 
 sub _add_font_family {
     my ( $self, $col, $family ) = @_;
     my %know_families = ( tt => 1, bf => 1, it => 1, sc => 1 );
     if ( !defined $know_families{$family} ) {
-        $self->invalid_option_usage(
+        $self->_invalid_option_usage(
             'custom_themes',
             "Family not known: $family. Valid families are: " . join ', ',
             sort keys %know_families
@@ -621,12 +561,6 @@ sub _add_font_family {
     $col_def->{value} = "\\text$family" . '{' . $col_def->{value} . '}';
     return $self->_get_mc_value($col_def);
 }
-
-###############################################################################
-# Usage      : $self->_add_font_color($col, $color);
-# Purpose    : add font color to column value
-# Returns    : new column value
-# Parameters : column value and color
 
 sub _add_font_color {
     my ( $self, $col, $color ) = @_;
@@ -648,17 +582,9 @@ sub _get_coldef_type_col_suffix {
     return '_COL';
 }
 
-###########################################################################
-# Usage      : $self->_get_coldef_code(\@data);
-# Purpose    : generate the LaTeX code of the column definitions (e.g.
-#              |l|r|r|r|)
-# Returns    : LaTeX code
-# Parameters : the data columns
-# Comments   : Tries to be intelligent. Hope it is ;)
-
 sub _get_coldef_code {
     my ( $self, $data ) = @_;
-    my @cols   = $self->_get_data_summary();
+    my @cols   = @{ $self->get__data_summary() };
     my $vlines = $self->get_theme_settings->{'VERTICAL_RULES'};
 
     my $v0 = q{|} x $vlines->[0];
@@ -714,15 +640,6 @@ sub _get_coldef_code {
     return $table_def;
 }
 
-###########################################################################
-# Usage      : $self->get_theme_settings();
-# Purpose    : return an hash reference with all settings of the current
-#              theme
-# Returns    : see purpose
-# Parameters : none
-# Throws     : exception if theme is unknown
-# See also   : get_available_themes();
-
 sub get_theme_settings {
     my ($self) = @_;
 
@@ -730,29 +647,69 @@ sub get_theme_settings {
     if ( defined $themes->{ $self->get_theme } ) {
         return $themes->{ $self->get_theme };
     }
-    $self->invalid_option_usage( 'theme', 'Not known: ' . $self->get_theme );
+    $self->_invalid_option_usage( 'theme', 'Not known: ' . $self->get_theme );
     return;
 }
 
-###########################################################################
-# Usage      : $self->get_available_themes();
-# Purpose    : return an hash reference with all available themes
-#              (predefined and custom)
-# Returns    : see purpose
-# Parameters : none
-# Throws     : no exceptions
-# See also   : get_theme_settings()
-
-sub get_available_themes {
+sub _check_options {
     my ($self) = @_;
-    my %defs;
 
-    for my $theme_obj ( $self->themes ) {
-        %defs = ( %defs, %{ $theme_obj->_definition } );
+    # default floating enviromnent is table
+    if ( $self->get_environment eq '1' ) {
+        $self->set_environment('table');
     }
-    $self->set_predef_themes( \%defs );
-    return {
-        ( %{ $self->get_predef_themes }, %{ $self->get_custom_themes } ) };
+
+    if ( $self->get_type eq 'xtab' || $self->get_type eq 'longtable' ) {
+        if ( !$self->get_environment ) {
+            $self->_invalid_option_usage( 'environment',
+                'xtab/longtable requires an environment' );
+        }
+        if ( $self->get_position ) {
+            $self->_invalid_option_usage( 'position',
+                'xtab/longtable does not support position' );
+        }
+    }
+
+    # check center, right, left options
+    my $cnt_true_alignments = 0;
+    for my $align ( $self->get_center, $self->get_right, $self->get_left ) {
+        if ($align) {
+            $cnt_true_alignments++;
+        }
+    }
+    if ( $cnt_true_alignments > 1 ) {
+        $self->_invalid_option_usage( 'center, left, right',
+            'only one allowed.' );
+    }
+    if ( $self->has_center || $self->has_right || $self->has_left ) {
+        $self->set__default_align(0);
+    }
+    else {
+        $self->set__default_align(1);
+    }
+
+    if ( $self->get_maincaption && $self->get_shortcaption ) {
+        $self->_invalid_option_usage( 'maincaption, shortcaption',
+            'only one allowed.' );
+    }
+
+    # handle default values by ourselves
+    if ( $self->get_width_environment eq 'tabular*' ) {
+        $self->set_width_environment(0);
+    }
+    if ( !$self->get_width ) {
+        if (   $self->get_width_environment eq 'tabularx'
+            && $self->get_type ne 'longtable' )
+        {
+            $self->_invalid_option_usage( 'width_environment',
+                'Is tabularx and width is unset' );
+        }
+        elsif ( $self->get_width_environment eq 'tabulary' ) {
+            $self->_invalid_option_usage( 'width_environment',
+                'Is tabulary and width is unset' );
+        }
+    }
+    return;
 }
 
 no Moose::Util::TypeConstraints;
@@ -766,7 +723,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 0.9.17
+This document describes LaTeX::Table version 1.0.0
 
 =head1 SYNOPSIS
 
@@ -824,7 +781,7 @@ Now in your LaTeX document:
 
   \documentclass{article}
 
-  % for multipage tables (xtab or longtable)
+  % for multi-page tables (xtab or longtable)
   \usepackage{xtab}
   %\usepackage{longtable}
 
@@ -848,7 +805,7 @@ complexity of using them behind an easy and intuitive API.
 
 =head1 FEATURES 
 
-This module supports multipage tables via the C<xtab> or the C<longtable>
+This module supports multi-page tables via the C<xtab> or the C<longtable>
 package.  For publication quality tables, it uses the C<booktabs> package. It
 also supports the C<tabularx> and C<tabulary> packages for nicer fixed-width
 tables.  Furthermore, it supports the C<colortbl> package for colored tables
@@ -915,7 +872,7 @@ The name of the LaTeX output file. Default is 'latextable.tex'.
 =item C<type>
 
 Can be 'std' (default) for standard LaTeX tables, 'ctable' for tables using
-the C<ctable> package or 'xtab' and 'longtable' for multipage tables (requires
+the C<ctable> package or 'xtab' and 'longtable' for multi-page tables (requires
 the C<xtab> and C<longtable> LaTeX packages, respectively). 
 
 =item C<header>
@@ -998,7 +955,7 @@ command is used, i.e. C<\midrule> vs. C<\hline>).
 =item C<custom_template> 
 
 The table types listed above use the L<Template> toolkit internally. These
-type tempates are very flexible and powerful, but you can also provide a
+type templates are very flexible and powerful, but you can also provide a
 custom template:
 
   # Returns the header and data formatted in LaTeX code. Nothing else.
@@ -1053,7 +1010,7 @@ Or even multiple commands:
   ...
 
 Default 0 (caption below the table) because the spacing in the standard LaTeX 
-macros is optimized for bottom captions. At least for multipage tables, 
+macros is optimized for bottom captions. At least for multi-page tables, 
 however, top captions are highly recommended. You can use the C<caption> 
 LaTeX package to fix the spacing:
 
@@ -1170,12 +1127,12 @@ only numbers are right-justified, others left-justified. Columns with cells
 longer than 30 characters are I<p> (paragraph) columns of size '5cm' (I<X>
 columns when the C<tabularx>, I<L> when the C<tabulary> package is selected).
 These rules can be changed with set_coldef_strategy(). Default is 0 (guess
-good definition). The left-hand column, the stub, is normally exculded here
+good definition). The left-hand column, the stub, is normally excluded here
 and is always left aligned. See L<LaTeX::Table::Themes::ThemeI>.
 
 =item C<coldef_strategy>
 
-Controls the behaviour of the C<coldef> calculation when get_coldef()
+Controls the behavior of the C<coldef> calculation when get_coldef()
 does not return a true value. It is a reference to a hash that contains
 regular expressions that define the I<types> of the columns. For example, 
 the standard types I<NUMBER> and I<LONG> are defined as:
@@ -1368,7 +1325,7 @@ LaTeX package. Default 0.
 
 =back
 
-=head2 MULTIPAGE TABLES
+=head2 MULTI-PAGE TABLES
 
 =over
 
@@ -1380,7 +1337,7 @@ is 'Continued from previous page'.
 
 =item C<tabletailmsg>
 
-Message at the end of a multipage table. Default is 'Continued on next page'. 
+Message at the end of a multi-page table. Default is 'Continued on next page'. 
 When using C<caption_top>, this is in most cases unnecessary and it is
 recommended to omit the tabletail (see below).
 
@@ -1493,14 +1450,6 @@ and in I<examples/examples.pdf> for the correct usage of this option.
 In method new() or set_option(). You passed a wrong type to the option. See
 this document or I<examples/examples.pdf> for the correct usage of this option.
 
-=item C<DEPRECATED. ...>  
-
-There were some minor API changes in C<LaTeX::Table> 0.9.0, 0.9.3, 0.9.12 and
-0.9.16. Just apply the changes to the script or contact its author.
-
-B<Important Note:> 0.9.17 will be the last version that includes deprecated
-code.
-
 =back
 
 =head1 CONFIGURATION AND ENVIRONMENT
@@ -1573,7 +1522,7 @@ NECESSARY SERVICING, REPAIR, OR CORRECTION.
 
 IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENSE, BE
 LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
 OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
 THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING

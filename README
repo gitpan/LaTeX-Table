@@ -1,4 +1,4 @@
-LaTeX-Table version 0.9.17
+LaTeX-Table version 1.0.0
 
 This module supports multipage tables via the xtab and the longtable package.
 For publication quality tables it utilizes the booktabs package. It also
@@ -10,13 +10,23 @@ predefined, good looking themes.
 
 INSTALLATION
 
-To install this module, run the following commands:
+To install this module with CPAN (recommended), just type
+
+    cpan LaTeX::Table
+
+If you have never used the cpan command before, you probably have to answer a
+few configuration questions. This command will automatically install missing
+modules required by LaTeX::Table.
+
+To install this module without CPAN, run the following commands:
 
     perl Build.PL
     ./Build
     ./Build test
     ./Build install
 
+If you get a warning about missing modules, install them manually or use the
+cpan command (see above).
 
 Alternatively, to install with ExtUtils::MakeMaker, you can use the following
 commands:
@@ -37,6 +47,7 @@ Now please compile these examples with LaTeX and check if all tables look ok:
 
     latex examples.tex 
     xdvi examples.dvi 
+    dvipdf examples.dvi
     
 
 PROGRAMS

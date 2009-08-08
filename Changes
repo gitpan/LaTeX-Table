@@ -1,5 +1,13 @@
 Revision history for LaTeX-Table
 
+0.99_1 Sat  Aug 08  11:33:00 2009
+        - code cleanup
+        - POD corrections
+        - removed all deprecated code
+        - Bugfix: * row id in callback functions sometimes wrong
+                  * perlcritic now passes with Pod::Spelling (thanks Salvatore
+                    and Rafael)
+
 0.9.17 Sat  Jul 26  12:00:00 2009
         - new option tablelasttail
         - Template variables documented in TypeI.pm

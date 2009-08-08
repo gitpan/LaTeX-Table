@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-19 14:52:43 +0200 (Sun, 19 Jul 2009) $
-# $Revision: 1753 $
+#     $Date: 2009-08-08 17:30:27 +0200 (Sat, 08 Aug 2009) $
+# $Revision: 1823 $
 #############################################################################
 
 use strict;
@@ -210,7 +210,7 @@ The table theme. See L<LaTeX::Table>. Default I<Meyrin>.
 
 =item C<--coldef>
 
-The column definition, eg 'llp{5cm}'. If unset, guessed by L<LaTeX::Table>.
+The column definition, e.g. 'llp{5cm}'. If unset, guessed by L<LaTeX::Table>.
 
 =item C<--title>
 
@@ -290,7 +290,7 @@ NECESSARY SERVICING, REPAIR, OR CORRECTION.
 
 IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENSE, BE
 LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
 OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
 THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING

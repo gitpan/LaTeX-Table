@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-13 13:47:11 +0200 (Mon, 13 Jul 2009) $
-# $Revision: 1738 $
+#     $Date: 2009-08-08 17:30:27 +0200 (Sat, 08 Aug 2009) $
+# $Revision: 1823 $
 #############################################################################
 
 use strict;
@@ -82,10 +82,10 @@ from Vim or emacs) and outputs a completely formatted table.
 
 =head1 LAZY FORMAT
 
-The first line must contain the L<LaTeX::Table> options (seperated by 
+The first line must contain the L<LaTeX::Table> options (separated by 
 semicolons C<;>) in the format C<optionname=value>. The
 second line must contain the header, the following lines the data. 
-Columns are seperated by C<&>. 
+Columns are separated by C<&>. 
 
 =head1 EXAMPLE 
 
@@ -160,7 +160,7 @@ NECESSARY SERVICING, REPAIR, OR CORRECTION.
 
 IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENSE, BE
 LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
 OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
 THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING

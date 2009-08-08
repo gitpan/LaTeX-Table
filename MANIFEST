@@ -34,7 +34,6 @@ t/50.synopsis.t
 t/60.coldef.t
 t/70.callback.t
 t/80.themes.t
-t/90.combat.t
 t/lib/MyThemes/Custom.pm
 t/perlcritic.t
 t/perlcriticrc
