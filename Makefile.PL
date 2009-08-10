@@ -17,7 +17,7 @@ WriteMakefile(
         'Test::NoWarnings' => 0,
         'File::Spec'       => 0,
         'English'        => 0,
-        'Moose'     => 0,
+        'Moose'     => 0.76,
         'Moose::Policy::FollowPBP'    => 0,
         'Module::Pluggable'    => 0,
         'Carp'           => 0,

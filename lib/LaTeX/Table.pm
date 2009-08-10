@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-08-08 17:30:27 +0200 (Sat, 08 Aug 2009) $
-# $Revision: 1823 $
+#     $Date: 2009-08-10 23:28:17 +0200 (Mon, 10 Aug 2009) $
+# $Revision: 1826 $
 #############################################################################
 
 package LaTeX::Table;
@@ -13,7 +13,7 @@ use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 use Moose::Util::TypeConstraints;
 
-use version; our $VERSION = qv('0.99_1');
+use version; our $VERSION = qv('0.99_2');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -97,12 +97,10 @@ has 'custom_themes' =>
 # private
 has '_data_summary' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has '_type_obj'     => ( is => 'rw', isa => 'LaTeX::Table::Types::TypeI' );
-has '_RULE_TOP_ID'   => ( is => 'ro', default => 0 );
-has '_RULE_MID_ID'   => ( is => 'ro', default => 1 );
-has '_RULE_INNER_ID' => ( is => 'ro', default => 2 );
-## no critic (ValuesAndExpressions::ProhibitMagicNumbers)
+has '_RULE_TOP_ID'    => ( is => 'ro', default => 0 );
+has '_RULE_MID_ID'    => ( is => 'ro', default => 1 );
+has '_RULE_INNER_ID'  => ( is => 'ro', default => 2 );
 has '_RULE_BOTTOM_ID' => ( is => 'ro', default => 3 );
-## use critic
 
 __PACKAGE__->meta->make_immutable;
 
@@ -1431,7 +1429,7 @@ required packages. The packages we use are C<array>, C<booktabs>, C<colortbl>,
 C<ctable>, C<graphicx>, C<longtable>, C<lscape>, C<rotating>, C<tabularx>,
 C<tabulary>, C<xcolor> and C<xtab>. 
 
-C<LaTeX::Table> may throw one of these errors and warnings:
+C<LaTeX::Table> may throw one of these errors:
 
 =over
 

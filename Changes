@@ -1,5 +1,10 @@
 Revision history for LaTeX-Table
 
+0.99_2 Sat  Aug 10  17:25:00 2009
+        - Bugfix: * removed unneccessary no critic (thanks Salvatore)
+                  * min Moose version in Build.PL/Makefile.PL (caused
+                    cpantesters fails)
+
 0.99_1 Sat  Aug 08  11:33:00 2009
         - code cleanup
         - POD corrections
