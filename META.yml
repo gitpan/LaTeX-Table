@@ -1,6 +1,6 @@
 ---
 name: LaTeX-Table
-version: v0.99_3
+version: v0.99_4
 author:
   - 'Markus Riester <mriester@gmx.de>'
 abstract: Perl extension for the automatic generation of LaTeX tables.
@@ -34,7 +34,7 @@ configure_requires:
 provides:
   LaTeX::Table:
     file: lib/LaTeX/Table.pm
-    version: v0.99_3
+    version: v0.99_4
   LaTeX::Table::Themes::Beamer:
     file: lib/LaTeX/Table/Themes/Beamer.pm
     version: 1738

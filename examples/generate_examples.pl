@@ -574,7 +574,6 @@ $table = LaTeX::Table->new(
         caption       => '\texttt{type=longtable}',
         tablelasttail => '\tiny{www.imdb.com}',
         caption_top   => 1,
-        center        => 0,
         # we don't define a width here!
         width_environment => 'tabularx', 
         filename       => 'longtable.tex'
@@ -582,9 +581,7 @@ $table = LaTeX::Table->new(
 );
 
 %now in LaTeX:
-\begin{center}
 \LTXtable{0.8\textwidth}{longtable}
-\end{center}
 
 \end{verbatim}
 EOT
@@ -637,7 +634,6 @@ $table = LaTeX::Table->new(
         caption     => '\texttt{type=longtable}',
         tablelasttail => '\tiny{www.imdb.com}',
         caption_top => 1,
-        center      => 0,
         # we don't define a width here!
         width_environment => 'tabularx', 
         filename    => 'longtable.tex',
@@ -646,9 +642,7 @@ $table = LaTeX::Table->new(
 print $table->generate();
 
 $code = << 'EOT';
-\begin{center}
 \LTXtable{0.8\textwidth}{longtable}
-\end{center}
 
 \subsection{Automatic column definitions}
 We can easily provide regular expressions that define the alignment of

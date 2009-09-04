@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-09-04 18:17:58 +0200 (Fri, 04 Sep 2009) $
-# $Revision: 1832 $
+#     $Date: 2009-09-04 20:16:43 +0200 (Fri, 04 Sep 2009) $
+# $Revision: 1833 $
 #############################################################################
 
 package LaTeX::Table;
@@ -13,7 +13,7 @@ use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 use Moose::Util::TypeConstraints;
 
-use version; our $VERSION = qv('0.99_3');
+use version; our $VERSION = qv('0.99_4');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -1254,18 +1254,15 @@ C<LTXtable> command (C<ltxtable> package):
           filename    => 'mylongtable.tex'
           type        => 'longtable',
           ...
-          center      => 0,
           width_environment => 'tabularx', 
       }
   );
  
 Then in LaTeX:
   
-  \begin{center}
   \LTXtable{0.8\textwidth}{mylongtable}
-  \end{center}
   
-Note that we have to do the centering and specification of the width in LaTeX. 
+Note that we have to do the specification of the width in LaTeX. 
 
 Default is 0 (see C<width>).
 
