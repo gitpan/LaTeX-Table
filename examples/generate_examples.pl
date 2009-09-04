@@ -106,8 +106,10 @@ foreach my $theme ( keys %{ $table->get_available_themes } ) {
     $table->generate();
     $table->set_filename("${theme}multipage2.tex");
     $table->set_type('longtable');
-    $table->set_maincaption("\\texttt{theme=$theme, type=longtable}");
+    $table->set_left(1);
+    $table->set_maincaption("\\texttt{theme=$theme, type=longtable, left=1}");
     $table->generate();
+    $table->clear_left(0);
 }
 
 open my $OUT, '>', 'examples.tex';
@@ -989,7 +991,8 @@ EOT
 ;
 
 print ${OUT}
-    "$code\\section{Version}\\small{Generated with LaTeX::Table Version $LaTeX::Table::VERSION}\n";
+    "$code\\section{Version}\\small{Generated with LaTeX::Table Version
+    \$$LaTeX::Table::VERSION\$}\n";
 
 $code = << 'EOT';
 \clearpage\begin{appendix}

@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-25 19:14:21 +0200 (Sat, 25 Jul 2009) $
-# $Revision: 1779 $
+#     $Date: 2009-09-04 17:29:03 +0200 (Fri, 04 Sep 2009) $
+# $Revision: 1831 $
 #############################################################################
 
 package LaTeX::Table::Types::Longtable;
@@ -10,7 +10,7 @@ use Moose;
 with 'LaTeX::Table::Types::TypeI';
 
 use version;
-our ($VERSION) = '$Revision: 1779 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+our ($VERSION) = '$Revision: 1831 $' =~ m{ \$Revision: \s+ (\S+) }xms;
 
 my $template = <<'EOT'
 {
@@ -19,10 +19,7 @@ my $template = <<'EOT'
 RULES_WIDTH_GLOBAL_CODE %][% RULES_COLOR_GLOBAL_CODE %][% IF FONTSIZE %]\[% FONTSIZE %]
 [% END %][% IF FONTFAMILY %]\[% FONTFAMILY %]family
 [% END %][% IF SIDEWAYS %]\begin{landscape}[% END 
-%][% IF CENTER %]\begin{center}
-[% END %][% IF LEFT %]\begin{flushleft}
-[% END %][% IF RIGHT %]\begin{flushright}
-[% END %][% RESIZEBOX_BEGIN_CODE %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF WIDTH %]{[%WIDTH %]}[% END %]{[% COLDEF %]}
+%][% RESIZEBOX_BEGIN_CODE %]\begin{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% IF CENTER %][c][% END %][% IF LEFT %][l][% END %][% IF RIGHT %][r][% END %]{[% COLDEF %]}
 [% IF CAPTION %][%IF CAPTION_TOP %]\caption[%IF SHORTCAPTION %][[%
 SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][%
 END %][% IF LABEL %]\label{[% LABEL %]}[% END %]}\\
@@ -36,9 +33,7 @@ END %][% IF LABEL %]\label{[% LABEL %]}[% END %]}\\
 SHORTCAPTION %]][% END %]{[% CAPTION %][% IF CONTINUED %] [% CONTINUEDMSG %][%
 END %][% IF LABEL %]\label{[% LABEL %]}[% END %]}\\
 [% END %][% END %]\endlastfoot
-[% DATA_CODE %]\end{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}
-[% RESIZEBOX_END_CODE %][% IF CENTER %]\end{center}[% END %][% IF LEFT
-%]\end{flushleft}[% END %][% IF RIGHT %]\end{flushright}[% END %][% IF
+[% DATA_CODE %]\end{[% TABULAR_ENVIRONMENT %][% IF STAR %]*[% END %]}[% RESIZEBOX_END_CODE %][% IF
 SIDEWAYS %]\end{landscape}[% END %]
 }
 EOT

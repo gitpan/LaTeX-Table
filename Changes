@@ -1,17 +1,22 @@
 Revision history for LaTeX-Table
 
+0.99_3 Fri  Sep 4  12:08:00 2009
+        - added clearer for alignment options. 
+        - Bugfixes: * Alignment of longtables are wrongly generated (#49422,
+                      thanks Jens)
+
 0.99_2 Sat  Aug 10  17:25:00 2009
-        - Bugfix: * removed unneccessary no critic (thanks Salvatore)
-                  * min Moose version in Build.PL/Makefile.PL (caused
-                    cpantesters fails)
+        - Bugfixes: * removed unneccessary no critic (thanks Salvatore)
+                    * min Moose version in Build.PL/Makefile.PL (caused
+                      cpantesters fails)
 
 0.99_1 Sat  Aug 08  11:33:00 2009
         - code cleanup
         - POD corrections
         - removed all deprecated code
-        - Bugfix: * row id in callback functions sometimes wrong
-                  * perlcritic now passes with Pod::Spelling (thanks Salvatore
-                    and Rafael)
+        - Bugfixes: * row id in callback functions sometimes wrong
+                    * perlcritic now passes with Pod::Spelling (thanks Salvatore
+                      and Rafael)
 
 0.9.17 Sat  Jul 26  12:00:00 2009
         - new option tablelasttail

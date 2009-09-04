@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-08-10 23:28:17 +0200 (Mon, 10 Aug 2009) $
-# $Revision: 1826 $
+#     $Date: 2009-09-04 18:17:58 +0200 (Fri, 04 Sep 2009) $
+# $Revision: 1832 $
 #############################################################################
 
 package LaTeX::Table;
@@ -13,7 +13,7 @@ use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 use Moose::Util::TypeConstraints;
 
-use version; our $VERSION = qv('0.99_2');
+use version; our $VERSION = qv('0.99_3');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -56,7 +56,12 @@ has 'xentrystretch' => ( is => 'rw', isa => 'Num', default => 0 );
 
 # Bool
 for my $attr (qw(center left right _default_align continued sideways)) {
-    has $attr => ( is => 'rw', isa => 'Bool', predicate => "has_$attr" );
+    has $attr => (
+        is        => 'rw',
+        isa       => 'Bool',
+        predicate => "has_$attr",
+        clearer   => "clear_$attr",
+    );
 }
 
 # enum
@@ -1054,6 +1059,9 @@ C<environment>. Only one of these options may return a true value.
     
   # don't generate any aligning code
   $table->set_center(0);
+  ...
+  # restore default
+  $table->clear_center();
 
 =item C<label>
 
@@ -1461,9 +1469,13 @@ L<Template>
 
 =head1 BUGS AND LIMITATIONS
 
-The width option causes problems with themes using the C<colortbl> package.
+The C<width> option causes problems with themes using the C<colortbl> package.
 You may have to specify here the overhang arguments of the C<\columcolor>
 commands manually. Patches are of course welcome.
+
+Problems with the C<width> option are also known for tables of type
+I<longtable>. You should use the C<tabularx> package as described in the
+C<width_environment> documentation. 
 
 Please report any bugs or feature requests to
 C<bug-latex-table@rt.cpan.org>, or through the web interface at
