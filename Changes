@@ -1,12 +1,16 @@
 Revision history for LaTeX-Table
 
+0.99_5  Mon  Sep 7  11:00:00 2009
+        - POD cleanup
+        - Bugfixes: * current perlcritic passes
+       
 0.99_4 Fri  Sep 4  15:00:00 2009
         - Corrected documentation for width_environment option (alignment is
           possible thanks to fix of #49422)
           
 0.99_3 Fri  Sep 4  12:08:00 2009
         - added clearer for alignment options. 
-        - Bugfixes: * Alignment of longtables are wrongly generated (#49422,
+        - Bugfixes: * Alignment of longtables is wrongly generated (#49422,
                       thanks Jens)
 
 0.99_2 Sat  Aug 10  17:25:00 2009

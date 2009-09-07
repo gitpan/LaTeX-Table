@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-09-04 17:29:03 +0200 (Fri, 04 Sep 2009) $
-# $Revision: 1831 $
+#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
+# $Revision: 1836 $
 #############################################################################
 
 package LaTeX::Table::Types::Longtable;
@@ -9,8 +9,7 @@ use Moose;
 
 with 'LaTeX::Table::Types::TypeI';
 
-use version;
-our ($VERSION) = '$Revision: 1831 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+use version; our $VERSION = qv('1.0.0');
 
 my $template = <<'EOT'
 {

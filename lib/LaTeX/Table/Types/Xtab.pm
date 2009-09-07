@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-25 19:09:05 +0200 (Sat, 25 Jul 2009) $
-# $Revision: 1778 $
+#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
+# $Revision: 1836 $
 #############################################################################
 
 package LaTeX::Table::Types::Xtab;
@@ -9,8 +9,7 @@ use Moose;
 
 with 'LaTeX::Table::Types::TypeI';
 
-use version;
-our ($VERSION) = '$Revision: 1778 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+use version; our $VERSION = qv('1.0.0');
 
 my $template = <<'EOT'
 {

@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-07-13 16:29:59 +0200 (Mon, 13 Jul 2009) $
-# $Revision: 1741 $
+#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
+# $Revision: 1836 $
 #############################################################################
 
 package LaTeX::Table::Themes::Booktabs;
@@ -9,8 +9,7 @@ use Moose;
 
 with 'LaTeX::Table::Themes::ThemeI';
 
-use version;
-our ($VERSION) = '$Revision: 1741 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+use version; our $VERSION = qv('1.0.0');
 
 sub _definition {
     my $themes = {

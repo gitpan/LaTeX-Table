@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-08-08 17:30:27 +0200 (Sat, 08 Aug 2009) $
-# $Revision: 1823 $
+#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
+# $Revision: 1836 $
 #############################################################################
 
 use strict;
@@ -12,7 +12,7 @@ use warnings;
 use LaTeX::Table;
 use Carp;
 
-use version; our $VERSION = $LaTeX::Table::VERSION;
+use version; our $VERSION = qv('1.0.0');
 
 my $line_id = 0;
 my @input;

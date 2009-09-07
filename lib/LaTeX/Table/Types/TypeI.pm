@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-08-08 17:30:27 +0200 (Sat, 08 Aug 2009) $
-# $Revision: 1823 $
+#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
+# $Revision: 1836 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -12,8 +12,7 @@ use warnings;
 use Moose::Role;
 use Template;
 
-use version;
-our ($VERSION) = '$Revision: 1823 $' =~ m{ \$Revision: \s+ (\S+) }xms;
+use version; our $VERSION = qv('1.0.0');
 
 use Carp;
 

@@ -1,6 +1,6 @@
 ---
 name: LaTeX-Table
-version: v0.99_4
+version: v0.99_5
 author:
   - 'Markus Riester <mriester@gmx.de>'
 abstract: Perl extension for the automatic generation of LaTeX tables.
@@ -34,37 +34,37 @@ configure_requires:
 provides:
   LaTeX::Table:
     file: lib/LaTeX/Table.pm
-    version: v0.99_4
+    version: v0.99_5
   LaTeX::Table::Themes::Beamer:
     file: lib/LaTeX/Table/Themes/Beamer.pm
-    version: 1738
+    version: v1.0.0
   LaTeX::Table::Themes::Booktabs:
     file: lib/LaTeX/Table/Themes/Booktabs.pm
-    version: 1741
+    version: v1.0.0
   LaTeX::Table::Themes::Classic:
     file: lib/LaTeX/Table/Themes/Classic.pm
-    version: 1780
+    version: v1.0.0
   LaTeX::Table::Themes::Modern:
     file: lib/LaTeX/Table/Themes/Modern.pm
-    version: 1741
+    version: v1.0.0
   LaTeX::Table::Themes::ThemeI:
     file: lib/LaTeX/Table/Themes/ThemeI.pm
-    version: 1741
+    version: v1.0.0
   LaTeX::Table::Types::Ctable:
     file: lib/LaTeX/Table/Types/Ctable.pm
-    version: 1764
+    version: v1.0.0
   LaTeX::Table::Types::Longtable:
     file: lib/LaTeX/Table/Types/Longtable.pm
-    version: 1831
+    version: v1.0.0
   LaTeX::Table::Types::Std:
     file: lib/LaTeX/Table/Types/Std.pm
-    version: 1764
+    version: v1.0.0
   LaTeX::Table::Types::TypeI:
     file: lib/LaTeX/Table/Types/TypeI.pm
-    version: 1823
+    version: v1.0.0
   LaTeX::Table::Types::Xtab:
     file: lib/LaTeX/Table/Types/Xtab.pm
-    version: 1778
+    version: v1.0.0
 generated_by: Module::Build version 0.35
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html

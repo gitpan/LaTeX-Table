@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-09-04 20:16:43 +0200 (Fri, 04 Sep 2009) $
-# $Revision: 1833 $
+#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
+# $Revision: 1836 $
 #############################################################################
 
 package LaTeX::Table;
@@ -13,7 +13,7 @@ use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 use Moose::Util::TypeConstraints;
 
-use version; our $VERSION = qv('0.99_4');
+use version; our $VERSION = qv('0.99_5');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -1249,9 +1249,7 @@ In this case, you have to generate a I<file> and then load the table with the
 C<LTXtable> command (C<ltxtable> package):
 
   $table = LaTeX::Table->new(
-      {   header      => $header,
-          data        => $data,
-          filename    => 'mylongtable.tex'
+      {   filename    => 'mylongtable.tex'
           type        => 'longtable',
           ...
           width_environment => 'tabularx', 
