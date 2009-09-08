@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
-# $Revision: 1836 $
+#     $Date: 2009-09-07 19:54:33 +0200 (Mon, 07 Sep 2009) $
+# $Revision: 1837 $
 #############################################################################
 
 package LaTeX::Table;
@@ -13,7 +13,7 @@ use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 use Moose::Util::TypeConstraints;
 
-use version; our $VERSION = qv('0.99_5');
+use version; our $VERSION = qv('1.0.0');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -34,7 +34,7 @@ use Module::Pluggable
 
 # Str
 for my $attr (
-    qw(label maincaption shortcaption caption caption_top coldef custom_template text_wrap width maxwidth width_environment custom_tabular_environment position tabletail star)
+    qw(label maincaption shortcaption caption caption_top coldef custom_template width maxwidth width_environment custom_tabular_environment position tabletail star)
     )
 {
     has $attr => ( is => 'rw', isa => 'Str', default => 0 );

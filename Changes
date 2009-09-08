@@ -1,6 +1,9 @@
 Revision history for LaTeX-Table
 
-0.99_5  Mon  Sep 7  11:00:00 2009
+1.0.0  Tue  Sep 8  11:00:00 2009
+        - Bugfixes: * text_wrap option still generated
+
+0.99_5 Mon  Sep 7  11:00:00 2009
         - POD cleanup
         - Bugfixes: * current perlcritic passes
        
