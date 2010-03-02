@@ -1,4 +1,4 @@
-use Test::More tests => 9;
+use Test::More tests => 10;
 use Test::NoWarnings;
 
 use LaTeX::Table;
@@ -16,6 +16,7 @@ is($table->_add_mc_def({ value => $test_def, align => 'r', cols => 2}), $test_de
 is($table->_add_mc_def({ value => 'test', align => 'r', cols => 2}), 'test:2r', 'no adding if already has a def');							 
 is_deeply($table->_get_mc_def('test'), { value => 'test' }, 'get without def');
 is_deeply($table->_get_mc_def('test:2c'), { value => 'test', align => 'c', cols => 2 }, 'get with def');
+is_deeply($table->_get_mc_def('test:12l'), { value => 'test', align => 'l', cols => 12 }, 'get with def');
 
 is_deeply($table->_add_font_family('test:2r', 'bf'), '\\textbf{test}:2r', 'add bold fonts');							 
 is($table->_extract_number_columns('test:2c'), 2, 'columwidth correct');

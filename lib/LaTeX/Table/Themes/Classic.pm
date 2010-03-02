@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
-# $Revision: 1836 $
+#     $Date: 2010-03-02 11:55:05 +0100 (Tue, 02 Mar 2010) $
+# $Revision: 1948 $
 #############################################################################
 
 package LaTeX::Table::Themes::Classic;
@@ -9,7 +9,7 @@ use Moose;
 
 with 'LaTeX::Table::Themes::ThemeI';
 
-use version; our $VERSION = qv('1.0.0');
+use version; our $VERSION = qv('1.0.1');
 
 sub _definition {
     my $themes = {
@@ -84,11 +84,11 @@ L<LaTeX::Table>, L<LaTeX::Table::Themes::ThemeI>
 
 =head1 AUTHOR
 
-Markus Riester  C<< <mriester@gmx.de> >>
+Markus Riester  C<< <limaone@cpan.org> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2010, Markus Riester C<< <limaone@cpan.org> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

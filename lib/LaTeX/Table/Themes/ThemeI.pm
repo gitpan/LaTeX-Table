@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
-# $Revision: 1836 $
+#     $Date: 2010-03-02 12:10:35 +0100 (Tue, 02 Mar 2010) $
+# $Revision: 1949 $
 #############################################################################
 
 package LaTeX::Table::Themes::ThemeI;
@@ -11,7 +11,7 @@ use warnings;
 
 use Moose::Role;
 
-use version; our $VERSION = qv('1.0.0');
+use version; our $VERSION = qv('1.0.1');
 
 requires '_definition';
 
@@ -64,8 +64,6 @@ LaTeX::Table::Themes::ThemeI - Interface for LaTeX table themes.
   
   1;
 
-  ..
-  $table->search_path( add => 'MyThemes');
 
 =head1 DESCRIPTION
 
@@ -205,8 +203,16 @@ Or, you can build a L<"THEME MODULE"> and extend the list of predefined themes.
 
 Now, to build a theme that you can easily load, take the L<"SYNOPSIS">
 template, change it and then make it accessible in C<LaTeX::Table> by saving
-it under the C<LaTeX::Table::Themes::*> namespace. Alternatively, you can use
-the search_path() method to add custom paths. See L<"SYNOPSIS">. If your theme
+it under the C<LaTeX::Table::Themes::*> namespace. 
+
+Alternatively, you can use the search_path() method to add custom paths. For
+example save the L<"SYNOPSIS"> module as C<./MyThemes/Custom.pm> and then add
+C<MyThemes> in the script that uses the new theme:
+
+  # in ./script.pl
+  $table->search_path( add => 'MyThemes');
+
+If your theme
 looks nice, please contribute it.
 
 =head1 SEE ALSO
@@ -215,11 +221,11 @@ L<LaTeX::Table>
 
 =head1 AUTHOR
 
-Markus Riester  C<< <mriester@gmx.de> >>
+Markus Riester  C<< <limaone@cpan.org> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2010, Markus Riester C<< <limaone@cpan.org> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

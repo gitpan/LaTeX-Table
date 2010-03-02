@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-09-07 19:54:33 +0200 (Mon, 07 Sep 2009) $
-# $Revision: 1837 $
+#     $Date: 2010-03-02 11:55:05 +0100 (Tue, 02 Mar 2010) $
+# $Revision: 1948 $
 #############################################################################
 
 package LaTeX::Table;
@@ -13,7 +13,7 @@ use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 use Moose::Util::TypeConstraints;
 
-use version; our $VERSION = qv('1.0.0');
+use version; our $VERSION = qv('1.0.1');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -541,7 +541,7 @@ sub _get_mc_value {
 
 sub _get_mc_def {
     my ( $self, $value ) = @_;
-    return $value =~ m{ \A (.*)\:(\d)([clr]) \z }xms
+    return $value =~ m{ \A (.*)\:(\d+)([clr]) \s* \z }xms
         ? {
         value => $1,
         cols  => $2,
@@ -1504,11 +1504,11 @@ Packages and Methods>.
 
 =head1 AUTHOR
 
-Markus Riester  C<< <mriester@gmx.de> >>
+Markus Riester  C<< <limaone@cpan.org> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2010, Markus Riester C<< <limaone@cpan.org> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

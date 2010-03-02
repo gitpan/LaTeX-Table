@@ -1,5 +1,14 @@
 Revision history for LaTeX-Table
 
+
+1.0.1  Tue  Sep 8  11:00:00 2009
+        - POD: * CPAN email address
+               * better example for ltpretty 
+        - Bugfixes: * multicolumn shortcut for columns > 9
+                    * ltpretty removed all slashes, not just the trailing ones
+                    * ltpretty removes now leading and trailing spaces in
+                      columns (caused problems with multicolumn shortcut)
+                    
 1.0.0  Tue  Sep 8  11:00:00 2009
         - Bugfixes: * text_wrap option still generated
 

@@ -2,8 +2,8 @@
 
 #############################################################################
 #   $Author: markus $
-#     $Date: 2009-09-07 17:06:22 +0200 (Mon, 07 Sep 2009) $
-# $Revision: 1836 $
+#     $Date: 2010-03-02 11:55:05 +0100 (Tue, 02 Mar 2010) $
+# $Revision: 1948 $
 #############################################################################
 
 use strict;
@@ -12,7 +12,7 @@ use warnings;
 use LaTeX::Table;
 use Carp;
 
-use version; our $VERSION = qv('1.0.0');
+use version; our $VERSION = qv('1.0.1');
 
 my $line_id = 0;
 my @input;
@@ -21,7 +21,11 @@ my $paramline;
 while ( my $line = <> ) {
     chomp $line;
     $line =~ s{\s+}{ }xmsg;
-    $line =~ s{\A \s* | \\ | \s* \z}{}xmsg;
+    $line =~ s{\A \s* | \s* \z}{}xmsg;
+
+    # remove trailing \\, we do that later
+    $line =~ s{\A \\\\ \z}{}xmsg;
+
     if ( $line_id == 0 ) {    #first line contains the parameters
         $paramline = $line;
     }
@@ -34,7 +38,10 @@ while ( my $line = <> ) {
 # uncomment original input
 _say( join q{}, map {"\n % $_"} ( $paramline, @input ) );
 
-@input = map { [ split m{ & }xms ] } @input;
+# create rows/column array[array_ref], remove leading and trailing spaces
+@input = map {
+    [ map { m{\A \s* (.*) \s* \z}xms ? $1 : $_ } split m{ & }xms ]
+} @input;
 
 # store the paramline in a hash
 my %params = map { _parse_param($_) } split m{ ; }xms, $paramline;
@@ -89,10 +96,13 @@ Columns are separated by C<&>.
 
 =head1 EXAMPLE 
 
-
-  theme=NYC;label=test;position=htb
-  Header Col1 & Header Col2
-  Data Col1 & Data Col2
+   theme=Meyrin;label=test;position=htb
+   Item:2c & Price
+   Gnat& per gram& 13.65
+   & each& 0.01
+   Gnu& stuffed& 92.59
+   Emu& stuffed& 33.33
+   Armadillo& frozen& 8.99
 
 =head1 VIM
 
@@ -113,6 +123,36 @@ Columns are separated by C<&>.
 =item 2. Press C<alt+|> 
 
 =item 3. Now "Shell command on region" should appear. Type C<ltpretty>
+
+=back
+
+=head1 OUTPUT
+
+=over
+
+   % theme=Meyrin;label=test;position=htb
+   % Item:2c & Price
+   % Gnat& per gram& 13.65
+   % & each& 0.01
+   % Gnu& stuffed& 92.59
+   % Emu& stuffed& 33.33
+   % Armadillo& frozen& 8.99
+  
+  \begin{table}[htb]
+  \centering
+  \begin{tabular}{llr}
+  \toprule
+  \multicolumn{2}{c}{Item} & Price \\
+  \midrule
+  Gnat      & per gram & 13.65 \\
+            & each     & 0.01  \\
+  Gnu       & stuffed  & 92.59 \\
+  Emu       & stuffed  & 33.33 \\
+  Armadillo & frozen   & 8.99  \\
+  \bottomrule
+  \end{tabular}
+  \label{test}
+  \end{table}
 
 =back
 
@@ -141,7 +181,7 @@ Markus Riester  C<< <mriester@gmx.de> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2009, Markus Riester C<< <mriester@gmx.de> >>. 
+Copyright (c) 2006-2010, Markus Riester C<< <mriester@gmx.de> >>. 
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.
