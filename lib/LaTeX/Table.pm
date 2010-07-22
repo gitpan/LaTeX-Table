@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2010-03-02 11:55:05 +0100 (Tue, 02 Mar 2010) $
-# $Revision: 1948 $
+#     $Date: 2010-07-22 03:01:10 +0200 (Thu, 22 Jul 2010) $
+# $Revision: 2076 $
 #############################################################################
 
 package LaTeX::Table;
@@ -9,11 +9,11 @@ package LaTeX::Table;
 use strict;
 use warnings;
 
-use Moose::Policy 'Moose::Policy::FollowPBP';
 use Moose;
 use Moose::Util::TypeConstraints;
+use MooseX::FollowPBP;
 
-use version; our $VERSION = qv('1.0.1');
+use version; our $VERSION = qv('1.0.2');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -122,9 +122,9 @@ sub generate_string {
         = 'LaTeX::Table::Types::'
         . uc( substr $self->get_type, 0, 1 )
         . substr $self->get_type, 1;
-    $self->set__type_obj( $type_obj_name->new( _table_obj => $self ) );
+    $self->_set_type_obj( $type_obj_name->new( _table_obj => $self ) );
 
-    return $self->get__type_obj->generate_latex_code();
+    return $self->_get_type_obj->generate_latex_code();
 }
 
 sub generate {
@@ -280,7 +280,7 @@ ROW:
         }
         push @summary, $type_of_this_col;
     }
-    $self->set__data_summary( \@summary );
+    $self->_set_data_summary( \@summary );
     return;
 }
 
@@ -302,7 +302,7 @@ sub _get_matrix_latex_code {
 
     my @code
         = $is_header
-        ? ( $self->_get_hline_code( $self->get__RULE_TOP_ID ) )
+        ? ( $self->_get_hline_code( $self->_get_RULE_TOP_ID ) )
         : ();
 ROW:
     for my $row ( @{$data_ref} ) {
@@ -312,7 +312,7 @@ ROW:
         # empty rows produce a horizontal line
         if ( !@cols ) {
             push @code,
-                $self->_get_hline_code( $self->get__RULE_INNER_ID, 1 );
+                $self->_get_hline_code( $self->_get_RULE_INNER_ID, 1 );
             next ROW;
         }
 
@@ -351,16 +351,16 @@ ROW:
 
         # do we have to draw a horizontal line?
         if ( $i == scalar @{$data_ref} ) {
-            push @code, $self->_get_hline_code( $self->get__RULE_BOTTOM_ID );
+            push @code, $self->_get_hline_code( $self->_get_RULE_BOTTOM_ID );
         }
         else {
-            push @code, $self->_get_hline_code( $self->get__RULE_INNER_ID );
+            push @code, $self->_get_hline_code( $self->_get_RULE_INNER_ID );
         }
     }
 
     # without header, just draw the topline, not this midline
     if ( $is_header && $i ) {
-        push @code, $self->_get_hline_code( $self->get__RULE_MID_ID );
+        push @code, $self->_get_hline_code( $self->_get_RULE_MID_ID );
     }
 
     return $self->_align_code( \@code );
@@ -405,7 +405,7 @@ sub _get_hline_code {
     {
         $line = $theme->{RULES_CMD}->[$id];
     }
-    if ( $id == $self->get__RULE_BOTTOM_ID ) {
+    if ( $id == $self->_get_RULE_BOTTOM_ID ) {
         $id = 0;
     }
 
@@ -477,7 +477,7 @@ sub _get_row_array {
                     )
                 );
                 if ( !defined $col_def->{cols} ) {
-                    my @summary = @{ $self->get__data_summary() };
+                    my @summary = @{ $self->_get_data_summary() };
                     $col_def->{cols} = 1;
                     $col_def->{align}
                         = $self->get_coldef_strategy->{ $summary[$col_id]
@@ -587,7 +587,7 @@ sub _get_coldef_type_col_suffix {
 
 sub _get_coldef_code {
     my ( $self, $data ) = @_;
-    my @cols   = @{ $self->get__data_summary() };
+    my @cols   = @{ $self->_get_data_summary() };
     my $vlines = $self->get_theme_settings->{'VERTICAL_RULES'};
 
     my $v0 = q{|} x $vlines->[0];
@@ -685,10 +685,10 @@ sub _check_options {
             'only one allowed.' );
     }
     if ( $self->has_center || $self->has_right || $self->has_left ) {
-        $self->set__default_align(0);
+        $self->_set_default_align(0);
     }
     else {
-        $self->set__default_align(1);
+        $self->_set_default_align(1);
     }
 
     if ( $self->get_maincaption && $self->get_shortcaption ) {
@@ -726,7 +726,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 1.0.0
+This document describes LaTeX::Table version 1.0.2
 
 =head1 SYNOPSIS
 
@@ -1483,6 +1483,8 @@ L<Data::Table>, L<LaTeX::Encode>
 =head1 CREDITS
 
 =over
+
+=item ANSGAR for some great patches.
 
 =item David Carlisle for the C<colortbl>, C<longtable>, C<ltxtable>,
 C<tabularx> and C<tabulary> LaTeX packages.

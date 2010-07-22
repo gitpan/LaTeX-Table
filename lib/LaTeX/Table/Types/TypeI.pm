@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2010-03-02 11:55:05 +0100 (Tue, 02 Mar 2010) $
-# $Revision: 1948 $
+#     $Date: 2010-07-22 03:01:10 +0200 (Thu, 22 Jul 2010) $
+# $Revision: 2076 $
 #############################################################################
 
 package LaTeX::Table::Types::TypeI;
@@ -12,13 +12,14 @@ use warnings;
 use Moose::Role;
 use Template;
 
-use version; our $VERSION = qv('1.0.1');
+use version; our $VERSION = qv('1.0.2');
 
 use Carp;
 
 has '_table_obj' => ( is => 'rw', isa => 'LaTeX::Table', required => 1 );
-has '_tabular_environment' => ( is => 'ro', required => 1 );
-has '_template'            => ( is => 'ro', required => 1 );
+has '_tabular_environment'  => ( is => 'ro', required => 1 );
+has '_template'             => ( is => 'ro', required => 1 );
+has '_requires_environment' => ( is => 'ro', default  => 0, required => 1 );
 
 sub generate_latex_code {
     my ($self) = @_;
@@ -31,7 +32,7 @@ sub generate_latex_code {
     }
 
     my $template_vars = {
-        'CENTER' => $tbl->get__default_align ? 1 : $tbl->get_center,
+        'CENTER' => $tbl->_get_default_align ? 1 : $tbl->get_center,
         'LEFT'   => $tbl->get_left(),
         'RIGHT'  => $tbl->get_right(),
         'ENVIRONMENT'  => $tbl->get_environment,
@@ -89,9 +90,9 @@ sub generate_latex_code {
             ? $tbl->get_theme_settings->{DEFINE_COLORS} . "\n"
             : q{}
         ),
-        'LT_NUM_COLUMNS' => scalar( @{ $tbl->get__data_summary() } ),
+        'LT_NUM_COLUMNS' => scalar( @{ $tbl->_get_data_summary() } ),
         'LT_BOTTOM_RULE_CODE' =>
-            $tbl->_get_hline_code( $tbl->get__RULE_BOTTOM_ID ),
+            $tbl->_get_hline_code( $tbl->_get_RULE_BOTTOM_ID ),
     };
 
     my $template_obj = Template->new();
@@ -105,6 +106,20 @@ sub generate_latex_code {
     $template_obj->process( \$template, $template_vars, \$template_output )
         or croak $template_obj->error();
     return $template_output;
+}
+
+sub _check_options {
+    my ($self) = @_;
+    my $tbl = $self->_table_obj;
+    if ( $self->_requires_environment() && !$self->get_environment ) {
+        $self->_invalid_option_usage( 'environment',
+            $tbl->get_type . ' requires an environment' );
+    }
+    if ( $self->_supports_position && $self->get_position ) {
+        $self->_invalid_option_usage( 'position',
+            $tbl->get_type . ' does not support position' );
+    }
+    return;
 }
 
 sub _get_caption_command {
@@ -184,9 +199,9 @@ sub _get_default_tabletail_code {
     my $v0  = q{|} x $tbl->get_theme_settings->{'VERTICAL_RULES'}->[0];
 
     return
-          $tbl->_get_hline_code( $tbl->get__RULE_MID_ID )
+          $tbl->_get_hline_code( $tbl->_get_RULE_MID_ID )
         . '\multicolumn{'
-        . @{ $tbl->get__data_summary() }
+        . @{ $tbl->_get_data_summary() }
         . "}{${v0}r$v0}{{"
         . $tbl->get_tabletailmsg
         . "}} \\\\\n";

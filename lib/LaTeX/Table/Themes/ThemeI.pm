@@ -1,7 +1,7 @@
 #############################################################################
 #   $Author: markus $
-#     $Date: 2010-03-02 12:10:35 +0100 (Tue, 02 Mar 2010) $
-# $Revision: 1949 $
+#     $Date: 2010-07-22 03:01:10 +0200 (Thu, 22 Jul 2010) $
+# $Revision: 2076 $
 #############################################################################
 
 package LaTeX::Table::Themes::ThemeI;
@@ -11,7 +11,7 @@ use warnings;
 
 use Moose::Role;
 
-use version; our $VERSION = qv('1.0.1');
+use version; our $VERSION = qv('1.0.2');
 
 requires '_definition';
 
