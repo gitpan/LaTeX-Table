@@ -1,9 +1,3 @@
-#############################################################################
-#   $Author: markus $
-#     $Date: 2010-07-22 03:01:10 +0200 (Thu, 22 Jul 2010) $
-# $Revision: 2076 $
-#############################################################################
-
 package LaTeX::Table::Themes::ThemeI;
 
 use strict;
@@ -11,7 +5,7 @@ use warnings;
 
 use Moose::Role;
 
-use version; our $VERSION = qv('1.0.2');
+use version; our $VERSION = qv('1.0.3');
 
 requires '_definition';
 
@@ -219,13 +213,9 @@ looks nice, please contribute it.
 
 L<LaTeX::Table>
 
-=head1 AUTHOR
-
-Markus Riester  C<< <limaone@cpan.org> >>
-
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2010, Markus Riester C<< <limaone@cpan.org> >>. 
+Copyright (c) 2006-2010, C<< <limaone@cpan.org> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

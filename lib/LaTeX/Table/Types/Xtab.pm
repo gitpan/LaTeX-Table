@@ -1,15 +1,9 @@
-#############################################################################
-#   $Author: markus $
-#     $Date: 2010-07-22 03:01:10 +0200 (Thu, 22 Jul 2010) $
-# $Revision: 2076 $
-#############################################################################
-
 package LaTeX::Table::Types::Xtab;
 use Moose;
 
 with 'LaTeX::Table::Types::TypeI';
 
-use version; our $VERSION = qv('1.0.2');
+use version; our $VERSION = qv('1.0.3');
 
 my $template = <<'EOT'
 {
@@ -42,6 +36,7 @@ EOT
 
 has '+_tabular_environment' => ( default => 'xtabular' );
 has '+_template'            => ( default => $template );
+has '+_is_floating'         => ( default => 0 );
 
 1;
 __END__
@@ -62,13 +57,9 @@ LaTeX::Table::Types::Xtab - Create multi-page LaTeX tables with the xtabular pac
 
 L<LaTeX::Table>, L<LaTeX::Table::Types::TypeI>
 
-=head1 AUTHOR
-
-Markus Riester  C<< <limaone@cpan.org> >>
-
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2010, Markus Riester C<< <limaone@cpan.org> >>. 
+Copyright (c) 2006-2010, C<< <limaone@cpan.org> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

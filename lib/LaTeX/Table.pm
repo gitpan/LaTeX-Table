@@ -1,9 +1,3 @@
-#############################################################################
-#   $Author: markus $
-#     $Date: 2010-07-22 03:01:10 +0200 (Thu, 22 Jul 2010) $
-# $Revision: 2076 $
-#############################################################################
-
 package LaTeX::Table;
 
 use strict;
@@ -13,7 +7,7 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use MooseX::FollowPBP;
 
-use version; our $VERSION = qv('1.0.2');
+use version; our $VERSION = qv('1.0.3');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -111,9 +105,6 @@ __PACKAGE__->meta->make_immutable;
 
 sub generate_string {
     my ( $self, @args ) = @_;
-
-    # are the user provided options ok?
-    $self->_check_options();
 
     # analyze the data
     $self->_calc_data_summary( $self->get_data );
@@ -574,12 +565,10 @@ sub _add_font_color {
 
 sub _get_coldef_type_col_suffix {
     my ($self) = @_;
-    if (   $self->get_width_environment eq 'tabularx'
-        || $self->get_type eq 'ctable' )
-    {
+    if ( $self->get_width_environment eq 'tabularx' ) {
         return '_COL_X';
     }
-    if ( $self->get_width_environment eq 'tabulary' ) {
+    elsif ( $self->get_width_environment eq 'tabulary' ) {
         return '_COL_Y';
     }
     return '_COL';
@@ -634,8 +623,7 @@ sub _get_coldef_code {
         $i++;
         if (   $i == 1
             && $self->get_width
-            && !$self->get_width_environment
-            && $self->get_type ne 'ctable' )
+            && !$self->get_width_environment )
         {
             $table_def .= '@{\extracolsep{\fill}}';
         }
@@ -654,67 +642,6 @@ sub get_theme_settings {
     return;
 }
 
-sub _check_options {
-    my ($self) = @_;
-
-    # default floating enviromnent is table
-    if ( $self->get_environment eq '1' ) {
-        $self->set_environment('table');
-    }
-
-    if ( $self->get_type eq 'xtab' || $self->get_type eq 'longtable' ) {
-        if ( !$self->get_environment ) {
-            $self->_invalid_option_usage( 'environment',
-                'xtab/longtable requires an environment' );
-        }
-        if ( $self->get_position ) {
-            $self->_invalid_option_usage( 'position',
-                'xtab/longtable does not support position' );
-        }
-    }
-
-    # check center, right, left options
-    my $cnt_true_alignments = 0;
-    for my $align ( $self->get_center, $self->get_right, $self->get_left ) {
-        if ($align) {
-            $cnt_true_alignments++;
-        }
-    }
-    if ( $cnt_true_alignments > 1 ) {
-        $self->_invalid_option_usage( 'center, left, right',
-            'only one allowed.' );
-    }
-    if ( $self->has_center || $self->has_right || $self->has_left ) {
-        $self->_set_default_align(0);
-    }
-    else {
-        $self->_set_default_align(1);
-    }
-
-    if ( $self->get_maincaption && $self->get_shortcaption ) {
-        $self->_invalid_option_usage( 'maincaption, shortcaption',
-            'only one allowed.' );
-    }
-
-    # handle default values by ourselves
-    if ( $self->get_width_environment eq 'tabular*' ) {
-        $self->set_width_environment(0);
-    }
-    if ( !$self->get_width ) {
-        if (   $self->get_width_environment eq 'tabularx'
-            && $self->get_type ne 'longtable' )
-        {
-            $self->_invalid_option_usage( 'width_environment',
-                'Is tabularx and width is unset' );
-        }
-        elsif ( $self->get_width_environment eq 'tabulary' ) {
-            $self->_invalid_option_usage( 'width_environment',
-                'Is tabulary and width is unset' );
-        }
-    }
-    return;
-}
-
 no Moose::Util::TypeConstraints;
 no Moose;
 1;    # Magic true value required at end of module
@@ -726,7 +653,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 1.0.2
+This document describes LaTeX::Table version 1.0.3
 
 =head1 SYNOPSIS
 
@@ -753,7 +680,7 @@ This document describes LaTeX::Table version 1.0.2
         maincaption => 'Price List',
         caption     => 'Try our special offer today!',
         label       => 'table:prices',
-        position    => 'htb',
+        position    => 'tbp',
         header      => $header,
         data        => $data,
   	}
@@ -1072,9 +999,9 @@ Default is 0. Requires C<environment>.
 
 =item C<position>
 
-The position of the environment, e.g. 'htb'. Only generated if get_position()
+The position of the environment, e.g. 'tbp'. Only generated if get_position()
 returns a true value. Default 0. Requires C<environment> and tables of C<type>
-I<std>.
+I<std> or I<ctable>.
 
 =item C<sideways>
 
@@ -1504,13 +1431,9 @@ Packages and Methods>.
 
 =back
 
-=head1 AUTHOR
-
-Markus Riester  C<< <limaone@cpan.org> >>
-
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2010, Markus Riester C<< <limaone@cpan.org> >>. 
+Copyright (c) 2006-2010, C<< <limaone@cpan.org> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

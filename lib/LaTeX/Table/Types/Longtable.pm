@@ -1,15 +1,9 @@
-#############################################################################
-#   $Author: markus $
-#     $Date: 2010-07-22 03:01:10 +0200 (Thu, 22 Jul 2010) $
-# $Revision: 2076 $
-#############################################################################
-
 package LaTeX::Table::Types::Longtable;
 use Moose;
 
 with 'LaTeX::Table::Types::TypeI';
 
-use version; our $VERSION = qv('1.0.2');
+use version; our $VERSION = qv('1.0.3');
 
 my $template = <<'EOT'
 {
@@ -40,6 +34,28 @@ EOT
 
 has '+_tabular_environment' => ( default => 'longtable' );
 has '+_template'            => ( default => $template );
+has '+_is_floating'         => ( default => 0 );
+
+# longtable only supports tabularx with LTXtable package, we don't need the
+# width here. Set to an arbitrary true value, we don't output it in the
+# template anyway.
+before '_check_options' => sub {
+    my ($self) = @_;
+    if ( $self->_table_obj->get_width_environment eq 'tabularx'
+        && !$self->_table_obj->get_width )
+    {
+        $self->_table_obj->set_width(1);
+    }
+};
+
+sub _get_tabular_environment {
+    my ($self) = @_;
+    my $tbl = $self->_table_obj;
+
+    return $tbl->get_custom_tabular_environment
+        ? $tbl->get_custom_tabular_environment
+        : $self->_tabular_environment;
+}
 
 1;
 __END__
@@ -60,13 +76,9 @@ LaTeX::Table::Types::Longtable - Create multi-page LaTeX tables with the longtab
 
 L<LaTeX::Table>, L<LaTeX::Table::Types::TypeI>
 
-=head1 AUTHOR
-
-Markus Riester  C<< <limaone@cpan.org> >>
-
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2010, Markus Riester C<< <limaone@cpan.org> >>. 
+Copyright (c) 2006-2010, C<< <limaone@cpan.org> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

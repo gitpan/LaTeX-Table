@@ -1,9 +1,3 @@
-#############################################################################
-#   $Author: markus $
-#     $Date: 2010-07-22 03:01:10 +0200 (Thu, 22 Jul 2010) $
-# $Revision: 2076 $
-#############################################################################
-
 package LaTeX::Table::Types::TypeI;
 
 use strict;
@@ -12,17 +6,19 @@ use warnings;
 use Moose::Role;
 use Template;
 
-use version; our $VERSION = qv('1.0.2');
+use version; our $VERSION = qv('1.0.3');
 
 use Carp;
 
 has '_table_obj' => ( is => 'rw', isa => 'LaTeX::Table', required => 1 );
-has '_tabular_environment'  => ( is => 'ro', required => 1 );
-has '_template'             => ( is => 'ro', required => 1 );
-has '_requires_environment' => ( is => 'ro', default  => 0, required => 1 );
+has '_tabular_environment' => ( is => 'ro', required => 1 );
+has '_template'            => ( is => 'ro', required => 1 );
+has '_is_floating'         => ( is => 'ro', default  => 1, required => 1 );
 
 sub generate_latex_code {
     my ($self) = @_;
+
+    $self->_check_options();
 
     my $tbl   = $self->_table_obj;
     my $theme = $tbl->get_theme_settings;
@@ -111,13 +107,61 @@ sub generate_latex_code {
 sub _check_options {
     my ($self) = @_;
     my $tbl = $self->_table_obj;
-    if ( $self->_requires_environment() && !$self->get_environment ) {
-        $self->_invalid_option_usage( 'environment',
-            $tbl->get_type . ' requires an environment' );
+
+    # default floating enviromnent is table
+    if ( $tbl->get_environment eq '1' ) {
+        $tbl->set_environment('table');
     }
-    if ( $self->_supports_position && $self->get_position ) {
-        $self->_invalid_option_usage( 'position',
-            $tbl->get_type . ' does not support position' );
+
+    if ( !$self->_is_floating ) {
+        if ( !$tbl->get_environment ) {
+            $tbl->_invalid_option_usage( 'environment',
+                $tbl->get_type
+                    . ' is non-floating and requires an environment' );
+        }
+        if ( $tbl->get_position ) {
+            $tbl->_invalid_option_usage( 'position',
+                $tbl->get_type
+                    . ' is non-floating and thus does not support position' );
+        }
+    }
+
+    # check center, right, left options
+    my $cnt_true_alignments = 0;
+    for my $align ( $tbl->get_center, $tbl->get_right, $tbl->get_left ) {
+        if ($align) {
+            $cnt_true_alignments++;
+        }
+    }
+    if ( $cnt_true_alignments > 1 ) {
+        $tbl->_invalid_option_usage( 'center, left, right',
+            'only one allowed.' );
+    }
+    if ( $tbl->has_center || $tbl->has_right || $tbl->has_left ) {
+        $tbl->_set_default_align(0);
+    }
+    else {
+        $tbl->_set_default_align(1);
+    }
+
+    if ( $tbl->get_maincaption && $tbl->get_shortcaption ) {
+        $tbl->_invalid_option_usage( 'maincaption, shortcaption',
+            'only one allowed.' );
+    }
+
+    # handle default values by ourselves
+    if ( $tbl->get_width_environment eq 'tabular*' ) {
+        $tbl->set_width_environment(0);
+    }
+    if ( !$tbl->get_width ) {
+        if ( $tbl->get_width_environment eq 'tabularx' ) {
+            $tbl->_invalid_option_usage( 'width_environment',
+                'Is tabularx and width is unset' );
+        }
+        elsif ( $tbl->get_width_environment eq 'tabulary' ) {
+            $tbl->_invalid_option_usage( 'width_environment',
+                'Is tabulary and width is unset' );
+        }
     }
     return;
 }
@@ -185,7 +229,7 @@ sub _get_tabular_environment {
         if ( !$tbl->get_width_environment ) {
             $res .= q{*};
         }
-        elsif ( $tbl->get_type ne 'longtable' ) {  #want the ltxtable package?
+        else {
             $res = $tbl->get_width_environment;
         }
     }
@@ -356,13 +400,9 @@ The predefined templates: L<LaTeX::Table::Types::Std>,
 L<LaTeX::Table::Types::Ctable>, L<LaTeX::Table::Types::Longtable>,
 L<LaTeX::Table::Types::Xtab>
 
-=head1 AUTHOR
-
-Markus Riester  C<< <limaone@cpan.org> >>
-
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2010, Markus Riester C<< <limaone@cpan.org> >>. 
+Copyright (c) 2006-2010, C<< <limaone@cpan.org> >>. 
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

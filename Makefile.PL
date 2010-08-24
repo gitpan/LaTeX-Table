@@ -6,7 +6,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME                => 'LaTeX::Table',
-    AUTHOR              => 'Markus Riester <limaone@cpan.org>',
+    AUTHOR              => '<limaone@cpan.org>',
     VERSION_FROM        => 'lib/LaTeX/Table.pm',
     ABSTRACT_FROM       => 'lib/LaTeX/Table.pm',
     ((ExtUtils::MakeMaker->VERSION() gt '6.30') ?
@@ -27,6 +27,15 @@ WriteMakefile(
         'Text::CSV'      => 0,
         'Cwd'            => 0,
     },
+    (   ( ExtUtils::MakeMaker->VERSION() gt '6.46' )
+        ? ( META_MERGE => {
+                resources => {
+                    repository => 'http://github.com/lima1/p5-latex-table',
+                },
+            }
+            )
+        : ()
+    ),
     EXE_FILES         => [ 'bin/csv2pdf', 'bin/ltpretty' ], 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'LaTeX-Table-*' },

@@ -1,18 +1,12 @@
 #!/usr/bin/perl
 
-#############################################################################
-#   $Author: markus $
-#     $Date: 2010-03-02 17:43:57 +0100 (Tue, 02 Mar 2010) $
-# $Revision: 1956 $
-#############################################################################
-
 use strict;
 use warnings;
 
 use LaTeX::Table;
 use Carp;
 
-use version; our $VERSION = qv('1.0.1');
+use version; our $VERSION = qv('1.0.3');
 
 my $line_id = 0;
 my @input;
@@ -172,13 +166,9 @@ Please report any bugs or feature requests to
 C<bug-latex-table@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>. 
 
-=head1 AUTHOR
-
-Markus Riester  C<< <limaone@cpan.org> >>
-
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2006-2010, Markus Riester C<< <limaone@cpan.org> >>. 
+Copyright (c) 2006-2010, C<< <limaone@cpan.org> >>. 
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

@@ -25,6 +25,7 @@ lib/LaTeX/Table/Themes/Modern.pm
 t/00.load.t
 t/10.table-ctable.t
 t/10.table-custom.t
+t/10.table-longtable.t
 t/10.table-std.t
 t/10.table-xtab.t
 t/20.mcdef.t
@@ -35,8 +36,8 @@ t/60.coldef.t
 t/70.callback.t
 t/80.themes.t
 t/lib/MyThemes/Custom.pm
-t/perlcritic.t
-t/perlcriticrc
-t/perltidyrc
-t/pod-coverage.t
-t/pod.t
+xt/release/perlcritic.t
+xt/release/perlcriticrc
+xt/release/perltidyrc
+xt/release/pod-coverage.t
+xt/release/pod.t
