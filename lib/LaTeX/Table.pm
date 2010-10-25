@@ -7,7 +7,7 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use MooseX::FollowPBP;
 
-use version; our $VERSION = qv('1.0.5');
+use version; our $VERSION = qv('1.0.5_99');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -28,7 +28,9 @@ use Module::Pluggable
 
 # Str
 for my $attr (
-    qw(label maincaption shortcaption caption caption_top coldef custom_template width maxwidth width_environment custom_tabular_environment position tabletail star)
+    qw(label maincaption shortcaption caption caption_top coldef
+    custom_template width maxwidth width_environment
+    custom_tabular_environment position tabletail star)
     )
 {
     has $attr => ( is => 'rw', isa => 'Str', default => 0 );
@@ -36,6 +38,7 @@ for my $attr (
 
 has 'filename'  => ( is => 'rw', isa => 'Str', default => 'latextable.tex' );
 has 'foottable' => ( is => 'rw', isa => 'Str', default => q{} );
+has 'eor'       => ( is => 'rw', isa => 'Str', default => q{\\\\} );
 has 'environment'  => ( is => 'rw', isa => 'Str', default => 1 );
 has 'theme'        => ( is => 'rw', isa => 'Str', default => 'Meyrin' );
 has 'continuedmsg' => ( is => 'rw', isa => 'Str', default => '(continued)' );
@@ -381,7 +384,7 @@ ROW:
         for my $i ( 0 .. scalar( @{$row} ) - 1 ) {
             $row->[$i] = sprintf '%-*s', $max{$i}, $row->[$i];
         }
-        $code .= join( ' & ', @{$row} ) . " \\\\\n";
+        $code .= join( ' & ', @{$row} ) . q{ } .  $self->get_eor . "\n";
     }
     return $code;
 }
@@ -653,7 +656,7 @@ LaTeX::Table - Perl extension for the automatic generation of LaTeX tables.
 
 =head1 VERSION
 
-This document describes LaTeX::Table version 1.0.5
+This document describes LaTeX::Table version 1.0.6
 
 =head1 SYNOPSIS
 
@@ -1151,8 +1154,9 @@ This will produce following LaTeX code:
   \begin{tabular*}{0.75\textwidth}{l@{\extracolsep{\fill} ... }
 
 For tables of C<type> I<std>, it is also possible to use the C<tabularx> and
-C<tabulary> LaTeX packages (see C<width_environment> below). The tables of type I<ctable>
-automatically use the C<tabularx> package.
+C<tabulary> LaTeX packages (see C<width_environment> below). The tables of
+type I<ctable> automatically use the C<tabularx> package. See also
+C<width_environment> for how to use this feature with I<longtable>. 
 
 =item C<width_environment>
 
@@ -1194,6 +1198,15 @@ Default is 0 (see C<width>).
 =item C<maxwidth>
 
 Only supported by tables of type I<ctable>. 
+
+=item C<eor>
+
+String specifing the end of a row. Default is '\\'.
+  
+  $table->set_eor("\\\\[1em]");
+
+Callback functions (see below) can be used to manually set the eor after the last
+column. This is useful when some rows require different eor strings. 
 
 =item C<callback>
 
@@ -1411,7 +1424,7 @@ L<Data::Table>, L<LaTeX::Encode>
 
 =over
 
-=item ANSGAR for some great patches.
+=item ANDREWF, ANSGAR and REHSACK for some great patches and suggestions.
 
 =item David Carlisle for the C<colortbl>, C<longtable>, C<ltxtable>,
 C<tabularx> and C<tabulary> LaTeX packages.
@@ -1420,9 +1433,6 @@ C<tabularx> and C<tabulary> LaTeX packages.
 
 =item Simon Fear for the C<booktabs> LaTeX package. The L<"SYNOPSIS"> table is
 the example in his documentation.
-
-=item Andrew Ford (ANDREWF) for many great suggestions. He also wrote
-L<LaTeX::Driver> and L<LaTeX::Encode> which are used by I<csv2pdf>.
 
 =item Lapo Filippo Mori for the excellent tutorial I<Tables in LaTeX2e:
 Packages and Methods>.

@@ -6,7 +6,7 @@ use warnings;
 use LaTeX::Table;
 use Carp;
 
-use version; our $VERSION = qv('1.0.5');
+use version; our $VERSION = qv('1.0.6');
 
 my $line_id = 0;
 my @input;
@@ -27,6 +27,14 @@ while ( my $line = <> ) {
         push @input, $line;
     }
     $line_id++;
+}
+
+while (scalar @input) {
+    if (!length $input[-1]) {
+        pop @input;
+    } else { 
+        last;
+    }    
 }
 
 # uncomment original input
@@ -86,7 +94,8 @@ from Vim or emacs) and outputs a completely formatted table.
 The first line must contain the L<LaTeX::Table> options (separated by 
 semicolons C<;>) in the format C<optionname=value>. The
 second line must contain the header, the following lines the data. 
-Columns are separated by C<&>. 
+Columns are separated by C<&>. Trailing empty lines are ignored, other 
+empty lines generate horizontal rules (as in L<LaTeX::Table>).
 
 =head1 EXAMPLE 
 
@@ -94,6 +103,7 @@ Columns are separated by C<&>.
    Item:2c & Price
    Gnat& per gram& 13.65
    & each& 0.01
+
    Gnu& stuffed& 92.59
    Emu& stuffed& 33.33
    Armadillo& frozen& 8.99
@@ -126,6 +136,7 @@ Columns are separated by C<&>.
    % Item:2c & Price
    % Gnat& per gram& 13.65
    % & each& 0.01
+   % 
    % Gnu& stuffed& 92.59
    % Emu& stuffed& 33.33
    % Armadillo& frozen& 8.99
@@ -138,6 +149,7 @@ Columns are separated by C<&>.
   \midrule
   Gnat      & per gram & 13.65 \\
             & each     & 0.01  \\
+  \midrule          
   Gnu       & stuffed  & 92.59 \\
   Emu       & stuffed  & 33.33 \\
   Armadillo & frozen   & 8.99  \\

@@ -3,7 +3,7 @@ use Moose;
 
 with 'LaTeX::Table::Themes::ThemeI';
 
-use version; our $VERSION = qv('1.0.5');
+use version; our $VERSION = qv('1.0.6');
 
 sub _definition {
     my $themes = {
@@ -20,6 +20,16 @@ sub _definition {
             'VERTICAL_RULES'   => [ 0, 0, 0 ],
             'HORIZONTAL_RULES' => [ 1, 1, 0 ],
             'BOOKTABS'         => 1,
+        },
+        'Evanston' => {
+            'HEADER_FONT_STYLE' => 'bf',
+            'STUB_ALIGN'        => 'l',
+            'VERTICAL_RULES'    => [ 0, 0, 0 ],
+            'HORIZONTAL_RULES'  => [ 1, 1, 0 ],
+            'RULES_CMD'         => [
+                '\toprule', '\midrule[\heavyrulewidth]',
+                '\midrule', '\bottomrule'
+            ],
         },
     };
     return $themes;
@@ -38,6 +48,7 @@ This module provides following themes:
 
   Meyrin   # as described in the booktabs documentation
   Zurich   # header centered and in bold font
+  Evanston # as described in Lapo Filippo Mori's tutorial
 
 =head1 REQUIRES
 

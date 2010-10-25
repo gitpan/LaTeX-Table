@@ -1,5 +1,13 @@
 Revision history for LaTeX-Table
-        
+
+1.0.6  Mon  Oct 25 2010
+        - eor option (thanks Jens)
+        - POD: Ascii tables of classic themes.
+        - fixed #62016 (thanks Bowen)
+        - ltpretty ignores empty trailing lines
+        - ltpretty test
+        - Evanston theme (Booktabs)
+
 1.0.5  Wed  Aug 25 2010
         - Set min. version of MooseX::FollowPBP to 0.03 (older versions caused
           cpan test fails)
