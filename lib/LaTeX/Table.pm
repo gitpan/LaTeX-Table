@@ -7,7 +7,7 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use MooseX::FollowPBP;
 
-use version; our $VERSION = qv('1.0.5_99');
+use version; our $VERSION = qv('1.0.6');
 
 use LaTeX::Table::Types::Std;
 use LaTeX::Table::Types::Xtab;
@@ -1201,7 +1201,7 @@ Only supported by tables of type I<ctable>.
 
 =item C<eor>
 
-String specifing the end of a row. Default is '\\'.
+String specifying the end of a row. Default is '\\'.
   
   $table->set_eor("\\\\[1em]");
 
